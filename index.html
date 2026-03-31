@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 :root{--bg:#09111C;--bg2:#0F1923;--card:#152234;--card2:#1A2E4A;--accent:#64A0C8;--a2:#4A88B8;--orange:#E8622A;--o2:#C84E1A;--green:#6FCF97;--yellow:#FEE500;--text:#FFF;--muted:rgba(255,255,255,.45);--border:rgba(100,160,200,.14);--r:16px;--nav:64px;}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
@@ -340,8 +342,79 @@ const PRODS=[
 const CATS=[{id:'all',em:'',l:'전체'},{id:'chicken',em:'🍗',l:'닭가슴살'},{id:'salad',em:'🥗',l:'샐러드·도시락'},{id:'snack',em:'🍌',l:'간식'},{id:'carb',em:'🍚',l:'탄수화물'},{id:'drink',em:'🥛',l:'음료'}];
 const CN={chicken:'닭가슴살',salad:'샐러드·도시락',snack:'간식',carb:'탄수화물',drink:'음료'};
 
-function lG(k,d){try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
-function lS(k,v){localStorage.setItem(k,JSON.stringify(v));}
+/* ===== Firebase Firestore 연동 ===== */
+const firebaseConfig={apiKey:"AIzaSyCICKJ00FCnb780oQ9_mZTgszG0FL64eFU",authDomain:"patraining-c1cd3.firebaseapp.com",projectId:"patraining-c1cd3",storageBucket:"patraining-c1cd3.firebasestorage.app",messagingSenderId:"414257826796",appId:"1:414257826796:web:537d28d40af145499fcec9"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+
+/* 로컬 캐시: Firestore 데이터의 메모리 복사본 (빠른 읽기용) */
+const _cache={};
+let _fsReady=false;
+
+/* Firestore 컬렉션 이름 매핑 (localStorage 키 → Firestore doc) */
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise'];
+
+/* 모든 데이터를 Firestore에서 로드 → 캐시에 저장 */
+async function fsInit(){
+  try{
+    const snap=await db.collection('pa_data').get();
+    snap.forEach(doc=>{_cache[doc.id]=doc.data().value;});
+    /* localStorage에 있는 데이터를 Firestore로 마이그레이션 (최초 1회) */
+    const migrated=_cache['_migrated'];
+    if(!migrated){
+      let hasMigration=false;
+      for(const k of FS_KEYS){
+        try{
+          const raw=localStorage.getItem(k);
+          if(raw&&!_cache[k]){
+            const val=JSON.parse(raw);
+            _cache[k]=val;
+            await db.collection('pa_data').doc(k).set({value:val});
+            hasMigration=true;
+          }
+        }catch(e){}
+      }
+      if(hasMigration){
+        await db.collection('pa_data').doc('_migrated').set({value:true});
+        console.log('[PA] localStorage → Firestore 마이그레이션 완료');
+      }
+    }
+    _fsReady=true;
+    console.log('[PA] Firestore 연결 완료, 데이터 로드됨');
+  }catch(e){
+    console.warn('[PA] Firestore 로드 실패, localStorage 폴백:',e);
+    _fsReady=false;
+  }
+}
+
+/* lG: 캐시 우선 읽기, 없으면 localStorage 폴백 */
+function lG(k,d){
+  if(_cache[k]!==undefined)return JSON.parse(JSON.stringify(_cache[k]));
+  try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}
+}
+
+/* lS: 캐시 + Firestore + localStorage (동시 기록) */
+function lS(k,v){
+  const clone=JSON.parse(JSON.stringify(v));
+  _cache[k]=clone;
+  localStorage.setItem(k,JSON.stringify(v));
+  if(_fsReady){
+    db.collection('pa_data').doc(k).set({value:clone}).catch(e=>console.warn('[PA] Firestore 저장 오류:',e));
+  }
+}
+
+/* 실시간 리스너: 다른 기기에서 변경 시 자동 동기화 */
+function fsListen(){
+  db.collection('pa_data').onSnapshot(snap=>{
+    snap.docChanges().forEach(change=>{
+      if(change.type==='modified'||change.type==='added'){
+        const k=change.doc.id;
+        if(k==='_migrated')return;
+        _cache[k]=change.doc.data().value;
+      }
+    });
+  },e=>console.warn('[PA] 리스너 오류:',e));
+}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
 const PGS=['home','notice','my','loc','prod','admin'];
@@ -411,10 +484,18 @@ toast(`${label}님 계정 연결 완료!`);
 logIn(v,pending.nn+(linkRole==='parent'?' (학부모)':''),pending.img);go('my');
 }
 function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(v==='PATRAINING2026'){go('admin');return;}if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');logIn(v,S[v].name,null);}
-document.addEventListener('DOMContentLoaded',()=>{const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
+document.addEventListener('DOMContentLoaded',async()=>{
+  /* Firestore 초기화 → 데이터 로드 → 실시간 리스너 시작 */
+  await fsInit();
+  fsListen();
+  const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
 function setN(n,img){document.getElementById('navProf').classList.add('show');document.getElementById('navNm').textContent=n;if(img)document.getElementById('navAv').innerHTML=`<img src="${img}" alt="">`;else document.getElementById('navAvT').textContent=n?n[0]:'😊';}
-function doLogout(){LC=null;sessionStorage.removeItem('pa_login');document.getElementById('loginBox').style.display='block';document.getElementById('myDB').style.display='none';document.getElementById('navProf').classList.remove('show');if(!isL&&window.Kakao)try{Kakao.Auth.logout(()=>{});}catch(e){}toast('로그아웃 완료');}
+function doLogout(){LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
+document.getElementById('loginBox').innerHTML=`<div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><div class="dtog" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 테스트 코드로 입장 (개발용)</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: HYR001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">테스트: HYR001 · KNY010</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">※ 입장 코드는 발급 후 3일간 유효<br>ltk6154@gmail.com</div></div>`;
+document.getElementById('loginBox').style.display='block';document.getElementById('myDB').style.display='none';document.getElementById('navProf').classList.remove('show');
+const inp=document.getElementById('dcI');if(inp){inp.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});inp.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}
+if(!isL&&window.Kakao)try{Kakao.Auth.setAccessToken(null);}catch(e){}toast('로그아웃 완료');}
 function chkL(){if(!LC){const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);rDB();return;}}}else{rDB();return;}document.getElementById('loginBox').style.display='block';document.getElementById('myDB').style.display='none';}
 
 /* 대시보드 */
@@ -534,7 +615,7 @@ function aAC(){const c=document.getElementById('ncC').value.trim().toUpperCase()
 function aDC(c){const codes=lG('pa_codes_c',{});delete codes[c];lS('pa_codes_c',codes);rAB();}
 
 function aWt(){return`<h3 style="font-size:14px;margin-bottom:14px;">몸무게 기록 업데이트</h3><div class="ar"><label>학생</label><select id="awS">${Object.entries(S).map(([c,s])=>`<option value="${c}">${s.name} (${c})</option>`).join('')}</select><label>몸무게</label><input type="number" step="0.1" id="awV" placeholder="kg" style="width:80px"><button class="ab ab-b" onclick="aAW()">추가</button></div><table class="at" style="margin-top:12px;"><tr><th>학생</th><th>기록수</th><th>최근</th></tr>${Object.entries(S).map(([c,s])=>{const ws=(lG('pa_weights',{})[c])||s.wts;return`<tr><td>${s.name}</td><td>${ws.length}</td><td>${ws[ws.length-1]}kg</td></tr>`;}).join('')}</table>`;}
-function aAW(){const c=document.getElementById('awS').value,v=parseFloat(document.getElementById('awV').value);if(!v){toast('몸무게 입력','err');return;}const d=lG('pa_weights',{});if(!d[c])d[c]=[...S[c].wts];d[c].push(v);lS('pa_weights',d);toast(`${S[c].name} — ${v}kg 추가`);rAB();}
+function aAW(){const c=document.getElementById('awS').value,v=parseFloat(document.getElementById('awV').value);if(!v||v<20||v>200){toast('올바른 몸무게 입력','err');return;}const data=lG('pa_weights',{});if(!data[c])data[c]=[...S[c].wts];data[c].push(v);lS('pa_weights',data);toast(`${S[c].name} — ${v}kg 추가`);rAB();}
 </script>
 </body>
 </html>
