@@ -284,6 +284,23 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 @media(max-width:960px){.nav{padding:0 20px;}.logo .sub{display:none;}.hero{flex-direction:column;padding:calc(var(--nav)+32px) 24px 48px;align-items:center;text-align:center;gap:28px;}.hcont{max-width:100%;display:flex;flex-direction:column;align-items:center;}.hdesc{text-align:left;max-width:100%;}.hbtns{justify-content:center;}.hside{flex-direction:row;width:100%;max-width:560px;}.hc{flex:1;min-width:0;}.ng,.lgrid{grid-template-columns:1fr;}.sec,.lsec,.psec{padding-left:24px;padding-right:24px;}}
 @media(max-width:640px){.navlinks{display:none;}.hbg{display:flex;}.nav-nm{display:none;}.htitle{font-size:clamp(44px,13vw,68px);}.hside{flex-direction:row;max-width:100%;gap:8px;}.hc{padding:12px 10px;}.hcv{font-size:24px;}.hcl{font-size:8px;letter-spacing:.1em;}.hcs{font-size:9px;}.hcbtn{font-size:11px;padding:10px 8px;}.mg2{grid-template-columns:1fr;}.kcard{padding:28px 20px;}.kakao-btn{padding:14px;font-size:14px;}.pgrid{grid-template-columns:repeat(2,1fr);}.sec,.lsec,.psec{padding-left:16px;padding-right:16px;}.my-wrap{padding:32px 16px 60px;}footer{padding:28px 20px;}}
 @media(max-width:380px){.htitle{font-size:40px;}.pgrid{grid-template-columns:1fr;}.mst{gap:6px;}.msv{font-size:13px;}.hcv{font-size:20px;}}
+/* 등록자 배지 */
+.by-badge{display:inline-block;font-size:8px;font-weight:900;padding:2px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;letter-spacing:.04em;}
+.by-student{background:rgba(100,160,200,.2);color:var(--accent);}
+.by-parent{background:rgba(111,207,151,.2);color:var(--green);}
+.by-admin{background:rgba(232,98,42,.2);color:var(--orange);}
+/* 관리자 기록관리 */
+.a-rec-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;}
+.a-rec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.a-rec-date{font-size:11px;color:var(--muted);font-weight:700;}
+.a-pill{font-size:9px;font-weight:900;padding:3px 8px;border-radius:6px;}
+.a-pill-i{background:rgba(232,98,42,.12);color:var(--orange);}
+.a-pill-e{background:rgba(100,160,200,.12);color:var(--accent);}
+/* 식단 수정 모달 */
+.diet-edit-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+.diet-edit-row label{font-size:11px;color:var(--muted);min-width:40px;font-weight:700;}
+.diet-edit-row input,.diet-edit-row textarea{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:inherit;outline:none;flex:1;}
+.diet-edit-row textarea{min-height:60px;resize:vertical;}
 </style>
 </head>
 <body>
@@ -312,13 +329,13 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 function toast(m,t){const w=document.getElementById('tw'),e=document.createElement('div');e.className='toast'+(t==='err'?' err':'');e.textContent=m;w.appendChild(e);setTimeout(()=>{e.style.opacity='0';e.style.transition='opacity .3s';setTimeout(()=>e.remove(),300);},2500);}
 let isL=false;try{if(location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')isL=true;if(!isL&&window.Kakao){if(!Kakao.isInitialized()){Kakao.init('a1ca85645cfb642c43ac95082a46e872');}}}catch(e){console.warn('Kakao init:',e);}
 const mkE=d=>{const x=new Date();x.setDate(x.getDate()+d);return x.toISOString();};
-const CODES={"HYR001":{n:"한유리",e:mkE(3)},"PDY002":{n:"박도영",e:mkE(3)},"PHS003":{n:"박하솔",e:mkE(3)},"HYJ004":{n:"황유진",e:mkE(3)},"NYE005":{n:"남예은",e:mkE(3)},"KCI006":{n:"김초이",e:mkE(3)},"NHY007":{n:"남하연",e:mkE(3)},"SSY008":{n:"심수연",e:mkE(3)},"KJW009":{n:"김지웅",e:mkE(3)},"KNY010":{n:"김나윤",e:mkE(3)},"KJH011":{n:"김주혁",e:mkE(3)}};
-const S={"HYR001":{name:"한유리",age:17,h:167,w:71,g:"여",goal:"체중감량",gc:"gl",bmr:1558,tdee:2142,tar:1840,wts:[71,70.5,70.2,69.8,69.5,69.1]},"PDY002":{name:"박도영",age:17,h:160,w:50,g:"여",goal:"근육증가",gc:"gg",bmr:1350,tdee:1856,tar:2060,wts:[50,50.3,50.6,50.8,51.1,51.4]},"PHS003":{name:"박하솔",age:17,h:160,w:52,g:"여",goal:"근육증가",gc:"gg",bmr:1370,tdee:1884,tar:2080,wts:[52,52.2,52.5,52.7,53,53.2]},"HYJ004":{name:"황유진",age:17,h:165,w:44,g:"여",goal:"증량+근육",gc:"gb",bmr:1302,tdee:1790,tar:2100,wts:[44,44.3,44.6,44.9,45.2,45.5]},"NYE005":{name:"남예은",age:17,h:155,w:50,g:"여",goal:"체중감량",gc:"gl",bmr:1317,tdee:1811,tar:1560,wts:[50,49.7,49.4,49.1,48.8,48.5]},"KCI006":{name:"김초이",age:17,h:170,w:68,g:"여",goal:"체중감량",gc:"gl",bmr:1543,tdee:2122,tar:1820,wts:[68,67.6,67.2,66.8,66.4,66]},"NHY007":{name:"남하연",age:17,h:162,w:55,g:"여",goal:"체중감량",gc:"gl",bmr:1394,tdee:1917,tar:1670,wts:[55,54.7,54.4,54.1,53.8,53.5]},"SSY008":{name:"심수연",age:17,h:163,w:63,g:"여",goal:"체중감량",gc:"gl",bmr:1468,tdee:2019,tar:1770,wts:[63,62.6,62.2,61.8,61.4,61]},"KJW009":{name:"김지웅",age:16,h:182,w:94.8,g:"남",goal:"체중감량",gc:"gl",bmr:2095,tdee:2881,tar:2400,wts:[94.8,94.2,93.6,93,92.4,91.8]},"KNY010":{name:"김나윤",age:18,h:155,w:62,g:"여",goal:"체중감량",gc:"gl",bmr:1452,tdee:1997,tar:1747,wts:[62,61.6,61.2,60.9,60.5,60.2]},"KJH011":{name:"김주혁",age:16,h:171,w:77,g:"남",goal:"체중감량",gc:"gl",bmr:1850,tdee:2867,tar:2517,wts:[77,76.5,76,75.5,75,74.5]}};
+const CODES={"HYR001":{n:"한유리",e:mkE(3)},"PDY002":{n:"박도영",e:mkE(3)},"PHS003":{n:"박하솔",e:mkE(3)},"HYJ004":{n:"황유진",e:mkE(3)},"NYE005":{n:"남예은",e:mkE(3)},"KCI006":{n:"김초이",e:mkE(3)},"NHY007":{n:"남하연",e:mkE(3)},"SSY008":{n:"심수연",e:mkE(3)},"KJW009":{n:"김지웅",e:mkE(3)},"KNY010":{n:"김나윤",e:mkE(3)},"KJH011":{n:"김주혁",e:mkE(3)},"KYS012":{n:"김예슬",e:mkE(30)}};
+const S={"HYR001":{name:"한유리",age:17,h:167,w:71,g:"여",goal:"체중감량",gc:"gl",bmr:1558,tdee:2142,tar:1840,wts:[71,70.5,70.2,69.8,69.5,69.1]},"PDY002":{name:"박도영",age:17,h:160,w:50,g:"여",goal:"근육증가",gc:"gg",bmr:1350,tdee:1856,tar:2060,wts:[50,50.3,50.6,50.8,51.1,51.4]},"PHS003":{name:"박하솔",age:17,h:160,w:52,g:"여",goal:"근육증가",gc:"gg",bmr:1370,tdee:1884,tar:2080,wts:[52,52.2,52.5,52.7,53,53.2]},"HYJ004":{name:"황유진",age:17,h:165,w:44,g:"여",goal:"증량+근육",gc:"gb",bmr:1302,tdee:1790,tar:2100,wts:[44,44.3,44.6,44.9,45.2,45.5]},"NYE005":{name:"남예은",age:17,h:155,w:50,g:"여",goal:"체중감량",gc:"gl",bmr:1317,tdee:1811,tar:1560,wts:[50,49.7,49.4,49.1,48.8,48.5]},"KCI006":{name:"김초이",age:17,h:170,w:68,g:"여",goal:"체중감량",gc:"gl",bmr:1543,tdee:2122,tar:1820,wts:[68,67.6,67.2,66.8,66.4,66]},"NHY007":{name:"남하연",age:17,h:162,w:55,g:"여",goal:"체중감량",gc:"gl",bmr:1394,tdee:1917,tar:1670,wts:[55,54.7,54.4,54.1,53.8,53.5]},"SSY008":{name:"심수연",age:17,h:163,w:63,g:"여",goal:"체중감량",gc:"gl",bmr:1468,tdee:2019,tar:1770,wts:[63,62.6,62.2,61.8,61.4,61]},"KJW009":{name:"김지웅",age:16,h:182,w:94.8,g:"남",goal:"체중감량",gc:"gl",bmr:2095,tdee:2881,tar:2400,wts:[94.8,94.2,93.6,93,92.4,91.8]},"KNY010":{name:"김나윤",age:18,h:155,w:62,g:"여",goal:"체중감량",gc:"gl",bmr:1452,tdee:1997,tar:1747,wts:[62,61.6,61.2,60.9,60.5,60.2]},"KJH011":{name:"김주혁",age:16,h:171,w:77,g:"남",goal:"체중감량",gc:"gl",bmr:1850,tdee:2867,tar:2517,wts:[77,76.5,76,75.5,75,74.5]},"KYS012":{name:"김예슬",age:23,h:164,w:59,g:"여",goal:"체중감량",gc:"gl",bmr:1402,tdee:1928,tar:1680,wts:[59]}};
 
 /* 식단 */
 const D1=[{d:"월",e:"MON",k:1840,am:{k:430,c:"햇반 현미밥 130g\n하림 닭가슴살 100g\n삶은 달걀 2개"},lu:{k:490,c:"한스푼샐러드 도시락\n맛있닭 스팀 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:705,c:"다신 곤약밥상\n허닭 닭가슴살 100g\n두유 190ml"}},{d:"화",e:"TUE",k:1840,am:{k:420,c:"햇반 현미밥 130g\n맛있닭 스팀 100g\n삶은 달걀 2개"},lu:{k:490,c:"다신현미밥상\n하림 닭가슴살 100g\n두유 190ml"},sn:{k:155,c:"그릭요거트 100g\n바나나 1개"},di:{k:775,c:"포켓샐러드\n랭커 닭가슴살 100g\n고구마 120g\n두유 190ml"}},{d:"수",e:"WED",k:1840,am:{k:430,c:"햇반 현미밥 130g\n하림 닭가슴살 100g\n삶은 달걀 2개"},lu:{k:485,c:"한스푼샐러드 도시락\n랭커 닭가슴살 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:710,c:"다신 곤약밥상\n맛있닭 스팀 100g\n두유 190ml"}},{d:"목",e:"THU",k:1840,am:{k:420,c:"햇반 현미밥 130g\n맛있닭 스팀 100g\n삶은 달걀 2개"},lu:{k:490,c:"포켓샐러드\n하림 닭가슴살 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:715,c:"다신현미밥상\n허닭 닭가슴살 100g\n두유 190ml"}},{d:"금",e:"FRI",k:1840,am:{k:430,c:"햇반 현미밥 130g\n하림 닭가슴살 100g\n삶은 달걀 2개"},lu:{k:485,c:"한스푼샐러드 도시락\n맛있닭 스팀 100g\n두유 190ml"},sn:{k:155,c:"그릭요거트 100g\n바나나 1개"},di:{k:770,c:"다신 곤약밥상\n랭커 닭가슴살 100g\n고구마 120g\n두유 190ml"}},{d:"토",e:"SAT",k:1840,am:{k:420,c:"햇반 현미밥 130g\n맛있닭 스팀 100g\n삶은 달걀 2개"},lu:{k:490,c:"다신현미밥상\n하림 닭가슴살 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:715,c:"포켓샐러드\n허닭 닭가슴살 100g\n두유 190ml"}},{d:"일",e:"SUN",k:1840,am:{k:430,c:"햇반 현미밥 130g\n하림 닭가슴살 100g\n삶은 달걀 2개"},lu:{k:490,c:"한스푼샐러드 도시락\n랭커 닭가슴살 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:705,c:"다신 곤약밥상\n맛있닭 스팀 100g\n두유 190ml"}}];
 const D2=[{d:"월",e:"MON",k:1747,am:{k:430,c:"햇반 현미밥 130g\n하림 닭가슴살 100g\n삶은 달걀 2개"},lu:{k:480,c:"한스푼샐러드 도시락\n맛있닭 스팀 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:622,c:"다신 곤약밥상\n허닭 닭가슴살 100g\n두유 190ml"}},{d:"화",e:"TUE",k:1750,am:{k:420,c:"햇반 현미밥 130g\n맛있닭 스팀 100g\n삶은 달걀 2개"},lu:{k:490,c:"다신현미밥상\n하림 닭가슴살 100g\n두유 190ml"},sn:{k:150,c:"그릭요거트 100g\n바나나 1개"},di:{k:690,c:"포켓샐러드\n랭커 닭가슴살 100g\n고구마 120g\n두유 190ml"}},{d:"수",e:"WED",k:1747,am:{k:430,c:"햇반 현미밥 130g\n하림 닭가슴살 100g\n삶은 달걀 2개"},lu:{k:480,c:"한스푼샐러드 도시락\n맛있닭 스팀 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:622,c:"다신 곤약밥상\n허닭 닭가슴살 100g\n두유 190ml"}},{d:"목",e:"THU",k:1747,am:{k:420,c:"햇반 현미밥 130g\n맛있닭 스팀 100g\n삶은 달걀 2개"},lu:{k:490,c:"다신현미밥상\n하림 닭가슴살 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:622,c:"포켓샐러드\n랭커 닭가슴살 100g\n두유 190ml"}},{d:"금",e:"FRI",k:1750,am:{k:430,c:"햇반 현미밥 130g\n하림 닭가슴살 100g\n삶은 달걀 2개"},lu:{k:480,c:"한스푼샐러드 도시락\n맛있닭 스팀 100g\n두유 190ml"},sn:{k:150,c:"그릭요거트 100g\n바나나 1개"},di:{k:690,c:"다신 곤약밥상\n허닭 닭가슴살 100g\n고구마 120g\n두유 190ml"}},{d:"토",e:"SAT",k:1747,am:{k:420,c:"햇반 현미밥 130g\n맛있닭 스팀 100g\n삶은 달걀 2개"},lu:{k:490,c:"다신현미밥상\n하림 닭가슴살 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:622,c:"포켓샐러드\n랭커 닭가슴살 100g\n두유 190ml"}},{d:"일",e:"SUN",k:1747,am:{k:430,c:"햇반 현미밥 130g\n하림 닭가슴살 100g\n삶은 달걀 2개"},lu:{k:480,c:"한스푼샐러드 도시락\n맛있닭 스팀 100g\n두유 190ml"},sn:{k:215,c:"그릭요거트 100g\n혼합견과 25g\n삶은 달걀 1개"},di:{k:622,c:"다신 곤약밥상\n허닭 닭가슴살 100g\n두유 190ml"}}];
-function gDiet(c){if(c==='HYR001')return D1;if(c==='KNY010')return D2;const t=S[c]?.tar||1800;return["월","화","수","목","금","토","일"].map((d,i)=>{const a=Math.round(t*.23),l=Math.round(t*.27),s=Math.round(t*.12),di=t-a-l-s;return{d,e:["MON","TUE","WED","THU","FRI","SAT","SUN"][i],k:t,am:{k:a,c:"햇반 현미밥 130g\n닭가슴살 100g\n삶은 달걀 2개"},lu:{k:l,c:"샐러드 도시락\n닭가슴살 100g\n두유 190ml"},sn:{k:s,c:"그릭요거트 100g\n혼합견과 25g"},di:{k:di,c:"다신 식단\n닭가슴살 100g\n두유 190ml"}};});}
+function gDiet(c){const custom=lG('pa_custom_diets',{});if(custom[c])return custom[c];if(c==='HYR001')return D1;if(c==='KNY010')return D2;const t=S[c]?.tar||1800;return["월","화","수","목","금","토","일"].map((d,i)=>{const a=Math.round(t*.23),l=Math.round(t*.27),s=Math.round(t*.12),di=t-a-l-s;return{d,e:["MON","TUE","WED","THU","FRI","SAT","SUN"][i],k:t,am:{k:a,c:"햇반 현미밥 130g\n닭가슴살 100g\n삶은 달걀 2개"},lu:{k:l,c:"샐러드 도시락\n닭가슴살 100g\n두유 190ml"},sn:{k:s,c:"그릭요거트 100g\n혼합견과 25g"},di:{k:di,c:"다신 식단\n닭가슴살 100g\n두유 190ml"}};});}
 
 const NA=[{t:"td",l:"🍽 식단표",title:"4월 1주차 식단표 업로드 완료",desc:"전원 개인별 7일 식단표가 업데이트되었습니다.",date:"2026.03.31",pin:true},{t:"ts",l:"📅 일정",title:"4월 수업 시작 안내",desc:"4월 7일(월)부터 정규 수업이 시작됩니다.",date:"2026.03.30"},{t:"tn",l:"📢 공지",title:"수분 섭취 목표 안내",desc:"하루 최소 1.5L 이상 수분 섭취를 권장합니다.",date:"2026.03.28"},{t:"tn",l:"📢 공지",title:"식단 질문 안내",desc:"식단 관련 문의는 카카오톡으로 문의해주세요.",date:"2026.03.25"}];
 const cp=q=>`https://www.coupang.com/np/search?q=${encodeURIComponent(q)}&channel=user`;
@@ -346,75 +363,23 @@ const CN={chicken:'닭가슴살',salad:'샐러드·도시락',snack:'간식',car
 const firebaseConfig={apiKey:"AIzaSyCICKJ00FCnb780oQ9_mZTgszG0FL64eFU",authDomain:"patraining-c1cd3.firebaseapp.com",projectId:"patraining-c1cd3",storageBucket:"patraining-c1cd3.firebasestorage.app",messagingSenderId:"414257826796",appId:"1:414257826796:web:537d28d40af145499fcec9"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-
-/* 로컬 캐시: Firestore 데이터의 메모리 복사본 (빠른 읽기용) */
-const _cache={};
-let _fsReady=false;
-
-/* Firestore 컬렉션 이름 매핑 (localStorage 키 → Firestore doc) */
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise'];
-
-/* 모든 데이터를 Firestore에서 로드 → 캐시에 저장 */
+const _cache={};let _fsReady=false;
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students'];
 async function fsInit(){
-  try{
-    const snap=await db.collection('pa_data').get();
-    snap.forEach(doc=>{_cache[doc.id]=doc.data().value;});
-    /* localStorage에 있는 데이터를 Firestore로 마이그레이션 (최초 1회) */
-    const migrated=_cache['_migrated'];
-    if(!migrated){
-      let hasMigration=false;
-      for(const k of FS_KEYS){
-        try{
-          const raw=localStorage.getItem(k);
-          if(raw&&!_cache[k]){
-            const val=JSON.parse(raw);
-            _cache[k]=val;
-            await db.collection('pa_data').doc(k).set({value:val});
-            hasMigration=true;
-          }
-        }catch(e){}
-      }
-      if(hasMigration){
-        await db.collection('pa_data').doc('_migrated').set({value:true});
-        console.log('[PA] localStorage → Firestore 마이그레이션 완료');
-      }
-    }
-    _fsReady=true;
-    console.log('[PA] Firestore 연결 완료, 데이터 로드됨');
-  }catch(e){
-    console.warn('[PA] Firestore 로드 실패, localStorage 폴백:',e);
-    _fsReady=false;
-  }
-}
-
-/* lG: 캐시 우선 읽기, 없으면 localStorage 폴백 */
-function lG(k,d){
-  if(_cache[k]!==undefined)return JSON.parse(JSON.stringify(_cache[k]));
-  try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}
-}
-
-/* lS: 캐시 + Firestore + localStorage (동시 기록) */
-function lS(k,v){
-  const clone=JSON.parse(JSON.stringify(v));
-  _cache[k]=clone;
-  localStorage.setItem(k,JSON.stringify(v));
-  if(_fsReady){
-    db.collection('pa_data').doc(k).set({value:clone}).catch(e=>console.warn('[PA] Firestore 저장 오류:',e));
-  }
-}
-
-/* 실시간 리스너: 다른 기기에서 변경 시 자동 동기화 */
-function fsListen(){
-  db.collection('pa_data').onSnapshot(snap=>{
-    snap.docChanges().forEach(change=>{
-      if(change.type==='modified'||change.type==='added'){
-        const k=change.doc.id;
-        if(k==='_migrated')return;
-        _cache[k]=change.doc.data().value;
-      }
-    });
-  },e=>console.warn('[PA] 리스너 오류:',e));
-}
+  try{const snap=await db.collection('pa_data').get();
+  snap.forEach(doc=>{_cache[doc.id]=doc.data().value;});
+  const migrated=_cache['_migrated'];
+  if(!migrated){let has=false;for(const k of FS_KEYS){try{const raw=localStorage.getItem(k);if(raw&&!_cache[k]){_cache[k]=JSON.parse(raw);await db.collection('pa_data').doc(k).set({value:_cache[k]});has=true;}}catch(e){}}
+  if(has){await db.collection('pa_data').doc('_migrated').set({value:true});console.log('[PA] 마이그레이션 완료');}}
+  _fsReady=true;console.log('[PA] Firestore 연결 완료, 데이터 로드됨');
+  }catch(e){console.warn('[PA] Firestore 폴백:',e);_fsReady=false;}}
+function lG(k,d){if(_cache[k]!==undefined)return JSON.parse(JSON.stringify(_cache[k]));try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
+function lS(k,v){const c=JSON.parse(JSON.stringify(v));_cache[k]=c;localStorage.setItem(k,JSON.stringify(v));if(_fsReady)db.collection('pa_data').doc(k).set({value:c}).catch(e=>console.warn('[PA] 저장오류:',e));}
+function fsListen(){db.collection('pa_data').onSnapshot(snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='modified'||ch.type==='added'){const k=ch.doc.id;if(k==='_migrated')return;_cache[k]=ch.doc.data().value;}});},e=>console.warn('[PA] 리스너:',e));}
+/* 현재 로그인 역할 감지 */
+function getCurRole(){if(aOK)return'admin';const sv=sessionStorage.getItem('pa_login');if(sv){try{const d=JSON.parse(sv);if(d.name&&d.name.includes('학부모'))return'parent';}catch(e){}}return'student';}
+function byBadge(by){if(!by)return'';const cls=by==='admin'?'by-admin':by==='parent'?'by-parent':'by-student';const lbl=by==='admin'?'관리자':by==='parent'?'학부모':'학생';return`<span class="by-badge ${cls}">${lbl}</span>`;}
+function getStudents(){const custom=lG('pa_custom_students',null);return custom||S;}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
 const PGS=['home','notice','my','loc','prod','admin'];
@@ -484,11 +449,7 @@ toast(`${label}님 계정 연결 완료!`);
 logIn(v,pending.nn+(linkRole==='parent'?' (학부모)':''),pending.img);go('my');
 }
 function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(v==='PATRAINING2026'){go('admin');return;}if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');logIn(v,S[v].name,null);}
-document.addEventListener('DOMContentLoaded',async()=>{
-  /* Firestore 초기화 → 데이터 로드 → 실시간 리스너 시작 */
-  await fsInit();
-  fsListen();
-  const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
+document.addEventListener('DOMContentLoaded',async()=>{await fsInit();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
 function setN(n,img){document.getElementById('navProf').classList.add('show');document.getElementById('navNm').textContent=n;if(img)document.getElementById('navAv').innerHTML=`<img src="${img}" alt="">`;else document.getElementById('navAvT').textContent=n?n[0]:'😊';}
 function doLogout(){LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
@@ -515,11 +476,11 @@ db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.nam
 <div class="calrow"><label>☀️ 점심</label><input type="number" id="iLu" placeholder="kcal" min="0"><span class="u">kcal</span><button class="rbtn" onclick="rI('점심','iLu')">등록</button></div>
 <div class="calrow"><label>🌙 저녁</label><input type="number" id="iDi" placeholder="kcal" min="0"><span class="u">kcal</span><button class="rbtn" onclick="rI('저녁','iDi')">등록</button></div>
 <div class="calrow"><label>🍪 간식</label><input type="number" id="iSn" placeholder="kcal" min="0"><span class="u">kcal</span><button class="rbtn" onclick="rI('간식','iSn')">등록</button></div>
-${iL.map((r,i)=>`<div class="logitem"><div class="li"><span class="ll">${r.label}</span><span class="lk">${r.kcal} kcal</span><span class="lt">${r.timestamp}</span></div><div class="la"><button class="ebtn" onclick="eI(${i})">수정</button><button class="dbtn" onclick="dI(${i})">삭제</button></div></div>`).join('')}
+${iL.map((r,i)=>`<div class="logitem"><div class="li"><span class="ll">${r.label}</span><span class="lk">${r.kcal} kcal</span>${byBadge(r.by)}<span class="lt">${r.timestamp}</span></div><div class="la"><button class="ebtn" onclick="eI(${i})">수정</button><button class="dbtn" onclick="dI(${i})">삭제</button></div></div>`).join('')}
 <div class="caltotal"><span>🍽 오늘 섭취 합계</span><strong>${iT.toLocaleString()} kcal</strong></div></div>
 <div class="calgrp" style="margin-top:14px;"><div class="calgrp-t"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent);"></span>운동 소모 칼로리</div>
 <div class="calrow"><label>🏃 운동</label><input type="number" id="exV" placeholder="kcal" min="0"><span class="u">kcal</span><button class="rbtn" onclick="rE()">등록</button></div>
-${eL.map((r,i)=>`<div class="logitem"><div class="li"><span class="ll">${i+1}회차</span><span class="lk">${r.kcal} kcal</span><span class="lt">${r.timestamp}</span></div><div class="la"><button class="ebtn" onclick="eE(${i})">수정</button><button class="dbtn" onclick="dE(${i})">삭제</button></div></div>`).join('')}
+${eL.map((r,i)=>`<div class="logitem"><div class="li"><span class="ll">${i+1}회차</span><span class="lk">${r.kcal} kcal</span>${byBadge(r.by)}<span class="lt">${r.timestamp}</span></div><div class="la"><button class="ebtn" onclick="eE(${i})">수정</button><button class="dbtn" onclick="dE(${i})">삭제</button></div></div>`).join('')}
 <div class="caltotal bl"><span>🏋️ 오늘 운동 합계</span><strong>${eT.toLocaleString()} kcal</strong></div>
 ${cT>0?`<div class="cex" style="margin-top:8px;">🏋️ 센터 운동 소모: <strong>${cT} kcal</strong>${cL.map(r=>`<span class="ct2">(${r.timestamp})</span>`).join('')}</div>`:''}</div></div>
 <div class="cc"><div class="ct">🔥 이번 주 칼로리 (kcal)</div><div style="display:flex;gap:12px;font-size:10px;margin-bottom:10px;"><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,var(--accent),rgba(100,160,200,.35));"></span>섭취</span><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,#E85D75,rgba(232,93,117,.35));"></span>운동</span><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,var(--orange),rgba(232,98,42,.35));"></span>목표 초과</span></div><div class="cw"><div class="cbars" id="cbars"></div></div><div class="xlbl"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div></div>
@@ -528,10 +489,10 @@ ${cT>0?`<div class="cex" style="margin-top:8px;">🏋️ 센터 운동 소모: <
 <button class="blo" onclick="doLogout()">로그아웃</button>`;
 rWSVG(wts);rCB(c,s.tar,diet);rMP(diet);}
 
-function rI(label,id){const v=parseInt(document.getElementById(id)?.value);if(!v||v<0){toast('올바른 칼로리를 입력하세요','err');return;}const td=new Date().toISOString().split('T')[0];const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});const d=lG('pa_student_intake',{});if(!d[LC])d[LC]=[];d[LC].push({date:td,label,kcal:v,timestamp:ts});lS('pa_student_intake',d);document.getElementById(id).value='';toast(`${label} ${v}kcal 등록`);rDB();}
+function rI(label,id){const v=parseInt(document.getElementById(id)?.value);if(!v||v<0){toast('올바른 칼로리를 입력하세요','err');return;}const td=new Date().toISOString().split('T')[0];const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});const by=getCurRole();const d=lG('pa_student_intake',{});if(!d[LC])d[LC]=[];d[LC].push({date:td,label,kcal:v,timestamp:ts,by});lS('pa_student_intake',d);document.getElementById(id).value='';toast(`${label} ${v}kcal 등록`);rDB();}
 function eI(idx){const td=new Date().toISOString().split('T')[0];const d=lG('pa_student_intake',{});const logs=(d[LC]||[]).filter(r=>r.date===td);if(!logs[idx])return;const nv=prompt(`${logs[idx].label} 수정 (현재: ${logs[idx].kcal})`,logs[idx].kcal);if(nv===null)return;const n=parseInt(nv);if(!n||n<0){toast('올바른 값 입력','err');return;}let ct=-1;for(let i=0;i<d[LC].length;i++){if(d[LC][i].date===td){ct++;if(ct===idx){d[LC][i].kcal=n;d[LC][i].timestamp=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+'(수정)';break;}}}lS('pa_student_intake',d);toast('수정 완료');rDB();}
 function dI(idx){if(!confirm('삭제하시겠습니까?'))return;const td=new Date().toISOString().split('T')[0];const d=lG('pa_student_intake',{});let ct=-1;for(let i=0;i<d[LC].length;i++){if(d[LC][i].date===td){ct++;if(ct===idx){d[LC].splice(i,1);break;}}}lS('pa_student_intake',d);toast('삭제 완료');rDB();}
-function rE(){const v=parseInt(document.getElementById('exV')?.value);if(!v||v<0){toast('올바른 칼로리를 입력하세요','err');return;}const td=new Date().toISOString().split('T')[0];const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});const d=lG('pa_student_exercise',{});if(!d[LC])d[LC]=[];d[LC].push({date:td,kcal:v,timestamp:ts});lS('pa_student_exercise',d);document.getElementById('exV').value='';toast(`운동 ${v}kcal 등록`);rDB();}
+function rE(){const v=parseInt(document.getElementById('exV')?.value);if(!v||v<0){toast('올바른 칼로리를 입력하세요','err');return;}const td=new Date().toISOString().split('T')[0];const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});const by=getCurRole();const d=lG('pa_student_exercise',{});if(!d[LC])d[LC]=[];d[LC].push({date:td,kcal:v,timestamp:ts,by});lS('pa_student_exercise',d);document.getElementById('exV').value='';toast(`운동 ${v}kcal 등록`);rDB();}
 function eE(idx){const td=new Date().toISOString().split('T')[0];const d=lG('pa_student_exercise',{});const logs=(d[LC]||[]).filter(r=>r.date===td);if(!logs[idx])return;const nv=prompt(`운동 수정 (현재: ${logs[idx].kcal})`,logs[idx].kcal);if(nv===null)return;const n=parseInt(nv);if(!n||n<0){toast('올바른 값','err');return;}let ct=-1;for(let i=0;i<d[LC].length;i++){if(d[LC][i].date===td){ct++;if(ct===idx){d[LC][i].kcal=n;d[LC][i].timestamp=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+'(수정)';break;}}}lS('pa_student_exercise',d);toast('수정 완료');rDB();}
 function dE(idx){if(!confirm('삭제하시겠습니까?'))return;const td=new Date().toISOString().split('T')[0];const d=lG('pa_student_exercise',{});let ct=-1;for(let i=0;i<d[LC].length;i++){if(d[LC][i].date===td){ct++;if(ct===idx){d[LC].splice(i,1);break;}}}lS('pa_student_exercise',d);toast('삭제 완료');rDB();}
 
@@ -582,8 +543,8 @@ function rSchedDetail(){
 /* ADMIN */
 let aOK=false,aTab='a-users';
 function aAuth(){if(document.getElementById('aPw').value==='PATRAINING2026'){aOK=true;document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');rAT();toast('관리자 인증 완료');}else toast('비밀번호 오류','err');}
-function rAT(){const tabs=[{id:'a-users',l:'카카오 매핑'},{id:'a-notices',l:'공지사항'},{id:'a-attend',l:'출석 체크'},{id:'a-sched',l:'스케줄 관리'},{id:'a-center',l:'센터 운동 kcal'},{id:'a-codes',l:'입장 코드'},{id:'a-weights',l:'몸무게 기록'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
-function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-users':b.innerHTML=aU();break;case'a-notices':b.innerHTML=aNt();break;case'a-attend':b.innerHTML=aAt();break;case'a-sched':b.innerHTML=aSch();break;case'a-center':b.innerHTML=aCe();break;case'a-codes':b.innerHTML=aCo();break;case'a-weights':b.innerHTML=aWt();break;}}
+function rAT(){const tabs=[{id:'a-users',l:'카카오 매핑'},{id:'a-notices',l:'공지사항'},{id:'a-attend',l:'출석 체크'},{id:'a-sched',l:'스케줄 관리'},{id:'a-center',l:'센터 운동 kcal'},{id:'a-codes',l:'입장 코드'},{id:'a-weights',l:'몸무게 기록'},{id:'a-records',l:'📊 학생 기록'},{id:'a-diet',l:'🍽 식단 수정'},{id:'a-stuMgr',l:'👥 학생 관리'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
+function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-users':b.innerHTML=aU();break;case'a-notices':b.innerHTML=aNt();break;case'a-attend':b.innerHTML=aAt();break;case'a-sched':b.innerHTML=aSch();break;case'a-center':b.innerHTML=aCe();break;case'a-codes':b.innerHTML=aCo();break;case'a-weights':b.innerHTML=aWt();break;case'a-records':b.innerHTML=aRec();break;case'a-diet':b.innerHTML=aDiet();break;case'a-stuMgr':b.innerHTML=aStuMgr();break;}}
 
 function aU(){const m=lG('pa_kakao_users',{});return`<h3 style="font-size:14px;margin-bottom:14px;">카카오 ID → 학생 코드 매핑</h3><div class="ar"><label>카카오ID</label><input id="akid" placeholder="카카오 사용자 ID"><label>학생</label><select id="asc">${Object.keys(S).map(c=>`<option value="${c}">${c} (${S[c].name})</option>`).join('')}</select><button class="ab ab-b" onclick="aMU()">등록</button></div>${Object.keys(m).length?`<table class="at"><tr><th>카카오ID</th><th>코드</th><th>이름</th><th></th></tr>${Object.entries(m).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td><td>${S[v]?.name||'?'}</td><td><button class="ab ab-r" onclick="aDU('${k}')">삭제</button></td></tr>`).join('')}</table>`:'<p style="font-size:12px;color:var(--muted);">등록된 매핑 없음</p>'}`;}
 function aMU(){const k=document.getElementById('akid').value.trim(),c=document.getElementById('asc').value;if(!k){toast('카카오ID 입력','err');return;}const m=lG('pa_kakao_users',{});m[k]=c;lS('pa_kakao_users',m);toast('매핑 등록');rAB();}
@@ -616,6 +577,97 @@ function aDC(c){const codes=lG('pa_codes_c',{});delete codes[c];lS('pa_codes_c',
 
 function aWt(){return`<h3 style="font-size:14px;margin-bottom:14px;">몸무게 기록 업데이트</h3><div class="ar"><label>학생</label><select id="awS">${Object.entries(S).map(([c,s])=>`<option value="${c}">${s.name} (${c})</option>`).join('')}</select><label>몸무게</label><input type="number" step="0.1" id="awV" placeholder="kg" style="width:80px"><button class="ab ab-b" onclick="aAW()">추가</button></div><table class="at" style="margin-top:12px;"><tr><th>학생</th><th>기록수</th><th>최근</th></tr>${Object.entries(S).map(([c,s])=>{const ws=(lG('pa_weights',{})[c])||s.wts;return`<tr><td>${s.name}</td><td>${ws.length}</td><td>${ws[ws.length-1]}kg</td></tr>`;}).join('')}</table>`;}
 function aAW(){const c=document.getElementById('awS').value,v=parseFloat(document.getElementById('awV').value);if(!v||v<20||v>200){toast('올바른 몸무게 입력','err');return;}const data=lG('pa_weights',{});if(!data[c])data[c]=[...S[c].wts];data[c].push(v);lS('pa_weights',data);toast(`${S[c].name} — ${v}kg 추가`);rAB();}
+
+/* ===== B. 관리자 학생 기록 수정 ===== */
+let arStu=Object.keys(S)[0],arDate=new Date().toISOString().split('T')[0];
+function aRec(){
+return`<h3 style="font-size:14px;margin-bottom:14px;">📊 학생 칼로리 기록 관리</h3>
+<div class="ar"><label>학생</label><select id="arS" onchange="arStu=this.value;rAB();">${Object.entries(S).map(([c,s])=>`<option value="${c}"${c===arStu?' selected':''}>${s.name} (${c})</option>`).join('')}</select>
+<label>날짜</label><input type="date" id="arD" value="${arDate}" onchange="arDate=this.value;rAB();"></div>
+<div style="display:flex;gap:12px;margin-bottom:14px;">
+<div style="flex:1;">
+<div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:8px;">🍽 섭취 칼로리</div>
+<div class="ar"><label>구분</label><select id="arIL"><option>아침</option><option>점심</option><option>저녁</option><option>간식</option></select><label>kcal</label><input type="number" id="arIK" placeholder="kcal" style="width:80px"><button class="ab ab-b" onclick="arAddI()">등록</button></div>
+${((lG('pa_student_intake',{})[arStu]||[]).filter(r=>r.date===arDate)).map((r,i)=>`<div class="a-rec-card"><div class="a-rec-hd"><span class="a-pill a-pill-i">${r.label}</span><span class="a-rec-date">${r.timestamp} ${byBadge(r.by)}</span></div><div style="font-size:14px;font-weight:900;">${r.kcal} kcal</div><div style="margin-top:6px;display:flex;gap:4px;"><button class="ab ab-b" style="font-size:10px;padding:4px 10px;" onclick="arEditI(${i})">수정</button><button class="ab ab-r" style="font-size:10px;padding:4px 10px;" onclick="arDelI(${i})">삭제</button></div></div>`).join('')||'<p style="font-size:11px;color:var(--muted);">기록 없음</p>'}
+</div>
+<div style="flex:1;">
+<div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;">🏋️ 운동 소모</div>
+<div class="ar"><label>kcal</label><input type="number" id="arEK" placeholder="kcal" style="width:80px"><button class="ab ab-b" onclick="arAddE()">등록</button></div>
+${((lG('pa_student_exercise',{})[arStu]||[]).filter(r=>r.date===arDate)).map((r,i)=>`<div class="a-rec-card"><div class="a-rec-hd"><span class="a-pill a-pill-e">${i+1}회차</span><span class="a-rec-date">${r.timestamp} ${byBadge(r.by)}</span></div><div style="font-size:14px;font-weight:900;">${r.kcal} kcal</div><div style="margin-top:6px;display:flex;gap:4px;"><button class="ab ab-b" style="font-size:10px;padding:4px 10px;" onclick="arEditE(${i})">수정</button><button class="ab ab-r" style="font-size:10px;padding:4px 10px;" onclick="arDelE(${i})">삭제</button></div></div>`).join('')||'<p style="font-size:11px;color:var(--muted);">기록 없음</p>'}
+</div></div>`;}
+
+function arAddI(){const l=document.getElementById('arIL').value,k=parseInt(document.getElementById('arIK').value);if(!k||k<0){toast('kcal 입력','err');return;}const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});const d=lG('pa_student_intake',{});if(!d[arStu])d[arStu]=[];d[arStu].push({date:arDate,label:l,kcal:k,timestamp:ts,by:'admin'});lS('pa_student_intake',d);document.getElementById('arIK').value='';toast(`${S[arStu].name} ${l} ${k}kcal 등록`);rAB();}
+function arEditI(idx){const d=lG('pa_student_intake',{});const logs=(d[arStu]||[]).filter(r=>r.date===arDate);if(!logs[idx])return;const nv=prompt(`수정 (현재: ${logs[idx].kcal})`,logs[idx].kcal);if(nv===null)return;const n=parseInt(nv);if(!n||n<0){toast('올바른 값','err');return;}let ct=-1;for(let i=0;i<d[arStu].length;i++){if(d[arStu][i].date===arDate){ct++;if(ct===idx){d[arStu][i].kcal=n;d[arStu][i].timestamp+='(관리자수정)';d[arStu][i].by='admin';break;}}}lS('pa_student_intake',d);toast('수정 완료');rAB();}
+function arDelI(idx){if(!confirm('삭제?'))return;const d=lG('pa_student_intake',{});let ct=-1;for(let i=0;i<d[arStu].length;i++){if(d[arStu][i].date===arDate){ct++;if(ct===idx){d[arStu].splice(i,1);break;}}}lS('pa_student_intake',d);toast('삭제');rAB();}
+function arAddE(){const k=parseInt(document.getElementById('arEK').value);if(!k||k<0){toast('kcal 입력','err');return;}const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});const d=lG('pa_student_exercise',{});if(!d[arStu])d[arStu]=[];d[arStu].push({date:arDate,kcal:k,timestamp:ts,by:'admin'});lS('pa_student_exercise',d);document.getElementById('arEK').value='';toast(`${S[arStu].name} 운동 ${k}kcal 등록`);rAB();}
+function arEditE(idx){const d=lG('pa_student_exercise',{});const logs=(d[arStu]||[]).filter(r=>r.date===arDate);if(!logs[idx])return;const nv=prompt(`수정 (현재: ${logs[idx].kcal})`,logs[idx].kcal);if(nv===null)return;const n=parseInt(nv);if(!n||n<0){toast('올바른 값','err');return;}let ct=-1;for(let i=0;i<d[arStu].length;i++){if(d[arStu][i].date===arDate){ct++;if(ct===idx){d[arStu][i].kcal=n;d[arStu][i].timestamp+='(관리자수정)';d[arStu][i].by='admin';break;}}}lS('pa_student_exercise',d);toast('수정 완료');rAB();}
+function arDelE(idx){if(!confirm('삭제?'))return;const d=lG('pa_student_exercise',{});let ct=-1;for(let i=0;i<d[arStu].length;i++){if(d[arStu][i].date===arDate){ct++;if(ct===idx){d[arStu].splice(i,1);break;}}}lS('pa_student_exercise',d);toast('삭제');rAB();}
+
+/* ===== D-1. 식단 수정 (관리자) ===== */
+let adStu=Object.keys(S)[0];
+function aDiet(){
+const custom=lG('pa_custom_diets',{});const cur=custom[adStu]||gDiet(adStu);
+return`<h3 style="font-size:14px;margin-bottom:14px;">🍽 식단표 수정</h3>
+<div class="ar"><label>학생</label><select id="adS" onchange="adStu=this.value;rAB();">${Object.entries(S).map(([c,s])=>`<option value="${c}"${c===adStu?' selected':''}>${s.name} (${c}) — 목표 ${s.tar}kcal</option>`).join('')}</select></div>
+<p style="font-size:11px;color:var(--muted);margin-bottom:14px;">각 요일을 클릭하면 메뉴를 수정할 수 있습니다. 수정 후 "저장"을 누르세요.</p>
+${cur.map((day,di)=>`<div class="dd"><div class="ddh" onclick="this.nextElementSibling.classList.toggle('on');this.querySelector('.chev').classList.toggle('on')"><div class="ddl"><div class="dpill">${day.d}<br><span style="font-size:8px;opacity:.6">${day.e}</span></div><div class="ddn">${day.d}요일</div></div><div style="display:flex;align-items:center;gap:11px;"><div class="ddk">${day.k} kcal</div><div class="chev">▼</div></div></div>
+<div class="ddb"><div class="mg2">
+<div><div class="diet-edit-row"><label>🌅아침</label><input type="number" id="dk_${di}_am" value="${day.am.k}" style="width:70px"><span style="font-size:10px;color:var(--muted);">kcal</span></div><div class="diet-edit-row"><label>메뉴</label><textarea id="dc_${di}_am">${day.am.c}</textarea></div></div>
+<div><div class="diet-edit-row"><label>☀점심</label><input type="number" id="dk_${di}_lu" value="${day.lu.k}" style="width:70px"><span style="font-size:10px;color:var(--muted);">kcal</span></div><div class="diet-edit-row"><label>메뉴</label><textarea id="dc_${di}_lu">${day.lu.c}</textarea></div></div>
+<div><div class="diet-edit-row"><label>🍪간식</label><input type="number" id="dk_${di}_sn" value="${day.sn.k}" style="width:70px"><span style="font-size:10px;color:var(--muted);">kcal</span></div><div class="diet-edit-row"><label>메뉴</label><textarea id="dc_${di}_sn">${day.sn.c}</textarea></div></div>
+<div><div class="diet-edit-row"><label>🌙저녁</label><input type="number" id="dk_${di}_di" value="${day.di.k}" style="width:70px"><span style="font-size:10px;color:var(--muted);">kcal</span></div><div class="diet-edit-row"><label>메뉴</label><textarea id="dc_${di}_di">${day.di.c}</textarea></div></div>
+</div></div></div>`).join('')}
+<div style="display:flex;gap:8px;margin-top:14px;">
+<button class="ab ab-b" onclick="adSave()" style="padding:10px 24px;font-size:13px;">💾 식단 저장</button>
+<button class="ab ab-r" onclick="adReset()" style="padding:10px 24px;font-size:13px;">↩ 기본 식단으로 복원</button>
+</div>`;}
+
+function adSave(){
+const custom=lG('pa_custom_diets',{});const base=custom[adStu]||gDiet(adStu);
+const newDiet=base.map((day,di)=>{
+const amk=parseInt(document.getElementById('dk_'+di+'_am').value)||day.am.k;
+const amc=document.getElementById('dc_'+di+'_am').value||day.am.c;
+const luk=parseInt(document.getElementById('dk_'+di+'_lu').value)||day.lu.k;
+const luc=document.getElementById('dc_'+di+'_lu').value||day.lu.c;
+const snk=parseInt(document.getElementById('dk_'+di+'_sn').value)||day.sn.k;
+const snc=document.getElementById('dc_'+di+'_sn').value||day.sn.c;
+const dik=parseInt(document.getElementById('dk_'+di+'_di').value)||day.di.k;
+const dic=document.getElementById('dc_'+di+'_di').value||day.di.c;
+return{...day,k:amk+luk+snk+dik,am:{k:amk,c:amc},lu:{k:luk,c:luc},sn:{k:snk,c:snc},di:{k:dik,c:dic}};
+});
+custom[adStu]=newDiet;lS('pa_custom_diets',custom);toast(`${S[adStu].name} 식단 저장 완료!`);rAB();}
+function adReset(){if(!confirm(`${S[adStu].name} 식단을 기본으로 복원?`))return;const custom=lG('pa_custom_diets',{});delete custom[adStu];lS('pa_custom_diets',custom);toast('기본 식단 복원');rAB();}
+
+/* ===== D-2. 학생 관리 (추가/삭제) ===== */
+function aStuMgr(){
+return`<h3 style="font-size:14px;margin-bottom:14px;">👥 학생 추가 / 삭제</h3>
+<div class="ar"><label>코드</label><input id="nsCode" placeholder="예: ABC012" style="width:100px" maxlength="10"></div>
+<div class="ar"><label>이름</label><input id="nsName" placeholder="이름"><label>나이</label><input type="number" id="nsAge" value="17" style="width:60px"><label>성별</label><select id="nsG"><option value="여">여</option><option value="남">남</option></select></div>
+<div class="ar"><label>키(cm)</label><input type="number" id="nsH" placeholder="160" style="width:70px"><label>몸무게</label><input type="number" step="0.1" id="nsW" placeholder="55" style="width:70px"></div>
+<div class="ar"><label>목표</label><select id="nsGoal"><option value="체중감량">체중감량</option><option value="근육증가">근육증가</option><option value="증량+근육">증량+근육</option></select><label>목표kcal</label><input type="number" id="nsTar" placeholder="1800" style="width:80px"></div>
+<button class="ab ab-b" onclick="addStu()" style="margin-bottom:16px;">학생 추가</button>
+<table class="at"><tr><th>코드</th><th>이름</th><th>나이</th><th>키</th><th>몸무게</th><th>목표</th><th>kcal</th><th></th></tr>
+${Object.entries(S).map(([c,s])=>`<tr><td>${c}</td><td>${s.name}</td><td>${s.age}</td><td>${s.h}cm</td><td>${s.w}kg</td><td>${s.goal}</td><td>${s.tar}</td><td><button class="ab ab-r" onclick="delStu('${c}')">삭제</button></td></tr>`).join('')}</table>`;}
+
+function addStu(){
+const code=document.getElementById('nsCode').value.trim().toUpperCase();
+const name=document.getElementById('nsName').value.trim();
+const age=parseInt(document.getElementById('nsAge').value)||17;
+const g=document.getElementById('nsG').value;
+const h=parseInt(document.getElementById('nsH').value);
+const w=parseFloat(document.getElementById('nsW').value);
+const goal=document.getElementById('nsGoal').value;
+const tar=parseInt(document.getElementById('nsTar').value);
+if(!code||!name||!h||!w||!tar){toast('모든 항목을 입력하세요','err');return;}
+if(S[code]){toast('이미 존재하는 코드','err');return;}
+const gc=goal==='체중감량'?'gl':goal==='근육증가'?'gg':'gb';
+const bmr=g==='남'?Math.round(88.362+13.397*w+4.799*h-5.677*age):Math.round(447.593+9.247*w+3.098*h-4.33*age);
+const tdee=Math.round(bmr*1.375);
+S[code]={name,age,h,w,g,goal,gc,bmr,tdee,tar,wts:[w]};
+CODES[code]={n:name,e:mkE(30)};
+lS('pa_custom_students',S);
+toast(`${name} (${code}) 추가 완료`);rAB();}
+function delStu(c){if(!confirm(`${S[c].name} 학생을 삭제하시겠습니까?`))return;delete S[c];delete CODES[c];lS('pa_custom_students',S);toast('삭제 완료');rAB();}
 </script>
 </body>
 </html>
