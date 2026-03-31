@@ -399,9 +399,12 @@ function rP(cat){document.getElementById('pf').innerHTML=CATS.map(c=>`<button cl
 
 /* 로그인 */
 let LC=null;
+const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 function kakaoLogin(){if(isL){toast('로컬 환경 — 아래 코드 로그인 이용','err');document.getElementById('dbox').classList.add('on');return;}if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
-/* 팝업 방식 (비공개 릴레이/VPN 호환) */
-try{Kakao.Auth.login({success:function(authObj){Kakao.Auth.setAccessToken(authObj.access_token);Kakao.API.request({url:'/v2/user/me',success:function(r){handleKakaoUser(r);},fail:function(e){console.warn('API error:',e);toast('사용자 정보 조회 실패','err');}});},fail:function(e){console.warn('Kakao popup fail:',e);toast('카카오 로그인 실패 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}
+if(isMobile){/* 모바일: 리다이렉트 방식 */
+try{Kakao.Auth.authorize({redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao redirect error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}
+else{/* PC: 팝업 방식 (비공개 릴레이 호환) */
+try{Kakao.Auth.login({success:function(authObj){Kakao.Auth.setAccessToken(authObj.access_token);Kakao.API.request({url:'/v2/user/me',success:function(r){handleKakaoUser(r);},fail:function(e){console.warn('API error:',e);toast('사용자 정보 조회 실패','err');}});},fail:function(e){console.warn('Kakao popup fail:',e);toast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요','err');document.getElementById('dbox').classList.add('on');}});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}}
 /* 카카오 유저 처리 (팝업/리다이렉트 공용) */
 function handleKakaoUser(r){const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
 if(kid===ADMIN_KAKAO_ID){setN('관리자 ('+nn+')',img);toast(nn+' 관리자님 환영합니다!');go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');aOK=true;rAT();return;}
