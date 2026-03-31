@@ -567,8 +567,19 @@ async function analyzeFoodPhoto(dataUrl){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
-        {type:'text',text:`이 음식 사진을 분석해서 아래 JSON 형식으로만 응답해줘. 다른 텍스트 없이 JSON만:
-{"name":"음식이름","kcal":총칼로리숫자,"carb":탄수화물g숫자,"protein":단백질g숫자,"fat":지방g숫자,"detail":"음식 구성 상세 설명(한국어, 2~3줄)","items":[{"name":"개별음식","kcal":숫자}],"advice":"이 사용자의 목표(${S[LC]?.goal||'체중감량'}, 일일 ${S[LC]?.tar||1800}kcal)에 맞는 짧은 코멘트"}`}
+        {type:'text',text:`당신은 한국 영양사 전문가입니다. 이 음식 사진을 분석해주세요.
+
+중요 규칙:
+1. 한국 식품영양성분 데이터베이스 기준으로 분석할 것
+2. 사진 속 음식의 양(그릇 크기, 접시 대비 비율)을 현실적으로 추정할 것
+3. 밥 한 공기는 약 300kcal, 국/찌개 1인분 150-250kcal, 고기반찬 1인분 200-350kcal
+4. 한식 1끼 평균은 500-800kcal임을 참고할 것
+5. 칼로리를 과소평가하지 말 것 — 실제 한국인 1끼 식사량 기준으로 넉넉하게 산정
+6. 소스, 기름, 양념의 칼로리도 반드시 포함할 것
+7. 음료가 보이면 음료 칼로리도 포함할 것
+
+아래 JSON 형식으로만 응답해줘. 다른 텍스트 없이 JSON만:
+{"name":"음식이름(한국어)","kcal":총칼로리숫자,"carb":탄수화물g숫자,"protein":단백질g숫자,"fat":지방g숫자,"detail":"보이는 음식 구성과 추정 중량을 상세히 설명(한국어, 3~4줄)","items":[{"name":"개별음식(추정중량포함)","kcal":숫자}],"advice":"이 사용자의 목표(${S[LC]?.goal||'체중감량'}, 일일 ${S[LC]?.tar||1800}kcal)에 맞는 짧은 영양 코멘트"}`}
       ]}]})
     });
     const data=await resp.json();
