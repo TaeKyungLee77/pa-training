@@ -301,6 +301,46 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 .diet-edit-row label{font-size:11px;color:var(--muted);min-width:40px;font-weight:700;}
 .diet-edit-row input,.diet-edit-row textarea{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:inherit;outline:none;flex:1;}
 .diet-edit-row textarea{min-height:60px;resize:vertical;}
+/* 음식 사진 분석 */
+.food-scan{background:linear-gradient(135deg,rgba(232,98,42,.08),rgba(100,160,200,.08));border:1px solid rgba(232,98,42,.2);border-radius:var(--r);padding:20px;margin-bottom:13px;position:relative;overflow:hidden;}
+.food-scan::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;border-radius:50%;background:rgba(232,98,42,.06);}
+.food-scan-title{font-size:14px;font-weight:900;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.food-scan-desc{font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6;}
+.food-scan-btns{display:flex;gap:8px;margin-bottom:12px;}
+.food-scan-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:12px;font-size:13px;font-weight:700;transition:all .2s;cursor:pointer;}
+.food-scan-btn.camera{background:var(--orange);color:#fff;}
+.food-scan-btn.camera:hover{background:var(--o2);transform:translateY(-1px);}
+.food-scan-btn.gallery{background:rgba(100,160,200,.15);color:var(--accent);border:1px solid rgba(100,160,200,.25);}
+.food-scan-btn.gallery:hover{background:rgba(100,160,200,.25);}
+.food-preview{width:100%;border-radius:10px;margin-bottom:12px;max-height:220px;object-fit:cover;display:none;}
+.food-result{display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;}
+.food-result.on{display:block;}
+.food-name{font-size:16px;font-weight:900;margin-bottom:10px;}
+.food-kcal{font-size:28px;font-weight:900;color:var(--orange);margin-bottom:12px;}
+.food-kcal span{font-size:14px;font-weight:500;color:var(--muted);}
+.nutri-bars{display:flex;gap:10px;margin-bottom:14px;}
+.nutri-bar{flex:1;text-align:center;}
+.nutri-label{font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;}
+.nutri-track{height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;margin-bottom:4px;}
+.nutri-fill{height:100%;border-radius:4px;transition:width .8s cubic-bezier(.34,1.56,.64,1);}
+.nutri-fill.carb{background:var(--accent);}
+.nutri-fill.prot{background:var(--orange);}
+.nutri-fill.fat{background:var(--green);}
+.nutri-val{font-size:12px;font-weight:900;}
+.nutri-val.carb{color:var(--accent);}
+.nutri-val.prot{color:var(--orange);}
+.nutri-val.fat{color:var(--green);}
+.food-detail{font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:14px;white-space:pre-line;}
+.food-actions{display:flex;gap:8px;}
+.food-add{flex:1;padding:12px;background:var(--orange);color:#fff;font-size:13px;font-weight:700;border-radius:10px;text-align:center;transition:all .2s;}
+.food-add:hover{background:var(--o2);}
+.food-retry{padding:12px 20px;background:rgba(255,255,255,.06);color:var(--muted);font-size:13px;font-weight:700;border-radius:10px;border:1px solid rgba(255,255,255,.08);transition:all .2s;}
+.food-retry:hover{color:var(--text);}
+.food-loading{display:none;text-align:center;padding:30px 0;}
+.food-loading.on{display:block;}
+.food-spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--orange);border-radius:50%;animation:fspin 1s linear infinite;margin:0 auto 12px;}
+@keyframes fspin{to{transform:rotate(360deg)}}
+.food-loading-text{font-size:13px;color:var(--muted);font-weight:500;}
 </style>
 </head>
 <body>
@@ -447,7 +487,7 @@ const label=linkRole==='parent'?S[v].name+' 학부모':S[v].name;
 toast(`${label}님 계정 연결 완료!`);
 logIn(v,pending.nn+(linkRole==='parent'?' (학부모)':''),pending.img);go('my');
 }
-function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(v==='PATRAINING2026'){go('admin');return;}if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');logIn(v,S[v].name,null);}
+function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(v==='PATRAINING2026'){go('admin');return;}if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');logIn(v,S[v].name,null);go('my');}
 document.addEventListener('DOMContentLoaded',async()=>{await fsInit();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
 function setN(n,img){document.getElementById('navProf').classList.add('show');document.getElementById('navNm').textContent=n;if(img)document.getElementById('navAv').innerHTML=`<img src="${img}" alt="">`;else document.getElementById('navAvT').textContent=n?n[0]:'😊';}
@@ -470,6 +510,19 @@ db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.nam
 <div class="my-panel on" id="pnl-dash">
 <div class="cc"><div class="ct">⚖ 몸무게 변화 (kg)</div><div class="cw"><svg class="wsvg" id="wsvg" viewBox="0 0 600 112" preserveAspectRatio="none"></svg></div><div class="xlbl"><span>1주</span><span>2주</span><span>3주</span><span>4주</span><span>5주</span><span>6주</span></div></div>
 <div class="calsec"><h4>🔥 오늘의 칼로리 기록</h4><div class="caldate">📅 ${td}</div>
+<div class="food-scan">
+<div class="food-scan-title">📷 음식 사진으로 칼로리 분석</div>
+<div class="food-scan-desc">음식 사진을 찍거나 선택하면 AI가 칼로리와 영양소를 자동 분석합니다</div>
+<div class="food-scan-btns">
+<button class="food-scan-btn camera" onclick="document.getElementById('foodCam').click()">📷 사진 촬영</button>
+<button class="food-scan-btn gallery" onclick="document.getElementById('foodGal').click()">🖼 갤러리</button>
+</div>
+<input type="file" id="foodCam" accept="image/*" capture="environment" style="display:none" onchange="foodSelected(this)">
+<input type="file" id="foodGal" accept="image/*" style="display:none" onchange="foodSelected(this)">
+<img id="foodPreview" class="food-preview">
+<div id="foodLoading" class="food-loading"><div class="food-spinner"></div><div class="food-loading-text">AI가 음식을 분석하고 있어요...</div></div>
+<div id="foodResult" class="food-result"></div>
+</div>
 <div class="calgrp"><div class="calgrp-t"><span style="width:6px;height:6px;border-radius:50%;background:var(--orange);"></span>실제 섭취 칼로리</div>
 <div class="calrow"><label>🌅 아침</label><input type="number" id="iAm" placeholder="kcal" min="0"><span class="u">kcal</span><button class="rbtn" onclick="rI('아침','iAm')">등록</button></div>
 <div class="calrow"><label>☀️ 점심</label><input type="number" id="iLu" placeholder="kcal" min="0"><span class="u">kcal</span><button class="rbtn" onclick="rI('점심','iLu')">등록</button></div>
@@ -487,6 +540,84 @@ ${cT>0?`<div class="cex" style="margin-top:8px;">🏋️ 센터 운동 소모: <
 <div class="my-panel" id="pnl-sched"><div class="cal-wrap"><div class="cal-hd"><h3 id="calTitle"></h3><div class="cal-nav"><button onclick="calNav(-1)">◀</button><button onclick="calNav(0)">오늘</button><button onclick="calNav(1)">▶</button></div></div><div class="cal-grid" id="calGrid"></div></div><div id="schedDetail"></div></div>
 <button class="blo" onclick="doLogout()">로그아웃</button>`;
 rWSVG(wts);rCB(c,s.tar,diet);rMP(diet);}
+
+/* ===== 음식 사진 분석 (Claude Vision API) ===== */
+let foodImgData=null;
+function foodSelected(inp){
+  const file=inp.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    foodImgData=e.target.result;
+    const preview=document.getElementById('foodPreview');
+    preview.src=foodImgData;preview.style.display='block';
+    document.getElementById('foodResult').className='food-result';
+    document.getElementById('foodResult').innerHTML='';
+    analyzeFoodPhoto(foodImgData);
+  };reader.readAsDataURL(file);
+  inp.value='';
+}
+async function analyzeFoodPhoto(dataUrl){
+  const loading=document.getElementById('foodLoading');
+  loading.classList.add('on');
+  const base64=dataUrl.split(',')[1];
+  const mediaType=dataUrl.split(';')[0].split(':')[1]||'image/jpeg';
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json','x-api-key':'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','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
+        {type:'text',text:`이 음식 사진을 분석해서 아래 JSON 형식으로만 응답해줘. 다른 텍스트 없이 JSON만:
+{"name":"음식이름","kcal":총칼로리숫자,"carb":탄수화물g숫자,"protein":단백질g숫자,"fat":지방g숫자,"detail":"음식 구성 상세 설명(한국어, 2~3줄)","items":[{"name":"개별음식","kcal":숫자}],"advice":"이 사용자의 목표(${S[LC]?.goal||'체중감량'}, 일일 ${S[LC]?.tar||1800}kcal)에 맞는 짧은 코멘트"}`}
+      ]}]})
+    });
+    const data=await resp.json();
+    const text=data.content?.map(c=>c.text||'').join('')||'';
+    const clean=text.replace(/```json|```/g,'').trim();
+    const result=JSON.parse(clean);
+    showFoodResult(result);
+  }catch(e){
+    console.warn('Food analysis error:',e);
+    document.getElementById('foodResult').className='food-result on';
+    document.getElementById('foodResult').innerHTML=`<div style="text-align:center;color:var(--orange);font-size:13px;font-weight:700;padding:12px;">⚠️ 분석에 실패했습니다<br><span style="font-size:11px;color:var(--muted);font-weight:400;">다시 시도하거나 다른 사진을 사용해주세요</span></div>`;
+  }finally{loading.classList.remove('on');}
+}
+function showFoodResult(r){
+  const el=document.getElementById('foodResult');
+  const maxNutri=Math.max(r.carb||0,r.protein||0,r.fat||0,1);
+  el.className='food-result on';
+  el.innerHTML=`
+    <div class="food-name">${esc(r.name)}</div>
+    <div class="food-kcal">${r.kcal}<span> kcal</span></div>
+    <div class="nutri-bars">
+      <div class="nutri-bar"><div class="nutri-label">탄수화물</div><div class="nutri-track"><div class="nutri-fill carb" style="width:${Math.round((r.carb/maxNutri)*100)}%"></div></div><div class="nutri-val carb">${r.carb}g</div></div>
+      <div class="nutri-bar"><div class="nutri-label">단백질</div><div class="nutri-track"><div class="nutri-fill prot" style="width:${Math.round((r.protein/maxNutri)*100)}%"></div></div><div class="nutri-val prot">${r.protein}g</div></div>
+      <div class="nutri-bar"><div class="nutri-label">지방</div><div class="nutri-track"><div class="nutri-fill fat" style="width:${Math.round((r.fat/maxNutri)*100)}%"></div></div><div class="nutri-val fat">${r.fat}g</div></div>
+    </div>
+    ${r.items&&r.items.length?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;">구성</div>${r.items.map(it=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04);"><span>${esc(it.name)}</span><span style="color:var(--orange);font-weight:700;">${it.kcal}kcal</span></div>`).join('')}`:''}
+    ${r.detail?`<div class="food-detail" style="margin-top:10px;">${esc(r.detail)}</div>`:''}
+    ${r.advice?`<div style="background:rgba(100,160,200,.08);border:1px solid rgba(100,160,200,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--accent);margin-bottom:12px;line-height:1.6;">💡 ${esc(r.advice)}</div>`:''}
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">어느 끼니에 등록할까요?</div>
+    <div class="food-actions">
+      <button class="food-add" onclick="foodAddMeal('아침',${r.kcal})">🌅 아침</button>
+      <button class="food-add" onclick="foodAddMeal('점심',${r.kcal})">☀️ 점심</button>
+      <button class="food-add" onclick="foodAddMeal('저녁',${r.kcal})">🌙 저녁</button>
+      <button class="food-add" onclick="foodAddMeal('간식',${r.kcal})" style="background:rgba(100,160,200,.15);color:var(--accent);">🍪 간식</button>
+    </div>
+    <button class="food-retry" onclick="document.getElementById('foodResult').className='food-result';document.getElementById('foodPreview').style.display='none';foodImgData=null;" style="width:100%;margin-top:8px;">다시 분석하기</button>`;
+}
+function foodAddMeal(label,kcal){
+  const td=new Date().toISOString().split('T')[0];
+  const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  const by=getCurRole();
+  const d=lG('pa_student_intake',{});if(!d[LC])d[LC]=[];
+  d[LC].push({date:td,label,kcal,timestamp:ts+'(📷)',by});
+  lS('pa_student_intake',d);
+  toast(`${label} ${kcal}kcal 등록 완료!`);
+  document.getElementById('foodResult').className='food-result';
+  document.getElementById('foodPreview').style.display='none';
+  foodImgData=null;
+  rDB();
+}
 
 function rI(label,id){const v=parseInt(document.getElementById(id)?.value);if(!v||v<0){toast('올바른 칼로리를 입력하세요','err');return;}const td=new Date().toISOString().split('T')[0];const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});const by=getCurRole();const d=lG('pa_student_intake',{});if(!d[LC])d[LC]=[];d[LC].push({date:td,label,kcal:v,timestamp:ts,by});lS('pa_student_intake',d);document.getElementById(id).value='';toast(`${label} ${v}kcal 등록`);rDB();}
 function eI(idx){const td=new Date().toISOString().split('T')[0];const d=lG('pa_student_intake',{});const logs=(d[LC]||[]).filter(r=>r.date===td);if(!logs[idx])return;const nv=prompt(`${logs[idx].label} 수정 (현재: ${logs[idx].kcal})`,logs[idx].kcal);if(nv===null)return;const n=parseInt(nv);if(!n||n<0){toast('올바른 값 입력','err');return;}let ct=-1;for(let i=0;i<d[LC].length;i++){if(d[LC][i].date===td){ct++;if(ct===idx){d[LC][i].kcal=n;d[LC][i].timestamp=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+'(수정)';break;}}}lS('pa_student_intake',d);toast('수정 완료');rDB();}
