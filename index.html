@@ -304,12 +304,6 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 </style>
 </head>
 <body>
-<div id="kakaoLoading" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
-<div style="font-size:40px;">🔐</div>
-<div style="font-size:15px;font-weight:700;color:var(--accent);">카카오 로그인 처리 중...</div>
-<div style="font-size:12px;color:var(--muted);">잠시만 기다려주세요</div>
-</div>
-<script>if(new URLSearchParams(location.search).get('code')){document.getElementById('kakaoLoading').style.display='flex';}</script>
 <div class="tw" id="tw"></div>
 <nav class="nav"><div class="logo" onclick="go('home')">P<span class="dot">.</span>A<span class="dot">·</span>TRAINING<span class="sub">PERFORMANCE ACHIEVEMENT</span></div><div class="navlinks"><div class="nl on" id="nl-home" onclick="go('home')">홈</div><div class="nl" id="nl-notice" onclick="go('notice')">공지사항</div><div class="nl" id="nl-my" onclick="goMY()">MY</div><div class="nl" id="nl-loc" onclick="go('loc')">위치</div><div class="nl" id="nl-prod" onclick="go('prod')">추천제품</div></div><div class="nav-right"><div class="nav-prof" id="navProf"><div class="nav-av" id="navAv"><span id="navAvT">😊</span></div><span class="nav-nm" id="navNm">-</span><button class="nav-lo" onclick="doLogout()">로그아웃</button></div><button class="hbg" onclick="togMob()"><span></span><span></span><span></span></button></div></nav>
 <div class="mob" id="mob"><div class="ml" onclick="go('home');cMob()">홈</div><div class="ml" onclick="go('notice');cMob()">공지사항</div><div class="ml" onclick="goMY();cMob()">MY</div><div class="ml" onclick="go('loc');cMob()">위치</div><div class="ml" onclick="go('prod');cMob()">추천제품</div></div>
@@ -408,8 +402,7 @@ let LC=null;
 function kakaoLogin(){if(isL){toast('로컬 환경 — 아래 코드 로그인 이용','err');document.getElementById('dbox').classList.add('on');return;}if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
 try{Kakao.Auth.authorize({redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}
 /* 카카오 유저 처리 (공용) */
-function hideKL(){const el=document.getElementById('kakaoLoading');if(el)el.style.display='none';}
-function handleKakaoUser(r){hideKL();const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
+function handleKakaoUser(r){const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
 if(kid===ADMIN_KAKAO_ID){setN('관리자 ('+nn+')',img);toast(nn+' 관리자님 환영합니다!');go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');aOK=true;rAT();return;}
 const map=lG('pa_kakao_users',{});const mapped=map[kid];
 const c=typeof mapped==='string'?mapped:mapped?.code;
@@ -420,7 +413,7 @@ sessionStorage.setItem('pa_kakao_pending',JSON.stringify({kid,nn,img}));go('my')
 const ADMIN_KAKAO_ID='4824357984';
 
 /* 리다이렉트 인가코드 처리 */
-function processKakaoAuth(){const params=new URLSearchParams(location.search);const code=params.get('code');if(!code)return;history.replaceState(null,'',location.pathname+location.hash);fetch('https://kauth.kakao.com/oauth/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:'a1ca85645cfb642c43ac95082a46e872',redirect_uri:location.origin+'/',code})}).then(r=>r.json()).then(data=>{if(data.access_token){Kakao.Auth.setAccessToken(data.access_token);Kakao.API.request({url:'/v2/user/me'}).then(r=>{handleKakaoUser(r);}).catch(e=>{hideKL();console.warn('API error:',e);toast('사용자 정보 조회 실패','err');});}else{hideKL();console.warn('Token fail:',data);toast('토큰 발급 실패 — 다시 시도해주세요','err');}}).catch(e=>{hideKL();console.warn('Token error:',e);toast('인증 처리 오류','err');});}
+function processKakaoAuth(){const params=new URLSearchParams(location.search);const code=params.get('code');if(!code)return;history.replaceState(null,'',location.pathname+location.hash);fetch('https://kauth.kakao.com/oauth/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:'a1ca85645cfb642c43ac95082a46e872',redirect_uri:location.origin+'/',code})}).then(r=>r.json()).then(data=>{if(data.access_token){Kakao.Auth.setAccessToken(data.access_token);Kakao.API.request({url:'/v2/user/me'}).then(r=>{handleKakaoUser(r);}).catch(e=>{console.warn('API error:',e);toast('사용자 정보 조회 실패','err');});}else{console.warn('Token fail:',data);toast('토큰 발급 실패','err');}}).catch(e=>{console.warn('Token error:',e);toast('인증 처리 오류','err');});}
 
 /* 미등록 카카오 유저 → 코드 입력 UI (본인/학부모 선택) */
 function showKakaoLink(nn){
@@ -455,11 +448,7 @@ toast(`${label}님 계정 연결 완료!`);
 logIn(v,pending.nn+(linkRole==='parent'?' (학부모)':''),pending.img);go('my');
 }
 function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(v==='PATRAINING2026'){go('admin');return;}if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');logIn(v,S[v].name,null);}
-document.addEventListener('DOMContentLoaded',async()=>{
-const hasKakaoCode=new URLSearchParams(location.search).has('code');
-if(hasKakaoCode){document.getElementById('pg-home').classList.remove('on');}
-await fsInit();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();
-if(!hasKakaoCode){const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}}});
+document.addEventListener('DOMContentLoaded',async()=>{await fsInit();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
 function setN(n,img){document.getElementById('navProf').classList.add('show');document.getElementById('navNm').textContent=n;if(img)document.getElementById('navAv').innerHTML=`<img src="${img}" alt="">`;else document.getElementById('navAvT').textContent=n?n[0]:'😊';}
 function doLogout(){LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
