@@ -53,7 +53,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .htitle .t1{display:block;color:var(--text);}
 .htitle .t2{display:block;color:var(--accent);}
 .htitle .t3{display:block;color:var(--orange);}
-.htitle .tf{display:block;font-size:clamp(10px,1.3vw,14px);font-family:'Noto Sans KR',sans-serif;font-weight:300;letter-spacing:.16em;color:rgba(255,255,255,.18);margin-top:10px;}
+.htitle .tf{display:block;font-size:clamp(10px,1.3vw,14px);font-family:'Noto Sans KR',sans-serif;font-weight:300;letter-spacing:.08em;color:rgba(255,255,255,.18);margin-top:10px;}
 .hdesc{font-size:15px;line-height:1.85;color:var(--muted);margin-bottom:32px;max-width:460px;}
 .hdesc strong{color:var(--text);font-weight:700;}
 .hbtns{display:flex;gap:11px;flex-wrap:wrap;}
@@ -235,6 +235,37 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .ar label{font-size:12px;color:var(--muted);min-width:70px;font-weight:600;}
 .ar input,.ar select,.ar textarea{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;flex:1;font-family:inherit;outline:none;}
 .ar textarea{min-height:80px;resize:vertical;}
+/* SCHEDULE */
+.my-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.my-tab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;transition:all .2s;}
+.my-tab:hover{color:var(--text);}
+.my-tab.on{background:rgba(100,160,200,.15);color:var(--accent);border-color:rgba(100,160,200,.3);}
+.my-panel{display:none;}.my-panel.on{display:block;}
+.cal-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:13px;}
+.cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-hd h3{font-size:16px;font-weight:900;}
+.cal-nav{display:flex;gap:6px;}
+.cal-nav button{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--muted);font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.cal-nav button:hover{color:var(--text);background:rgba(255,255,255,.1);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;}
+.cal-dow{font-size:10px;font-weight:700;color:var(--muted);padding:6px 0;letter-spacing:.06em;}
+.cal-day{font-size:12px;padding:8px 4px;border-radius:8px;cursor:pointer;transition:all .15s;position:relative;min-height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.cal-day:hover{background:rgba(255,255,255,.05);}
+.cal-day.today{background:rgba(100,160,200,.15);color:var(--accent);font-weight:900;}
+.cal-day.has-ev::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--orange);position:absolute;bottom:3px;}
+.cal-day.empty{cursor:default;}.cal-day.empty:hover{background:transparent;}
+.cal-day.sel{background:rgba(232,98,42,.15);border:1px solid rgba(232,98,42,.3);}
+.sched-list{margin-top:12px;}
+.sched-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:10px;margin-bottom:6px;}
+.sched-time{font-size:11px;font-weight:700;color:var(--accent);min-width:50px;}
+.sched-info{flex:1;min-width:0;}
+.sched-title{font-size:13px;font-weight:700;}
+.sched-desc{font-size:11px;color:var(--muted);margin-top:2px;}
+.sched-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sched-dot.lesson{background:var(--accent);}
+.sched-dot.rest{background:var(--green);}
+.sched-dot.event{background:var(--orange);}
+.no-sched{text-align:center;padding:20px;color:var(--muted);font-size:12px;}
 footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid var(--border);padding:32px 40px;text-align:center;}
 .flogo{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--accent);letter-spacing:.12em;margin-bottom:5px;}
 .ftag{font-size:10px;letter-spacing:.18em;color:rgba(255,255,255,.18);margin-bottom:14px;}
@@ -277,7 +308,7 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 
 <script>
 function toast(m,t){const w=document.getElementById('tw'),e=document.createElement('div');e.className='toast'+(t==='err'?' err':'');e.textContent=m;w.appendChild(e);setTimeout(()=>{e.style.opacity='0';e.style.transition='opacity .3s';setTimeout(()=>e.remove(),300);},2500);}
-let isL=false;try{if(location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')isL=true;if(!isL&&window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){isL=true;}
+let isL=false;try{if(location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')isL=true;if(!isL&&window.Kakao){if(!Kakao.isInitialized()){Kakao.init('a1ca85645cfb642c43ac95082a46e872');}}}catch(e){console.warn('Kakao init:',e);}
 const mkE=d=>{const x=new Date();x.setDate(x.getDate()+d);return x.toISOString();};
 const CODES={"HYR001":{n:"한유리",e:mkE(3)},"PDY002":{n:"박도영",e:mkE(3)},"PHS003":{n:"박하솔",e:mkE(3)},"HYJ004":{n:"황유진",e:mkE(3)},"NYE005":{n:"남예은",e:mkE(3)},"KCI006":{n:"김초이",e:mkE(3)},"NHY007":{n:"남하연",e:mkE(3)},"SSY008":{n:"심수연",e:mkE(3)},"KJW009":{n:"김지웅",e:mkE(3)},"KNY010":{n:"김나윤",e:mkE(3)},"KJH011":{n:"김주혁",e:mkE(3)}};
 const S={"HYR001":{name:"한유리",age:17,h:167,w:71,g:"여",goal:"체중감량",gc:"gl",bmr:1558,tdee:2142,tar:1840,wts:[71,70.5,70.2,69.8,69.5,69.1]},"PDY002":{name:"박도영",age:17,h:160,w:50,g:"여",goal:"근육증가",gc:"gg",bmr:1350,tdee:1856,tar:2060,wts:[50,50.3,50.6,50.8,51.1,51.4]},"PHS003":{name:"박하솔",age:17,h:160,w:52,g:"여",goal:"근육증가",gc:"gg",bmr:1370,tdee:1884,tar:2080,wts:[52,52.2,52.5,52.7,53,53.2]},"HYJ004":{name:"황유진",age:17,h:165,w:44,g:"여",goal:"증량+근육",gc:"gb",bmr:1302,tdee:1790,tar:2100,wts:[44,44.3,44.6,44.9,45.2,45.5]},"NYE005":{name:"남예은",age:17,h:155,w:50,g:"여",goal:"체중감량",gc:"gl",bmr:1317,tdee:1811,tar:1560,wts:[50,49.7,49.4,49.1,48.8,48.5]},"KCI006":{name:"김초이",age:17,h:170,w:68,g:"여",goal:"체중감량",gc:"gl",bmr:1543,tdee:2122,tar:1820,wts:[68,67.6,67.2,66.8,66.4,66]},"NHY007":{name:"남하연",age:17,h:162,w:55,g:"여",goal:"체중감량",gc:"gl",bmr:1394,tdee:1917,tar:1670,wts:[55,54.7,54.4,54.1,53.8,53.5]},"SSY008":{name:"심수연",age:17,h:163,w:63,g:"여",goal:"체중감량",gc:"gl",bmr:1468,tdee:2019,tar:1770,wts:[63,62.6,62.2,61.8,61.4,61]},"KJW009":{name:"김지웅",age:16,h:182,w:94.8,g:"남",goal:"체중감량",gc:"gl",bmr:2095,tdee:2881,tar:2400,wts:[94.8,94.2,93.6,93,92.4,91.8]},"KNY010":{name:"김나윤",age:18,h:155,w:62,g:"여",goal:"체중감량",gc:"gl",bmr:1452,tdee:1997,tar:1747,wts:[62,61.6,61.2,60.9,60.5,60.2]},"KJH011":{name:"김주혁",age:16,h:171,w:77,g:"남",goal:"체중감량",gc:"gl",bmr:1850,tdee:2867,tar:2517,wts:[77,76.5,76,75.5,75,74.5]}};
@@ -330,7 +361,7 @@ function rP(cat){document.getElementById('pf').innerHTML=CATS.map(c=>`<button cl
 
 /* 로그인 */
 let LC=null;
-function kakaoLogin(){if(isL){toast('로컬 환경 — 아래 코드 로그인 이용','err');document.getElementById('dbox').classList.add('on');return;}try{Kakao.Auth.login({success(){Kakao.API.request({url:'/v2/user/me',success(r){const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;const map=lG('pa_kakao_users',{});const c=map[kid];if(c&&S[c])logIn(c,nn,img);else toast('미등록 계정. 선생님께 문의','err');},fail(){toast('사용자 정보 오류','err');}});},fail(){toast('로그인 실패','err');}});}catch(e){toast('SDK 오류','err');document.getElementById('dbox').classList.add('on');}}
+function kakaoLogin(){if(isL){toast('로컬 환경 — 아래 코드 로그인 이용','err');document.getElementById('dbox').classList.add('on');return;}if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}try{Kakao.Auth.login({success(){Kakao.API.request({url:'/v2/user/me',success(r){const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;const map=lG('pa_kakao_users',{});const c=map[kid];if(c&&S[c])logIn(c,nn,img);else toast('미등록 계정. 선생님께 문의','err');},fail(){toast('사용자 정보 오류','err');}});},fail(e){console.warn('Kakao login fail:',e);toast('로그인 실패 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}
 function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(v==='PATRAINING2026'){go('admin');return;}if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');logIn(v,S[v].name,null);}
 document.addEventListener('DOMContentLoaded',()=>{const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
@@ -346,6 +377,8 @@ const cL=(lG('pa_center_exercise',{})[c]||[]).filter(r=>r.date===td);
 const iT=iL.reduce((a,r)=>a+r.kcal,0);const eT=eL.reduce((a,r)=>a+r.kcal,0);const cT=cL.reduce((a,r)=>a+r.kcal,0);
 const db=document.getElementById('myDB');db.style.display='block';document.getElementById('loginBox').style.display='none';
 db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.name[0]}</span></div><div><div class="mname">${s.name}</div><div class="mmeta">${s.age}세 · ${s.h}cm · ${wts[wts.length-1]}kg · ${s.g}</div><span class="mgoal ${s.gc}">${s.goal}</span></div></div><div class="mst"><div class="ms"><div class="msl">BMR</div><div class="msv bl">${s.bmr.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">TDEE</div><div class="msv">${s.tdee.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">목표</div><div class="msv og">${s.tar.toLocaleString()}</div><div class="msu">kcal/일</div></div></div></div>
+<div class="my-tabs"><button class="my-tab on" onclick="myTab('dash',this)">📊 대시보드</button><button class="my-tab" onclick="myTab('sched',this)">📅 스케줄</button></div>
+<div class="my-panel on" id="pnl-dash">
 <div class="cc"><div class="ct">⚖ 몸무게 변화 (kg)</div><div class="cw"><svg class="wsvg" id="wsvg" viewBox="0 0 600 112" preserveAspectRatio="none"></svg></div><div class="xlbl"><span>1주</span><span>2주</span><span>3주</span><span>4주</span><span>5주</span><span>6주</span></div></div>
 <div class="calsec"><h4>🔥 오늘의 칼로리 기록</h4><div class="caldate">📅 ${td}</div>
 <div class="calgrp"><div class="calgrp-t"><span style="width:6px;height:6px;border-radius:50%;background:var(--orange);"></span>실제 섭취 칼로리</div>
@@ -361,7 +394,9 @@ ${eL.map((r,i)=>`<div class="logitem"><div class="li"><span class="ll">${i+1}회
 <div class="caltotal bl"><span>🏋️ 오늘 운동 합계</span><strong>${eT.toLocaleString()} kcal</strong></div>
 ${cT>0?`<div class="cex" style="margin-top:8px;">🏋️ 센터 운동 소모: <strong>${cT} kcal</strong>${cL.map(r=>`<span class="ct2">(${r.timestamp})</span>`).join('')}</div>`:''}</div></div>
 <div class="cc"><div class="ct">🔥 이번 주 칼로리 (kcal)</div><div style="display:flex;gap:12px;font-size:10px;margin-bottom:10px;"><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,var(--accent),rgba(100,160,200,.35));"></span>섭취</span><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,#E85D75,rgba(232,93,117,.35));"></span>운동</span><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,var(--orange),rgba(232,98,42,.35));"></span>목표 초과</span></div><div class="cw"><div class="cbars" id="cbars"></div></div><div class="xlbl"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div></div>
-<div class="dwl">📋 이번 주 7일 식단표</div><div id="dlist"></div><button class="blo" onclick="doLogout()">로그아웃</button>`;
+<div class="dwl">📋 이번 주 7일 식단표</div><div id="dlist"></div></div>
+<div class="my-panel" id="pnl-sched"><div class="cal-wrap"><div class="cal-hd"><h3 id="calTitle"></h3><div class="cal-nav"><button onclick="calNav(-1)">◀</button><button onclick="calNav(0)">오늘</button><button onclick="calNav(1)">▶</button></div></div><div class="cal-grid" id="calGrid"></div></div><div id="schedDetail"></div></div>
+<button class="blo" onclick="doLogout()">로그아웃</button>`;
 rWSVG(wts);rCB(c,s.tar,diet);rMP(diet);}
 
 function rI(label,id){const v=parseInt(document.getElementById(id)?.value);if(!v||v<0){toast('올바른 칼로리를 입력하세요','err');return;}const td=new Date().toISOString().split('T')[0];const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});const d=lG('pa_student_intake',{});if(!d[LC])d[LC]=[];d[LC].push({date:td,label,kcal:v,timestamp:ts});lS('pa_student_intake',d);document.getElementById(id).value='';toast(`${label} ${v}kcal 등록`);rDB();}
@@ -377,11 +412,49 @@ function rCB(code,tar,diet){const cb=document.getElementById('cbars');if(!cb)ret
 
 function rMP(diet){const dl=document.getElementById('dlist');if(!dl)return;dl.innerHTML='';diet.forEach((d,i)=>{const el=document.createElement('div');el.className='dd';el.innerHTML=`<div class="ddh" onclick="this.nextElementSibling.classList.toggle('on');this.querySelector('.chev').classList.toggle('on')"><div class="ddl"><div class="dpill">${d.d}<br><span style="font-size:8px;opacity:.6">${d.e}</span></div><div class="ddn">4월 ${7+i}일</div></div><div style="display:flex;align-items:center;gap:11px;"><div class="ddk">${d.k.toLocaleString()} kcal</div><div class="chev${i===0?' on':''}">▼</div></div></div><div class="ddb${i===0?' on':''}"><div class="mg2"><div><div class="mt">🌅 아침</div><div class="mk">${d.am.k} kcal</div><div class="mc">${d.am.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">☀️ 점심</div><div class="mk">${d.lu.k} kcal</div><div class="mc">${d.lu.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🍪 간식</div><div class="mk">${d.sn.k} kcal</div><div class="mc">${d.sn.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🌙 저녁</div><div class="mk">${d.di.k} kcal</div><div class="mc">${d.di.c.replace(/\n/g,'<br>')}</div></div></div></div>`;dl.appendChild(el);});}
 
+/* MY 탭 전환 */
+function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='sched')rCal();}
+
+/* 스케줄/달력 */
+let calY,calM,calSel;
+function initCal(){const n=new Date();calY=n.getFullYear();calM=n.getMonth();calSel=n.toISOString().split('T')[0];}
+initCal();
+function calNav(dir){if(dir===0){initCal();}else{calM+=dir;if(calM>11){calM=0;calY++;}if(calM<0){calM=11;calY--;}}rCal();}
+function rCal(){
+  const title=document.getElementById('calTitle');if(!title)return;
+  title.textContent=`${calY}년 ${calM+1}월`;
+  const grid=document.getElementById('calGrid');
+  const today=new Date().toISOString().split('T')[0];
+  const first=new Date(calY,calM,1);const lastDay=new Date(calY,calM+1,0).getDate();
+  let startDow=first.getDay();if(startDow===0)startDow=7;
+  const schedData=lG('pa_schedules',{});const mySched=schedData[LC]||[];
+  let html=['일','월','화','수','목','금','토'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  startDow=first.getDay();
+  for(let i=0;i<startDow;i++)html+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=lastDay;d++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=ds===today;const isSel=ds===calSel;
+    const hasEv=mySched.some(e=>e.date===ds);
+    html+=`<div class="cal-day${isToday?' today':''}${isSel?' sel':''}${hasEv?' has-ev':''}" onclick="selDay('${ds}')">${d}</div>`;
+  }
+  grid.innerHTML=html;
+  rSchedDetail();
+}
+function selDay(ds){calSel=ds;rCal();}
+function rSchedDetail(){
+  const el=document.getElementById('schedDetail');if(!el)return;
+  const schedData=lG('pa_schedules',{});const mySched=(schedData[LC]||[]).filter(e=>e.date===calSel);
+  const ds=calSel;const dow=['일','월','화','수','목','금','토'][new Date(ds).getDay()];
+  if(!mySched.length){el.innerHTML=`<div class="no-sched">📅 ${ds} (${dow})<br>등록된 일정이 없습니다</div>`;return;}
+  el.innerHTML=`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;">📅 ${ds} (${dow}) — ${mySched.length}건</div>`+
+    mySched.map(e=>`<div class="sched-item"><div class="sched-dot ${e.type||'lesson'}"></div><div class="sched-time">${e.time||''}</div><div class="sched-info"><div class="sched-title">${esc(e.title)}</div>${e.desc?`<div class="sched-desc">${esc(e.desc)}</div>`:''}</div></div>`).join('');
+}
+
 /* ADMIN */
 let aOK=false,aTab='a-users';
 function aAuth(){if(document.getElementById('aPw').value==='PATRAINING2026'){aOK=true;document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');rAT();toast('관리자 인증 완료');}else toast('비밀번호 오류','err');}
-function rAT(){const tabs=[{id:'a-users',l:'카카오 매핑'},{id:'a-notices',l:'공지사항'},{id:'a-attend',l:'출석 체크'},{id:'a-center',l:'센터 운동 kcal'},{id:'a-codes',l:'입장 코드'},{id:'a-weights',l:'몸무게 기록'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
-function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-users':b.innerHTML=aU();break;case'a-notices':b.innerHTML=aNt();break;case'a-attend':b.innerHTML=aAt();break;case'a-center':b.innerHTML=aCe();break;case'a-codes':b.innerHTML=aCo();break;case'a-weights':b.innerHTML=aWt();break;}}
+function rAT(){const tabs=[{id:'a-users',l:'카카오 매핑'},{id:'a-notices',l:'공지사항'},{id:'a-attend',l:'출석 체크'},{id:'a-sched',l:'스케줄 관리'},{id:'a-center',l:'센터 운동 kcal'},{id:'a-codes',l:'입장 코드'},{id:'a-weights',l:'몸무게 기록'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
+function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-users':b.innerHTML=aU();break;case'a-notices':b.innerHTML=aNt();break;case'a-attend':b.innerHTML=aAt();break;case'a-sched':b.innerHTML=aSch();break;case'a-center':b.innerHTML=aCe();break;case'a-codes':b.innerHTML=aCo();break;case'a-weights':b.innerHTML=aWt();break;}}
 
 function aU(){const m=lG('pa_kakao_users',{});return`<h3 style="font-size:14px;margin-bottom:14px;">카카오 ID → 학생 코드 매핑</h3><div class="ar"><label>카카오ID</label><input id="akid" placeholder="카카오 사용자 ID"><label>학생</label><select id="asc">${Object.keys(S).map(c=>`<option value="${c}">${c} (${S[c].name})</option>`).join('')}</select><button class="ab ab-b" onclick="aMU()">등록</button></div>${Object.keys(m).length?`<table class="at"><tr><th>카카오ID</th><th>코드</th><th>이름</th><th></th></tr>${Object.entries(m).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td><td>${S[v]?.name||'?'}</td><td><button class="ab ab-r" onclick="aDU('${k}')">삭제</button></td></tr>`).join('')}</table>`:'<p style="font-size:12px;color:var(--muted);">등록된 매핑 없음</p>'}`;}
 function aMU(){const k=document.getElementById('akid').value.trim(),c=document.getElementById('asc').value;if(!k){toast('카카오ID 입력','err');return;}const m=lG('pa_kakao_users',{});m[k]=c;lS('pa_kakao_users',m);toast('매핑 등록');rAB();}
@@ -393,6 +466,17 @@ function aDN(i){const ns=lG('pa_notices_c',[]);ns.splice(i,1);lS('pa_notices_c',
 
 function aAt(){const att=lG('pa_attendance',{});const td=new Date().toISOString().split('T')[0];return`<h3 style="font-size:14px;margin-bottom:14px;">출석 체크 — ${td}</h3><table class="at"><tr><th>코드</th><th>이름</th><th>출석</th></tr>${Object.entries(S).map(([c,s])=>{const ok=att[c]?.[td]==='O';return`<tr><td>${c}</td><td>${s.name}</td><td><button class="ab ${ok?'ab-g':'ab-r'}" onclick="aTg('${c}','${td}')" style="min-width:40px;">${ok?'O':'X'}</button></td></tr>`;}).join('')}</table>`;}
 function aTg(c,d){const att=lG('pa_attendance',{});if(!att[c])att[c]={};att[c][d]=att[c][d]==='O'?'X':'O';lS('pa_attendance',att);rAB();}
+
+function aSch(){const td=new Date().toISOString().split('T')[0];const all=lG('pa_schedules',{});let rows=[];Object.entries(all).forEach(([c,arr])=>arr.forEach(r=>rows.push({code:c,name:S[c]?.name||c,...r})));rows.sort((a,b)=>a.date.localeCompare(b.date));
+return`<h3 style="font-size:14px;margin-bottom:14px;">스케줄 관리 (레슨 일정)</h3>
+<div class="ar"><label>학생</label><select id="asStu"><option value="ALL">전체 학생</option>${Object.entries(S).map(([c,s])=>`<option value="${c}">${s.name} (${c})</option>`).join('')}</select></div>
+<div class="ar"><label>날짜</label><input type="date" id="asDate" value="${td}"><label>시간</label><input type="time" id="asTime" value="16:00" style="width:100px"></div>
+<div class="ar"><label>제목</label><input id="asTitle" placeholder="예: 레슨 3회차"><label>유형</label><select id="asType"><option value="lesson">레슨</option><option value="rest">휴식</option><option value="event">이벤트</option></select></div>
+<div class="ar"><label>메모</label><input id="asDesc" placeholder="선택사항" style="flex:2"></div>
+<button class="ab ab-b" onclick="aAddSch()" style="margin-bottom:16px;">일정 등록</button>
+${rows.length?`<table class="at"><tr><th>학생</th><th>날짜</th><th>시간</th><th>제목</th><th></th></tr>${rows.map((r,i)=>`<tr><td>${r.name}</td><td>${r.date}</td><td>${r.time||''}</td><td>${esc(r.title)}</td><td><button class="ab ab-r" onclick="aDelSch('${r.code}','${r.date}','${esc(r.title)}')">삭제</button></td></tr>`).join('')}</table>`:'<p style="font-size:12px;color:var(--muted);">등록된 일정 없음</p>'}`;}
+function aAddSch(){const stu=document.getElementById('asStu').value,d=document.getElementById('asDate').value,time=document.getElementById('asTime').value,title=document.getElementById('asTitle').value.trim(),type=document.getElementById('asType').value,desc=document.getElementById('asDesc').value.trim();if(!d||!title){toast('날짜와 제목을 입력하세요','err');return;}const data=lG('pa_schedules',{});const targets=stu==='ALL'?Object.keys(S):[stu];targets.forEach(c=>{if(!data[c])data[c]=[];data[c].push({date:d,time,title,type,desc});});lS('pa_schedules',data);toast(`${targets.length}명에게 일정 등록 완료`);document.getElementById('asTitle').value='';document.getElementById('asDesc').value='';rAB();}
+function aDelSch(code,date,title){const data=lG('pa_schedules',{});if(data[code]){data[code]=data[code].filter(r=>!(r.date===date&&r.title===title));lS('pa_schedules',data);toast('삭제 완료');rAB();}}
 
 function aCe(){const td=new Date().toISOString().split('T')[0];const all=lG('pa_center_exercise',{});let rows=[];Object.entries(all).forEach(([c,a])=>a.forEach(r=>rows.push({code:c,name:S[c]?.name||c,...r})));rows.sort((a,b)=>b.date.localeCompare(a.date));return`<h3 style="font-size:14px;margin-bottom:14px;">센터 운동 칼로리 입력</h3><div class="ar"><label>학생</label><select id="acS">${Object.entries(S).map(([c,s])=>`<option value="${c}">${s.name} (${c})</option>`).join('')}</select><label>날짜</label><input type="date" id="acD" value="${td}"><label>kcal</label><input type="number" id="acK" placeholder="소모 kcal" style="width:100px"><button class="ab ab-b" onclick="aSC()">저장</button></div><table class="at" style="margin-top:12px;"><tr><th>학생</th><th>날짜</th><th>kcal</th><th>등록시간</th></tr>${rows.slice(0,15).map(r=>`<tr><td>${r.name}</td><td>${r.date}</td><td>${r.kcal}</td><td style="font-size:10px;color:var(--muted);">${r.timestamp}</td></tr>`).join('')}</table>`;}
 function aSC(){const c=document.getElementById('acS').value,d=document.getElementById('acD').value,k=parseInt(document.getElementById('acK').value);if(!k||k<0){toast('kcal 입력','err');return;}const ts=new Date().toLocaleString('ko-KR');const data=lG('pa_center_exercise',{});if(!data[c])data[c]=[];data[c].push({date:d,kcal:k,timestamp:ts});lS('pa_center_exercise',data);toast(`${S[c].name} — ${d} ${k}kcal 저장`);rAB();}
