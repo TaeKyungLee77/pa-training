@@ -532,11 +532,8 @@ const mkE=d=>{const x=new Date();x.setDate(x.getDate()+d);return x.toISOString()
 const CODES={};
 const S={};
 
-/* ⚠ 초기 학생 데이터 — 최초 1회 Firestore 마이그레이션용
-   배포 후 관리자 페이지에서 학생 목록이 정상 로드되면
-   아래 _INIT_STUDENTS 내용을 {} 로 교체해도 됩니다.
-   (Firestore pa_students 문서에 이미 저장되어 있으므로) */
-const _INIT_STUDENTS={"HYR001":{name:"한유리",age:17,h:167,w:71,g:"여",goal:"체중감량",gc:"gl",bmr:1558,tdee:2142,tar:1840,wts:[71]},"PDY002":{name:"박도영",age:17,h:160,w:50,g:"여",goal:"근육증가",gc:"gg",bmr:1350,tdee:1856,tar:2060,wts:[50]},"PHS003":{name:"박하솔",age:17,h:160,w:52,g:"여",goal:"근육증가",gc:"gg",bmr:1370,tdee:1884,tar:2080,wts:[52]},"HYJ004":{name:"황유진",age:17,h:165,w:44,g:"여",goal:"증량+근육",gc:"gb",bmr:1302,tdee:1790,tar:2100,wts:[44]},"NYE005":{name:"남예은",age:17,h:155,w:50,g:"여",goal:"체중감량",gc:"gl",bmr:1317,tdee:1811,tar:1560,wts:[50]},"KCI006":{name:"김초이",age:17,h:170,w:68,g:"여",goal:"체중감량",gc:"gl",bmr:1543,tdee:2122,tar:1820,wts:[68]},"NHY007":{name:"남하연",age:17,h:162,w:55,g:"여",goal:"체중감량",gc:"gl",bmr:1394,tdee:1917,tar:1670,wts:[55]},"SSY008":{name:"심수연",age:17,h:163,w:63,g:"여",goal:"체중감량",gc:"gl",bmr:1468,tdee:2019,tar:1770,wts:[63]},"KJW009":{name:"김지웅",age:16,h:182,w:94.8,g:"남",goal:"체중감량",gc:"gl",bmr:2095,tdee:2881,tar:2400,wts:[94.8]},"KNY010":{name:"김나윤",age:18,h:155,w:62,g:"여",goal:"체중감량",gc:"gl",bmr:1452,tdee:1997,tar:1747,wts:[62]},"KJH011":{name:"김주혁",age:16,h:171,w:77,g:"남",goal:"체중감량",gc:"gl",bmr:1850,tdee:2867,tar:2517,wts:[77]},"KYS012":{name:"김예슬",age:23,h:164,w:59,g:"여",goal:"체중감량",gc:"gl",bmr:1402,tdee:1928,tar:1680,wts:[59]}};
+/* 학생 데이터는 Firestore pa_students에서 로드됩니다 */
+const _INIT_STUDENTS={};
 
 /* Firestore에서 학생 데이터 로드 + 최초 마이그레이션 */
 async function loadStudents(){
