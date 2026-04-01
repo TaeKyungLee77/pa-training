@@ -341,12 +341,90 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 .food-spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--orange);border-radius:50%;animation:fspin 1s linear infinite;margin:0 auto 12px;}
 @keyframes fspin{to{transform:rotate(360deg)}}
 .food-loading-text{font-size:13px;color:var(--muted);font-weight:500;}
+/* 예약 시스템 */
+.rsv-wrap{max-width:780px;margin:0 auto;padding:48px 24px 80px;position:relative;z-index:1;}
+.rsv-cal-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.rsv-cal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.rsv-cal-hd h3{font-size:18px;font-weight:900;}
+.rsv-cal-nav{display:flex;gap:6px;}
+.rsv-cal-nav button{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--muted);font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.rsv-cal-nav button:hover{color:var(--text);background:rgba(255,255,255,.1);}
+.rsv-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+.rsv-dow{font-size:10px;font-weight:700;color:var(--muted);padding:8px 0;letter-spacing:.06em;}
+.rsv-dow:first-child{color:rgba(232,98,42,.6);}
+.rsv-dow:last-child{color:rgba(100,160,200,.6);}
+.rsv-day{font-size:13px;padding:10px 4px;border-radius:10px;cursor:pointer;transition:all .15s;position:relative;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+.rsv-day:hover{background:rgba(255,255,255,.05);}
+.rsv-day.today{background:rgba(100,160,200,.1);color:var(--accent);font-weight:900;}
+.rsv-day.sel{background:rgba(232,98,42,.15);border:2px solid rgba(232,98,42,.4);font-weight:900;}
+.rsv-day.empty{cursor:default;opacity:0;}.rsv-day.empty:hover{background:transparent;}
+.rsv-day.off{color:rgba(255,255,255,.15);cursor:not-allowed;}.rsv-day.off:hover{background:transparent;}
+.rsv-day .dot-row{display:flex;gap:2px;justify-content:center;}
+.rsv-day .dot-g{width:4px;height:4px;border-radius:50%;background:var(--green);}
+.rsv-day .dot-r{width:4px;height:4px;border-radius:50%;background:var(--orange);}
+.rsv-day .dot-x{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.12);}
+.rsv-legend{display:flex;gap:16px;margin-top:12px;justify-content:center;}
+.rsv-legend span{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.rsv-legend .lg{width:8px;height:8px;border-radius:50%;}
+.rsv-slots{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.rsv-slots-title{font-size:14px;font-weight:900;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.rsv-slots-date{font-size:11px;color:var(--muted);margin-bottom:16px;}
+.rsv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;}
+.rsv-slot{padding:12px 8px;border-radius:10px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;border:2px solid transparent;}
+.rsv-slot.open{background:rgba(111,207,151,.08);border-color:rgba(111,207,151,.25);color:var(--green);}
+.rsv-slot.open:hover{background:rgba(111,207,151,.18);transform:translateY(-1px);}
+.rsv-slot.open.picked{background:rgba(100,160,200,.2);border-color:var(--accent);color:var(--accent);}
+.rsv-slot.closed{background:rgba(232,98,42,.06);color:rgba(232,98,42,.45);cursor:not-allowed;}
+.rsv-slot.off{background:rgba(255,255,255,.02);color:rgba(255,255,255,.12);cursor:not-allowed;}
+.rsv-slot .sl-t{font-size:9px;font-weight:500;margin-top:2px;opacity:.7;}
+.rsv-picked-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.rsv-picked-chip{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;background:rgba(100,160,200,.15);color:var(--accent);border:1px solid rgba(100,160,200,.25);}
+.rsv-picked-chip button{color:var(--muted);font-size:14px;line-height:1;}
+.rsv-actions{display:flex;gap:10px;margin-top:8px;}
+.rsv-submit{flex:1;padding:14px;background:var(--accent);color:#fff;font-size:14px;font-weight:700;border-radius:12px;transition:all .2s;text-align:center;}
+.rsv-submit:hover{background:var(--a2);transform:translateY(-1px);}
+.rsv-submit:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.rsv-schedule-btn{padding:14px 20px;background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;border-radius:12px;border:1px solid rgba(255,255,255,.1);transition:all .2s;}
+.rsv-schedule-btn:hover{color:var(--text);border-color:rgba(255,255,255,.25);}
+.rsv-my{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.rsv-my h4{font-size:14px;font-weight:900;margin-bottom:12px;}
+.rsv-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:10px;margin-bottom:6px;}
+.rsv-item .ri-date{font-size:12px;font-weight:700;color:var(--accent);min-width:80px;}
+.rsv-item .ri-time{font-size:13px;font-weight:700;flex:1;}
+.rsv-status{font-size:10px;font-weight:900;padding:4px 10px;border-radius:6px;}
+.rsv-status.pending{background:rgba(254,229,0,.15);color:#E6CF00;}
+.rsv-status.approved{background:rgba(111,207,151,.15);color:var(--green);}
+.rsv-status.rejected{background:rgba(232,98,42,.15);color:var(--orange);}
+/* Admin reservation */
+.rsv-admin-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;}
+.rsv-admin-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.rsv-admin-name{font-size:14px;font-weight:900;}
+.rsv-admin-dt{font-size:12px;color:var(--muted);}
+.rsv-admin-slots{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.rsv-admin-slot{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(100,160,200,.12);color:var(--accent);}
+.rsv-admin-actions{display:flex;gap:6px;}
+/* PDF modal */
+.pdf-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);align-items:center;justify-content:center;}
+.pdf-overlay.on{display:flex;}
+.pdf-modal{background:var(--bg2);border:1px solid var(--border);border-radius:20px;width:92%;max-width:700px;max-height:85vh;overflow-y:auto;padding:28px;position:relative;}
+.pdf-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.06);color:var(--muted);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:2;}
+.pdf-close:hover{color:var(--text);background:rgba(255,255,255,.12);}
+.pdf-title{font-size:18px;font-weight:900;margin-bottom:4px;}
+.pdf-sub{font-size:11px;color:var(--muted);margin-bottom:20px;}
+.pdf-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.pdf-tbl th{padding:8px 6px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--muted);border-bottom:2px solid var(--border);background:rgba(255,255,255,.02);}
+.pdf-tbl td{padding:6px 4px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04);font-weight:600;}
+.pdf-tbl td.open{color:var(--green);}
+.pdf-tbl td.closed{color:rgba(232,98,42,.5);}
+.pdf-tbl td.holiday{color:rgba(255,255,255,.12);background:rgba(255,255,255,.01);}
+.pdf-tbl tr:hover td{background:rgba(255,255,255,.02);}
+@media(max-width:640px){.rsv-grid{grid-template-columns:repeat(3,1fr);}.rsv-wrap{padding:32px 16px 60px;}}
 </style>
 </head>
 <body>
 <div class="tw" id="tw"></div>
-<nav class="nav"><div class="logo" onclick="go('home')">P<span class="dot">.</span>A<span class="dot">·</span>TRAINING<span class="sub">PERFORMANCE ACHIEVEMENT</span></div><div class="navlinks"><div class="nl on" id="nl-home" onclick="go('home')">홈</div><div class="nl" id="nl-notice" onclick="go('notice')">공지사항</div><div class="nl" id="nl-my" onclick="goMY()">MY</div><div class="nl" id="nl-loc" onclick="go('loc')">위치</div><div class="nl" id="nl-prod" onclick="go('prod')">추천제품</div></div><div class="nav-right"><div class="nav-prof" id="navProf"><div class="nav-av" id="navAv"><span id="navAvT">😊</span></div><span class="nav-nm" id="navNm">-</span><button class="nav-lo" onclick="doLogout()">로그아웃</button></div><button class="hbg" onclick="togMob()"><span></span><span></span><span></span></button></div></nav>
-<div class="mob" id="mob"><div class="ml" onclick="go('home');cMob()">홈</div><div class="ml" onclick="go('notice');cMob()">공지사항</div><div class="ml" onclick="goMY();cMob()">MY</div><div class="ml" onclick="go('loc');cMob()">위치</div><div class="ml" onclick="go('prod');cMob()">추천제품</div></div>
+<nav class="nav"><div class="logo" onclick="go('home')">P<span class="dot">.</span>A<span class="dot">·</span>TRAINING<span class="sub">PERFORMANCE ACHIEVEMENT</span></div><div class="navlinks"><div class="nl on" id="nl-home" onclick="go('home')">홈</div><div class="nl" id="nl-notice" onclick="go('notice')">공지사항</div><div class="nl" id="nl-reserve" onclick="goReserve()">예약하기</div><div class="nl" id="nl-my" onclick="goMY()">MY</div><div class="nl" id="nl-loc" onclick="go('loc')">위치</div><div class="nl" id="nl-prod" onclick="go('prod')">추천제품</div></div><div class="nav-right"><div class="nav-prof" id="navProf"><div class="nav-av" id="navAv"><span id="navAvT">😊</span></div><span class="nav-nm" id="navNm">-</span><button class="nav-lo" onclick="doLogout()">로그아웃</button></div><button class="hbg" onclick="togMob()"><span></span><span></span><span></span></button></div></nav>
+<div class="mob" id="mob"><div class="ml" onclick="go('home');cMob()">홈</div><div class="ml" onclick="go('notice');cMob()">공지사항</div><div class="ml" onclick="goReserve();cMob()">예약하기</div><div class="ml" onclick="goMY();cMob()">MY</div><div class="ml" onclick="go('loc');cMob()">위치</div><div class="ml" onclick="go('prod');cMob()">추천제품</div></div>
 
 <div class="pg on" id="pg-home">
 <div class="hero-bg"><div class="hero"><div class="hcont"><div class="eyebrow fu"><span class="pulse"></span>PERFORMANCE ACHIEVEMENT TRAINING</div><h1 class="htitle fu d1"><span class="t1">PERFORM</span><span class="t2">ACHIEVE</span><span class="t3">TRAINING</span><span class="tf">Performance · Achievement · Training</span></h1><p class="hdesc fu d2"><strong>P.A트레이닝</strong>과 함께하는 맞춤형 식단 &amp; 체력 관리.<br>개인별 목표에 맞는 칼로리 설계와 7일 식단표를 매주 업데이트합니다.</p><div class="hbtns fu d3"><div class="btnp" onclick="goMY()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="white" stroke-width="2"/></svg>MY 페이지</div><div class="btng" onclick="go('notice')">공지사항 보기 →</div></div></div><div class="hside fu d4"><div class="hc"><div class="hcl">CURRENT</div><div class="hcv og">4월</div><div class="hcs">현재 진행 중</div></div><div class="hc"><div class="hcl">WAITING</div><div class="hcv bl">15</div><div class="hcs">대기 인원</div></div><div class="hc" style="padding:13px 15px;"><div class="hcl" style="margin-bottom:9px;">MY 식단표 &amp; 기록</div><div class="hcbtn" onclick="goMY()">MY 페이지 →</div></div></div></div></div>
@@ -355,17 +433,43 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 
 <div class="pg" id="pg-notice"><div class="sec" style="padding-top:48px;"><div class="sec-top"><div><div class="sey">NOTICE</div><h2 class="st">공지사항</h2></div></div><div class="ng" id="allN"></div></div></div>
 
-<div class="pg" id="pg-my"><div class="my-wrap"><div id="loginBox"><div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><div class="dtog" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 입장 코드로 시작하기</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: HYR001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">선생님께 받은 코드를 입력하세요</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">※ 입장 코드는 발급 후 3일간 유효<br>ltk6154@gmail.com</div></div></div><div id="myDB" style="display:none;"></div></div></div>
+<div class="pg" id="pg-my"><div class="my-wrap"><div id="loginBox"><div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><div class="dtog" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 입장 코드로 시작하기</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: HYR001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">선생님께 받은 코드를 입력하세요</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">※ 입장 코드는 발급 후 3일간 유효<br><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="412d352a7770747501262c20282d6f222e2c">[email&#160;protected]</a></div></div></div><div id="myDB" style="display:none;"></div></div></div>
 
 <div class="pg" id="pg-loc"><div class="lsec"><div class="sec-top" style="margin-bottom:30px;"><div><div class="sey">LOCATION</div><h2 class="st">위치 안내</h2></div></div><div class="lgrid"><div class="mape"><div class="mpe"><div style="font-size:42px;">📍</div><div style="font-weight:700;font-size:16px;color:var(--text)">청담동 센터</div><div style="font-size:12px;text-align:center;line-height:1.7;">서울특별시 강남구 청담동 58-12</div></div></div><div class="mig"><div class="mc2"><div class="mcl">📍 주소</div><div class="mcv">서울 강남구 청담동 58-12</div><div class="mcs">P.A 트레이닝 센터</div></div><div class="mc2"><div class="mcl">🚇 교통</div><div class="mcv">압구정로데오역 인근</div><div class="mcs">수인분당선 K212 · 도보 이용 가능</div></div><div class="mc2"><div class="mcl">🕐 운영시간</div><div class="mcv">수업 일정에 따라 운영</div><div class="mcs">정확한 시간은 선생님께 문의해주세요</div></div><a class="mbtn" href="https://map.naver.com/v5/search/서울 강남구 청담동 58-12" target="_blank" rel="noopener">네이버 지도로 보기 →</a></div></div></div></div>
 
 <div class="pg" id="pg-prod"><div class="psec"><div class="sec-top" style="margin-bottom:8px;"><div><div class="sey">RECOMMENDED</div><h2 class="st">추천 제품</h2></div></div><p style="font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.7;">식단표에 사용되는 제품을 바로 구매할 수 있어요.</p><div class="pf" id="pf"></div><div class="pgrid" id="pg2"></div></div></div>
 
+<div class="pg" id="pg-reserve">
+<div class="rsv-wrap">
+<div class="sec-top"><div><div class="sey">RESERVATION</div><h2 class="st">레슨 예약</h2></div></div>
+<p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.7;">원하는 날짜와 시간을 선택하여 레슨을 예약하세요.<br>예약은 <strong style="color:var(--text);">대기 상태</strong>로 접수되며, 선생님 승인 후 확정됩니다.</p>
+<div id="rsvLoginMsg" style="display:none;"><div class="kcard fu" style="max-width:420px;margin:0 auto;"><div class="kcard-ico">📅</div><div class="kcard-h">로그인 필요</div><p class="kcard-p">레슨 예약을 위해 먼저 로그인해주세요.</p><button class="kakao-btn" onclick="goMY()">로그인하러 가기 →</button></div></div>
+<div id="rsvContent" style="display:none;">
+<div class="rsv-cal-wrap">
+<div class="rsv-cal-hd"><h3 id="rsvCalTitle"></h3><div class="rsv-cal-nav"><button onclick="rsvNav(-1)">◀</button><button onclick="rsvNav(0)">오늘</button><button onclick="rsvNav(1)">▶</button></div></div>
+<div class="rsv-cal-grid" id="rsvCalGrid"></div>
+<div class="rsv-legend"><span><div class="lg" style="background:var(--green);"></div>운영</span><span><div class="lg" style="background:var(--orange);"></div>마감</span><span><div class="lg" style="background:rgba(255,255,255,.12);"></div>휴무</span></div>
+</div>
+<div id="rsvSlots"></div>
+<div id="rsvMyList"></div>
+</div>
+</div>
+</div>
+
+<div class="pdf-overlay" id="pdfOverlay">
+<div class="pdf-modal">
+<button class="pdf-close" onclick="document.getElementById('pdfOverlay').classList.remove('on')">✕</button>
+<div class="pdf-title" id="pdfTitle"></div>
+<div class="pdf-sub" id="pdfSub"></div>
+<div id="pdfBody"></div>
+</div>
+</div>
+
 <div class="pg" id="pg-admin"><div class="admin-wrap"><div class="sec-top"><div><div class="sey">ADMIN</div><h2 class="st">관리자</h2></div></div><div class="admin-lock" id="aLock"><p style="color:var(--muted);font-size:13px;">관리자 비밀번호를 입력하세요</p><input type="password" id="aPw" placeholder="비밀번호" onkeydown="if(event.key==='Enter')aAuth()"><button onclick="aAuth()">진입</button></div><div class="admin-panel" id="aPanel"><div class="atabs" id="aTabs"></div><div id="aBody"></div></div></div></div>
 
-<footer><div class="flogo">P.A TRAINING</div><div class="ftag">PERFORMANCE · ACHIEVEMENT · TRAINING</div><div class="fls"><a href="mailto:ltk6154@gmail.com">ltk6154@gmail.com</a><a onclick="go('notice')">공지사항</a><a onclick="go('loc')">위치</a><a onclick="go('prod')">추천제품</a></div><div class="fc">© 2026 P.A Training. All rights reserved.</div></footer>
+<footer><div class="flogo">P.A TRAINING</div><div class="ftag">PERFORMANCE · ACHIEVEMENT · TRAINING</div><div class="fls"><a href="/cdn-cgi/l/email-protection#305c445b0601050470575d51595c1e535f5d"><span class="__cf_email__" data-cfemail="2448504f12151110644349454d480a474b49">[email&#160;protected]</span></a><a onclick="go('notice')">공지사항</a><a onclick="goReserve()">예약하기</a><a onclick="go('loc')">위치</a><a onclick="go('prod')">추천제품</a></div><div class="fc">© 2026 P.A Training. All rights reserved.</div></footer>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 function toast(m,t){const w=document.getElementById('tw'),e=document.createElement('div');e.className='toast'+(t==='err'?' err':'');e.textContent=m;w.appendChild(e);setTimeout(()=>{e.style.opacity='0';e.style.transition='opacity .3s';setTimeout(()=>e.remove(),300);},2500);}
 let isL=false;try{if(location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')isL=true;if(!isL&&window.Kakao){if(!Kakao.isInitialized()){Kakao.init('a1ca85645cfb642c43ac95082a46e872');}}}catch(e){console.warn('Kakao init:',e);}
 const mkE=d=>{const x=new Date();x.setDate(x.getDate()+d);return x.toISOString();};
@@ -404,7 +508,7 @@ const firebaseConfig={apiKey:"AIzaSyCICKJ00FCnb780oQ9_mZTgszG0FL64eFU",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const _cache={};let _fsReady=false;
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students'];
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots'];
 async function fsInit(){
   try{const snap=await db.collection('pa_data').get();
   snap.forEach(doc=>{_cache[doc.id]=doc.data().value;});
@@ -422,7 +526,7 @@ function byBadge(by){if(!by)return'';const cls=by==='admin'?'by-admin':by==='par
 function getStudents(){const custom=lG('pa_custom_students',null);return custom||S;}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
-const PGS=['home','notice','my','loc','prod','admin'];
+const PGS=['home','notice','reserve','my','loc','prod','admin'];
 function go(id){PGS.forEach(p=>{const el=document.getElementById('pg-'+p);if(el)el.classList.toggle('on',p===id);const nl=document.getElementById('nl-'+p);if(nl)nl.classList.toggle('on',p===id);});window.scrollTo({top:0,behavior:'smooth'});if(id==='notice')rAN();if(id==='prod')rP('all');}
 function goMY(){go('my');chkL();}
 function togMob(){document.getElementById('mob').classList.toggle('on');}
@@ -683,10 +787,10 @@ function rSchedDetail(){
 }
 
 /* ADMIN */
-let aOK=false,aTab='a-users';
+let aOK=false,aTab='a-rsv';
 function aAuth(){if(document.getElementById('aPw').value==='PATRAINING2026'){aOK=true;document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');rAT();toast('관리자 인증 완료');}else toast('비밀번호 오류','err');}
-function rAT(){const tabs=[{id:'a-users',l:'카카오 매핑'},{id:'a-notices',l:'공지사항'},{id:'a-attend',l:'출석 체크'},{id:'a-sched',l:'스케줄 관리'},{id:'a-center',l:'센터 운동 kcal'},{id:'a-codes',l:'입장 코드'},{id:'a-weights',l:'몸무게 기록'},{id:'a-records',l:'📊 학생 기록'},{id:'a-diet',l:'🍽 식단 수정'},{id:'a-stuMgr',l:'👥 학생 관리'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
-function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-users':b.innerHTML=aU();break;case'a-notices':b.innerHTML=aNt();break;case'a-attend':b.innerHTML=aAt();break;case'a-sched':b.innerHTML=aSch();break;case'a-center':b.innerHTML=aCe();break;case'a-codes':b.innerHTML=aCo();break;case'a-weights':b.innerHTML=aWt();break;case'a-records':b.innerHTML=aRec();break;case'a-diet':b.innerHTML=aDiet();break;case'a-stuMgr':b.innerHTML=aStuMgr();break;}}
+function rAT(){const tabs=[{id:'a-rsv',l:'📅 예약 관리'},{id:'a-users',l:'카카오 매핑'},{id:'a-notices',l:'공지사항'},{id:'a-attend',l:'출석 체크'},{id:'a-sched',l:'스케줄 관리'},{id:'a-center',l:'센터 운동 kcal'},{id:'a-codes',l:'입장 코드'},{id:'a-weights',l:'몸무게 기록'},{id:'a-records',l:'📊 학생 기록'},{id:'a-diet',l:'🍽 식단 수정'},{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-slots',l:'⏰ 시간표 관리'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
+function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-rsv':b.innerHTML=aRsv();break;case'a-users':b.innerHTML=aU();break;case'a-notices':b.innerHTML=aNt();break;case'a-attend':b.innerHTML=aAt();break;case'a-sched':b.innerHTML=aSch();break;case'a-center':b.innerHTML=aCe();break;case'a-codes':b.innerHTML=aCo();break;case'a-weights':b.innerHTML=aWt();break;case'a-records':b.innerHTML=aRec();break;case'a-diet':b.innerHTML=aDiet();break;case'a-stuMgr':b.innerHTML=aStuMgr();break;case'a-slots':b.innerHTML=aSlots();break;}}
 
 function aU(){const m=lG('pa_kakao_users',{});return`<h3 style="font-size:14px;margin-bottom:14px;">카카오 ID → 학생 코드 매핑</h3><div class="ar"><label>카카오ID</label><input id="akid" placeholder="카카오 사용자 ID"><label>학생</label><select id="asc">${Object.keys(S).map(c=>`<option value="${c}">${c} (${S[c].name})</option>`).join('')}</select><button class="ab ab-b" onclick="aMU()">등록</button></div>${Object.keys(m).length?`<table class="at"><tr><th>카카오ID</th><th>코드</th><th>이름</th><th></th></tr>${Object.entries(m).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td><td>${S[v]?.name||'?'}</td><td><button class="ab ab-r" onclick="aDU('${k}')">삭제</button></td></tr>`).join('')}</table>`:'<p style="font-size:12px;color:var(--muted);">등록된 매핑 없음</p>'}`;}
 function aMU(){const k=document.getElementById('akid').value.trim(),c=document.getElementById('asc').value;if(!k){toast('카카오ID 입력','err');return;}const m=lG('pa_kakao_users',{});m[k]=c;lS('pa_kakao_users',m);toast('매핑 등록');rAB();}
@@ -806,10 +910,372 @@ const gc=goal==='체중감량'?'gl':goal==='근육증가'?'gg':'gb';
 const bmr=g==='남'?Math.round(88.362+13.397*w+4.799*h-5.677*age):Math.round(447.593+9.247*w+3.098*h-4.33*age);
 const tdee=Math.round(bmr*1.375);
 S[code]={name,age,h,w,g,goal,gc,bmr,tdee,tar,wts:[w]};
-CODES[code]={n:name,e:mkE(30)};
-lS('pa_custom_students',S);
+CODES[code]={n:name,e:mkE(365)};
+const cs=lG('pa_custom_students',null)||{};cs[code]=S[code];lS('pa_custom_students',cs);
 toast(`${name} (${code}) 추가 완료`);rAB();}
-function delStu(c){if(!confirm(`${S[c].name} 학생을 삭제하시겠습니까?`))return;delete S[c];delete CODES[c];lS('pa_custom_students',S);toast('삭제 완료');rAB();}
+function delStu(c){if(!confirm(`${S[c]?.name} 삭제?`))return;delete S[c];delete CODES[c];const cs=lG('pa_custom_students',null)||{};delete cs[c];lS('pa_custom_students',cs);toast('삭제 완료');rAB();}
+
+/* ===== 예약 시스템 ===== */
+
+/* 4월 운영시간표 기본 데이터 */
+const DEFAULT_SLOTS_2026_04={
+'2026-04-06':{slots:{9:'open',10:'open',11:'open'},note:''},
+'2026-04-07':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'open',18:'open',19:'open',20:'open',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-08':{slots:{9:'open',10:'open',11:'closed',12:'closed',13:'closed',14:'closed',15:'open',16:'open',17:'open',18:'closed',19:'closed',20:'closed',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-09':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'closed',15:'closed',16:'closed',17:'closed',18:'open',19:'open',20:'open',21:'open',22:'open',23:'open'},note:''},
+'2026-04-10':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'closed',18:'closed',19:'closed',20:'closed',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-11':{slots:{},note:'토요일 정기 휴무'},
+'2026-04-12':{slots:{},note:'일요일 정기 휴무'},
+'2026-04-13':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'open',18:'open',19:'open',20:'open',21:'open',22:'closed',23:'closed'},note:''},
+'2026-04-14':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'open',18:'open',19:'open',20:'closed',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-15':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'open',18:'closed',19:'closed',20:'closed',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-16':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'closed',15:'closed',16:'closed',17:'closed',18:'closed',19:'closed',20:'closed',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-17':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'closed',18:'closed',19:'closed',20:'closed',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-18':{slots:{},note:'토요일 정기 휴무'},
+'2026-04-19':{slots:{},note:'일요일 정기 휴무'},
+'2026-04-20':{slots:{},note:'원정 휴무'},
+'2026-04-21':{slots:{},note:'원정 휴무'},
+'2026-04-22':{slots:{},note:'원정 휴무'},
+'2026-04-23':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'closed',15:'closed',16:'closed',17:'closed',18:'open',19:'open',20:'open',21:'open',22:'open',23:'open'},note:''},
+'2026-04-24':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'closed',18:'closed',19:'closed',20:'closed',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-25':{slots:{},note:'토요일 정기 휴무'},
+'2026-04-26':{slots:{},note:'일요일 정기 휴무'},
+'2026-04-27':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'open',18:'open',19:'open',20:'open',21:'open',22:'closed',23:'closed'},note:''},
+'2026-04-28':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'open',18:'open',19:'open',20:'closed',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-29':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'open',15:'open',16:'open',17:'open',18:'closed',19:'closed',20:'closed',21:'closed',22:'closed',23:'closed'},note:''},
+'2026-04-30':{slots:{9:'open',10:'open',11:'open',12:'open',13:'open',14:'closed',15:'closed',16:'closed',17:'closed',18:'open',19:'open',20:'open',21:'open',22:'open',23:'open'},note:''}
+};
+
+function getSlots(){
+const saved=lG('pa_schedule_slots',null);
+if(saved)return saved;
+return DEFAULT_SLOTS_2026_04;
+}
+
+function getSlotsForDate(ds){
+const all=getSlots();
+return all[ds]||null;
+}
+
+/* 예약 페이지 */
+function goReserve(){go('reserve');rsvInit();}
+let rsvY,rsvM,rsvSel,rsvPicked=[];
+function rsvInit(){
+const n=new Date();rsvY=n.getFullYear();rsvM=n.getMonth();rsvSel=n.toISOString().split('T')[0];rsvPicked=[];
+if(!LC){document.getElementById('rsvLoginMsg').style.display='block';document.getElementById('rsvContent').style.display='none';return;}
+document.getElementById('rsvLoginMsg').style.display='none';document.getElementById('rsvContent').style.display='block';
+rsvRenderCal();rsvRenderSlots();rsvRenderMyList();
+}
+function rsvNav(dir){if(dir===0){const n=new Date();rsvY=n.getFullYear();rsvM=n.getMonth();rsvSel=n.toISOString().split('T')[0];}else{rsvM+=dir;if(rsvM>11){rsvM=0;rsvY++;}if(rsvM<0){rsvM=11;rsvY--;}}rsvPicked=[];rsvRenderCal();rsvRenderSlots();}
+
+function rsvRenderCal(){
+const title=document.getElementById('rsvCalTitle');if(!title)return;
+title.textContent=`${rsvY}년 ${rsvM+1}월`;
+const grid=document.getElementById('rsvCalGrid');
+const today=new Date().toISOString().split('T')[0];
+const first=new Date(rsvY,rsvM,1);const lastDay=new Date(rsvY,rsvM+1,0).getDate();
+let startDow=first.getDay();
+let html=['일','월','화','수','목','금','토'].map((d,i)=>`<div class="rsv-dow">${d}</div>`).join('');
+for(let i=0;i<startDow;i++)html+=`<div class="rsv-day empty"></div>`;
+for(let d=1;d<=lastDay;d++){
+const ds=`${rsvY}-${String(rsvM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const isToday=ds===today;const isSel=ds===rsvSel;
+const dayData=getSlotsForDate(ds);
+const dow=new Date(rsvY,rsvM,d).getDay();
+let cls='rsv-day';let dots='';
+if(isToday)cls+=' today';
+if(isSel)cls+=' sel';
+if(!dayData||Object.keys(dayData.slots||{}).length===0){
+cls+=' off';dots='<div class="dot-row"><div class="dot-x"></div></div>';
+}else{
+const vals=Object.values(dayData.slots);
+const hasOpen=vals.includes('open');
+const hasClosed=vals.includes('closed');
+dots='<div class="dot-row">';
+if(hasOpen)dots+='<div class="dot-g"></div>';
+if(hasClosed)dots+='<div class="dot-r"></div>';
+dots+='</div>';
+}
+const past=ds<today;
+if(past)cls+=' off';
+html+=`<div class="${cls}" onclick="${past||cls.includes('off')?'':'rsvSelDay(\''+ds+'\')'}">${d}${dots}</div>`;
+}
+grid.innerHTML=html;
+}
+
+function rsvSelDay(ds){rsvSel=ds;rsvPicked=[];rsvRenderCal();rsvRenderSlots();}
+
+function rsvRenderSlots(){
+const el=document.getElementById('rsvSlots');if(!el)return;
+const ds=rsvSel;
+const dayData=getSlotsForDate(ds);
+const dow=['일','월','화','수','목','금','토'][new Date(ds).getDay()];
+const today=new Date().toISOString().split('T')[0];
+
+if(!dayData||Object.keys(dayData.slots||{}).length===0){
+const note=dayData?.note||'휴무일';
+el.innerHTML=`<div class="rsv-slots"><div class="rsv-slots-title">📅 ${ds} (${dow})</div><div style="text-align:center;padding:30px 0;"><div style="font-size:36px;margin-bottom:10px;">🚫</div><div style="font-size:14px;font-weight:700;margin-bottom:4px;">휴무일</div><div style="font-size:12px;color:var(--muted);">${esc(note)}</div></div>
+<div class="rsv-actions"><button class="rsv-schedule-btn" onclick="showMonthlyPDF()" style="width:100%;">📋 전체일정 확인하기</button></div></div>`;
+return;
+}
+
+if(ds<today){
+el.innerHTML=`<div class="rsv-slots"><div class="rsv-slots-title">📅 ${ds} (${dow})</div><div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">지난 날짜는 예약할 수 없습니다.</div></div>`;
+return;
+}
+
+const hours=Object.keys(dayData.slots).map(Number).sort((a,b)=>a-b);
+let slotsHtml=hours.map(h=>{
+const st=dayData.slots[h];
+const isPicked=rsvPicked.includes(h);
+let cls='rsv-slot';
+if(st==='open'){cls+=' open';if(isPicked)cls+=' picked';}
+else cls+=' closed';
+const label=`${h}:00`;
+const endLabel=`${h+1}:00`;
+const stLabel=st==='open'?(isPicked?'✓ 선택됨':'예약 가능'):'마감';
+return`<div class="${cls}" onclick="${st==='open'?'rsvToggle('+h+')':''}">${label}<div class="sl-t">${stLabel}</div></div>`;
+}).join('');
+
+let pickedHtml='';
+if(rsvPicked.length>0){
+pickedHtml=`<div style="margin-bottom:14px;"><div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:8px;">선택한 시간 (${rsvPicked.length}개)</div><div class="rsv-picked-bar">${rsvPicked.sort((a,b)=>a-b).map(h=>`<div class="rsv-picked-chip">${h}:00~${h+1}:00 <button onclick="rsvToggle(${h})">✕</button></div>`).join('')}</div></div>`;
+}
+
+el.innerHTML=`<div class="rsv-slots"><div class="rsv-slots-title">📅 ${ds} (${dow})<span style="font-size:11px;font-weight:500;color:var(--muted);margin-left:8px;">시간을 선택하세요 (복수 선택 가능)</span></div><div class="rsv-slots-date">${dayData.note?'📌 '+esc(dayData.note):''}</div><div class="rsv-grid">${slotsHtml}</div>${pickedHtml}<div class="rsv-actions"><button class="rsv-submit" onclick="rsvSubmit()" ${rsvPicked.length===0?'disabled':''}>📩 신청하기 (${rsvPicked.length}건)</button><button class="rsv-schedule-btn" onclick="showMonthlyPDF()">📋 전체일정</button></div></div>`;
+}
+
+function rsvToggle(h){
+const idx=rsvPicked.indexOf(h);
+if(idx>=0)rsvPicked.splice(idx,1);else rsvPicked.push(h);
+rsvRenderSlots();
+}
+
+function rsvSubmit(){
+if(!LC){toast('로그인이 필요합니다','err');return;}
+if(rsvPicked.length===0){toast('시간을 선택하세요','err');return;}
+const ds=rsvSel;
+const reservations=lG('pa_reservations',[]);
+const id='RSV'+Date.now();
+reservations.push({
+id,code:LC,name:S[LC]?.name||LC,date:ds,
+hours:rsvPicked.sort((a,b)=>a-b).slice(),
+status:'pending',
+createdAt:new Date().toISOString(),
+memo:''
+});
+lS('pa_reservations',reservations);
+rsvPicked=[];
+toast(`${ds} 예약 신청 완료! 선생님 승인을 기다려주세요.`);
+rsvRenderSlots();rsvRenderMyList();
+}
+
+function rsvRenderMyList(){
+const el=document.getElementById('rsvMyList');if(!el||!LC)return;
+const all=lG('pa_reservations',[]).filter(r=>r.code===LC).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+if(all.length===0){el.innerHTML='';return;}
+const statusLabel={pending:'대기중',approved:'승인',rejected:'거절'};
+el.innerHTML=`<div class="rsv-my"><h4>📋 나의 예약 내역</h4>${all.slice(0,10).map(r=>{
+const dow=['일','월','화','수','목','금','토'][new Date(r.date).getDay()];
+return`<div class="rsv-item"><div class="ri-date">${r.date}<br><span style="font-size:10px;color:var(--muted);">(${dow})</span></div><div class="ri-time">${r.hours.map(h=>h+':00').join(', ')}</div><span class="rsv-status ${r.status}">${statusLabel[r.status]||r.status}</span>${r.status==='pending'?`<button class="ab ab-r" style="font-size:10px;padding:4px 8px;margin-left:6px;" onclick="rsvCancel('${r.id}')">취소</button>`:''}</div>`;
+}).join('')}</div>`;
+}
+
+function rsvCancel(id){
+if(!confirm('예약을 취소하시겠습니까?'))return;
+let all=lG('pa_reservations',[]);
+all=all.filter(r=>r.id!==id);
+lS('pa_reservations',all);
+toast('예약 취소 완료');
+rsvRenderMyList();
+}
+
+/* 전체일정 (월간 시간표) PDF 스타일 모달 */
+function showMonthlyPDF(){
+const ov=document.getElementById('pdfOverlay');
+const y=rsvY||new Date().getFullYear();
+const m=rsvM!==undefined?rsvM:new Date().getMonth();
+document.getElementById('pdfTitle').textContent=`${y}년 ${m+1}월 운영시간표`;
+document.getElementById('pdfSub').textContent=`P.A 트레이닝 · 토·일 정기 휴무`;
+const lastDay=new Date(y,m+1,0).getDate();
+const hours=[];for(let h=9;h<=23;h++)hours.push(h);
+let html=`<div style="overflow-x:auto;"><table class="pdf-tbl"><tr><th style="min-width:44px;">날짜</th>`;
+hours.forEach(h=>{html+=`<th>${h}</th>`;});
+html+=`<th>비고</th></tr>`;
+for(let d=1;d<=lastDay;d++){
+const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const dow=['일','월','화','수','목','금','토'][new Date(y,m,d).getDay()];
+const dayData=getSlotsForDate(ds);
+const isHoliday=!dayData||Object.keys(dayData?.slots||{}).length===0;
+html+=`<tr><td style="font-weight:900;white-space:nowrap;${dow==='토'||dow==='일'?'color:rgba(232,98,42,.5);':''}">${d}(${dow})</td>`;
+hours.forEach(h=>{
+if(isHoliday){html+=`<td class="holiday">—</td>`;}
+else{
+const st=dayData.slots[h];
+if(st==='open')html+=`<td class="open">●</td>`;
+else if(st==='closed')html+=`<td class="closed">▲</td>`;
+else html+=`<td class="holiday">—</td>`;
+}
+});
+const note=dayData?.note||'';
+if(isHoliday)html+=`<td style="font-size:9px;color:var(--orange);">${esc(note)||'휴무'}</td>`;
+else html+=`<td style="font-size:9px;color:var(--muted);">${esc(note)}</td>`;
+html+=`</tr>`;
+}
+html+=`</table></div>`;
+html+=`<div style="margin-top:14px;display:flex;gap:16px;justify-content:center;font-size:10px;color:var(--muted);">
+<span style="display:flex;align-items:center;gap:4px;"><span style="color:var(--green);font-weight:900;">●</span> 운영</span>
+<span style="display:flex;align-items:center;gap:4px;"><span style="color:var(--orange);font-weight:900;">▲</span> 마감</span>
+<span style="display:flex;align-items:center;gap:4px;"><span style="color:rgba(255,255,255,.2);">—</span> 휴무</span></div>`;
+document.getElementById('pdfBody').innerHTML=html;
+ov.classList.add('on');
+}
+
+/* ===== 관리자: 예약 관리 탭 ===== */
+function aRsv(){
+const all=lG('pa_reservations',[]).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+const pending=all.filter(r=>r.status==='pending');
+const done=all.filter(r=>r.status!=='pending');
+const statusLabel={pending:'대기중',approved:'승인',rejected:'거절'};
+return`<h3 style="font-size:14px;margin-bottom:6px;">📅 예약 관리</h3>
+<p style="font-size:11px;color:var(--muted);margin-bottom:16px;">학생들의 레슨 예약 신청을 승인/거절할 수 있습니다.</p>
+${pending.length>0?`<div style="font-size:12px;font-weight:700;color:var(--orange);margin-bottom:10px;">⏳ 대기중 (${pending.length}건)</div>
+${pending.map(r=>{
+const dow=['일','월','화','수','목','금','토'][new Date(r.date).getDay()];
+return`<div class="rsv-admin-item"><div class="rsv-admin-hd"><div class="rsv-admin-name">${esc(r.name)} (${r.code})</div><div class="rsv-admin-dt">${r.date} (${dow})</div></div><div class="rsv-admin-slots">${r.hours.map(h=>`<span class="rsv-admin-slot">${h}:00~${h+1}:00</span>`).join('')}</div><div style="font-size:10px;color:var(--muted);margin-bottom:8px;">신청: ${new Date(r.createdAt).toLocaleString('ko-KR')}</div><div class="rsv-admin-actions"><button class="ab ab-g" onclick="rsvApprove('${r.id}')">✅ 승인</button><button class="ab ab-r" onclick="rsvReject('${r.id}')">❌ 거절</button></div></div>`;
+}).join('')}`:`<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;border:1px dashed var(--border);border-radius:12px;margin-bottom:16px;">대기중인 예약이 없습니다</div>`}
+${done.length>0?`<div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:10px;margin-top:16px;">📋 처리 완료 (최근 20건)</div>
+<table class="at"><tr><th>이름</th><th>날짜</th><th>시간</th><th>상태</th><th></th></tr>
+${done.slice(0,20).map(r=>`<tr><td>${esc(r.name)}</td><td>${r.date}</td><td>${r.hours.map(h=>h+':00').join(', ')}</td><td><span class="rsv-status ${r.status}">${statusLabel[r.status]}</span></td><td><button class="ab ab-r" style="font-size:10px;" onclick="rsvDelete('${r.id}')">삭제</button></td></tr>`).join('')}</table>`:''}`;
+}
+
+function rsvApprove(id){
+const all=lG('pa_reservations',[]);
+const r=all.find(x=>x.id===id);if(r){r.status='approved';r.processedAt=new Date().toISOString();}
+lS('pa_reservations',all);toast('예약 승인 완료');rAB();
+}
+function rsvReject(id){
+const all=lG('pa_reservations',[]);
+const r=all.find(x=>x.id===id);if(r){r.status='rejected';r.processedAt=new Date().toISOString();}
+lS('pa_reservations',all);toast('예약 거절');rAB();
+}
+function rsvDelete(id){
+if(!confirm('삭제?'))return;
+let all=lG('pa_reservations',[]);
+all=all.filter(x=>x.id!==id);
+lS('pa_reservations',all);toast('삭제');rAB();
+}
+
+/* ===== 관리자: 시간표 관리 탭 ===== */
+let slotEditDate='';
+function aSlots(){
+const today=new Date().toISOString().split('T')[0];
+if(!slotEditDate)slotEditDate=today;
+const dayData=getSlotsForDate(slotEditDate);
+const dow=['일','월','화','수','목','금','토'][new Date(slotEditDate).getDay()];
+const isHoliday=!dayData||Object.keys(dayData?.slots||{}).length===0;
+
+let slotsEditor='';
+if(!isHoliday){
+const hours=[];for(let h=9;h<=23;h++)hours.push(h);
+slotsEditor=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-bottom:14px;">${hours.map(h=>{
+const st=dayData?.slots?.[h]||'none';
+const cls=st==='open'?'ab-g':st==='closed'?'ab-r':'';
+return`<div style="display:flex;align-items:center;gap:4px;"><span style="font-size:12px;font-weight:700;min-width:45px;">${h}:00</span><select onchange="slotChange('${slotEditDate}',${h},this.value)" style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:11px;"><option value="open"${st==='open'?' selected':''}>운영</option><option value="closed"${st==='closed'?' selected':''}>마감</option><option value="none"${st==='none'?' selected':''}>—</option></select></div>`;
+}).join('')}</div>`;
+}
+
+return`<h3 style="font-size:14px;margin-bottom:14px;">⏰ 운영 시간표 관리</h3>
+<div class="ar"><label>날짜</label><input type="date" id="slotDate" value="${slotEditDate}" onchange="slotEditDate=this.value;rAB();">
+<button class="ab ab-b" onclick="slotSetAllOpen()">전체 운영</button>
+<button class="ab ab-r" onclick="slotSetHoliday()">휴무 설정</button>
+<button class="rsv-schedule-btn" onclick="showMonthlyPDF()" style="padding:6px 14px;font-size:11px;">📋 월간표 보기</button></div>
+<p style="font-size:12px;font-weight:700;margin-bottom:8px;">${slotEditDate} (${dow}) ${isHoliday?'<span style="color:var(--orange);">— 휴무</span>':''}</p>
+${slotsEditor}
+<p style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.6;">※ 변경사항은 즉시 저장됩니다.<br>※ 매월 마지막주 월요일에 다음달 일정이 자동 오픈됩니다.</p>
+<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;"><div style="font-size:12px;font-weight:700;margin-bottom:10px;">🔄 다음달 일정 일괄 생성</div>
+<div class="ar"><label>대상월</label><select id="slotBulkMonth"><option value="5">5월</option><option value="6">6월</option><option value="7">7월</option></select><label>기본</label><select id="slotBulkType"><option value="weekday">평일 9-21시 운영</option><option value="full">전일 9-23시 운영</option></select><button class="ab ab-b" onclick="slotBulkCreate()">일괄 생성</button></div></div>`;
+}
+
+function slotChange(ds,h,val){
+const all=lG('pa_schedule_slots',null)||{...DEFAULT_SLOTS_2026_04};
+if(!all[ds])all[ds]={slots:{},note:''};
+if(val==='none')delete all[ds].slots[h];
+else all[ds].slots[h]=val;
+lS('pa_schedule_slots',all);
+}
+function slotSetAllOpen(){
+const ds=slotEditDate;
+const all=lG('pa_schedule_slots',null)||{...DEFAULT_SLOTS_2026_04};
+const slots={};for(let h=9;h<=21;h++)slots[h]='open';
+for(let h=22;h<=23;h++)slots[h]='closed';
+all[ds]={slots,note:''};
+lS('pa_schedule_slots',all);toast(ds+' 운영 설정 완료');rAB();
+}
+function slotSetHoliday(){
+const ds=slotEditDate;
+const all=lG('pa_schedule_slots',null)||{...DEFAULT_SLOTS_2026_04};
+const note=prompt('휴무 사유 (선택)','')||'휴무';
+all[ds]={slots:{},note};
+lS('pa_schedule_slots',all);toast(ds+' 휴무 설정 완료');rAB();
+}
+function slotBulkCreate(){
+const m=parseInt(document.getElementById('slotBulkMonth').value);
+const type=document.getElementById('slotBulkType').value;
+const y=new Date().getFullYear();
+const lastDay=new Date(y,m,0).getDate();
+const all=lG('pa_schedule_slots',null)||{...DEFAULT_SLOTS_2026_04};
+for(let d=1;d<=lastDay;d++){
+const ds=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const dow=new Date(y,m-1,d).getDay();
+if(dow===0||dow===6){all[ds]={slots:{},note:dow===0?'일요일 정기 휴무':'토요일 정기 휴무'};}
+else{
+const slots={};
+const endH=type==='full'?23:21;
+for(let h=9;h<=endH;h++)slots[h]='open';
+if(type==='weekday'){for(let h=22;h<=23;h++)slots[h]='closed';}
+all[ds]={slots,note:''};
+}
+}
+lS('pa_schedule_slots',all);
+toast(`${m}월 일정 일괄 생성 완료!`);rAB();
+}
+
+/* 매월 마지막주 월요일 자동 오픈 체크 (로드시) */
+(function checkAutoOpen(){
+const now=new Date();const y=now.getFullYear(),m=now.getMonth();
+const lastDay=new Date(y,m+1,0).getDate();
+let lastMon=null;
+for(let d=lastDay;d>=1;d--){if(new Date(y,m,d).getDay()===1){lastMon=d;break;}}
+if(lastMon&&now.getDate()>=lastMon){
+const nextM=m+2>12?1:m+2;const nextY=m+2>12?y+1:y;
+const checkKey=`${nextY}-${String(nextM).padStart(2,'0')}`;
+const all=lG('pa_schedule_slots',null)||{...DEFAULT_SLOTS_2026_04};
+const nextLastDay=new Date(nextY,nextM,0).getDate();
+const firstDs=`${checkKey}-01`;
+if(!all[firstDs]){
+console.log('[PA] 다음달 일정 자동 오픈:',checkKey);
+for(let d=1;d<=nextLastDay;d++){
+const ds=`${checkKey}-${String(d).padStart(2,'0')}`;
+const dow=new Date(nextY,nextM-1,d).getDay();
+if(dow===0||dow===6){all[ds]={slots:{},note:dow===0?'일요일 정기 휴무':'토요일 정기 휴무'};}
+else{const slots={};for(let h=9;h<=21;h++)slots[h]='open';for(let h=22;h<=23;h++)slots[h]='closed';all[ds]={slots,note:''};}
+}
+lS('pa_schedule_slots',all);
+}
+}
+})();
+
+/* 홈에 예약 버튼 추가 */
+(function addReserveBtn(){
+const btns=document.querySelector('.hbtns');
+if(btns&&!btns.querySelector('.rsv-home-btn')){
+const b=document.createElement('div');b.className='btnp rsv-home-btn';b.style.background='var(--orange)';
+b.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>예약하기';
+b.onclick=()=>goReserve();
+btns.insertBefore(b,btns.firstChild.nextSibling);
+}
+})();
 </script>
 </body>
 </html>
