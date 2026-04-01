@@ -981,8 +981,8 @@ function rSchedDetail(){
 /* ADMIN */
 let aOK=false,aTab='a-wait';
 function aAuth(){if(document.getElementById('aPw').value==='PATRAINING2026'){aOK=true;document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');rAT();toast('관리자 인증 완료');}else toast('비밀번호 오류','err');}
-function rAT(){const tabs=[{id:'a-wait',l:'⏳ 대기 관리'},{id:'a-rsv',l:'📅 예약 관리'},{id:'a-users',l:'카카오 매핑'},{id:'a-notices',l:'공지사항'},{id:'a-attend',l:'출석 체크'},{id:'a-sched',l:'스케줄 관리'},{id:'a-center',l:'센터 운동 kcal'},{id:'a-codes',l:'입장 코드'},{id:'a-weights',l:'⚖ 신체 기록'},{id:'a-records',l:'📊 학생 기록'},{id:'a-diet',l:'🍽 식단 수정'},{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-prods',l:'🛒 추천제품'},{id:'a-slots',l:'⏰ 시간표 관리'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
-function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-wait':b.innerHTML=aWait();break;case'a-rsv':b.innerHTML=aRsv();break;case'a-users':b.innerHTML=aU();break;case'a-notices':b.innerHTML=aNt();break;case'a-attend':b.innerHTML=aAt();break;case'a-sched':b.innerHTML=aSch();break;case'a-center':b.innerHTML=aCe();break;case'a-codes':b.innerHTML=aCo();break;case'a-weights':b.innerHTML=aWt();break;case'a-records':b.innerHTML=aRec();break;case'a-diet':b.innerHTML=aDiet();break;case'a-stuMgr':b.innerHTML=aStuMgr();break;case'a-prods':b.innerHTML=aProds();break;case'a-slots':b.innerHTML=aSlots();break;}updateWaitCount();}
+function rAT(){const tabs=[{id:'a-wait',l:'⏳ 대기 관리'},{id:'a-rsv',l:'📅 예약 관리'},{id:'a-notices',l:'📢 공지사항'},{id:'a-sched',l:'📅 스케줄'},{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-diet',l:'🍽 식단 수정'},{id:'a-prods',l:'🛒 추천제품'},{id:'a-slots',l:'⏰ 시간표'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
+function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-wait':b.innerHTML=aWait();break;case'a-rsv':b.innerHTML=aRsv();break;case'a-notices':b.innerHTML=aNt();break;case'a-sched':b.innerHTML=aSch();break;case'a-stuMgr':b.innerHTML=aStuMgr();break;case'a-records':b.innerHTML=aRec();break;case'a-diet':b.innerHTML=aDiet();break;case'a-prods':b.innerHTML=aProds();break;case'a-slots':b.innerHTML=aSlots();break;}updateWaitCount();}
 
 function aU(){const m=lG('pa_kakao_users',{});return`<h3 style="font-size:14px;margin-bottom:14px;">카카오 ID → 학생 코드 매핑</h3><div class="ar"><label>카카오ID</label><input id="akid" placeholder="카카오 사용자 ID"><label>학생</label><select id="asc">${Object.keys(S).map(c=>`<option value="${c}">${c} (${S[c].name})</option>`).join('')}</select><button class="ab ab-b" onclick="aMU()">등록</button></div>${Object.keys(m).length?`<table class="at"><tr><th>카카오ID</th><th>코드</th><th>이름</th><th></th></tr>${Object.entries(m).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td><td>${S[v]?.name||'?'}</td><td><button class="ab ab-r" onclick="aDU('${k}')">삭제</button></td></tr>`).join('')}</table>`:'<p style="font-size:12px;color:var(--muted);">등록된 매핑 없음</p>'}`;}
 function aMU(){const k=document.getElementById('akid').value.trim(),c=document.getElementById('asc').value;if(!k){toast('카카오ID 입력','err');return;}const m=lG('pa_kakao_users',{});m[k]=c;lS('pa_kakao_users',m);toast('매핑 등록');rAB();}
@@ -1007,7 +1007,7 @@ function aAddSch(){const stu=document.getElementById('asStu').value,d=document.g
 function aDelSch(code,date,title){const data=lG('pa_schedules',{});if(data[code]){data[code]=data[code].filter(r=>!(r.date===date&&r.title===title));lS('pa_schedules',data);toast('삭제 완료');rAB();}}
 
 function aCe(){const td=new Date().toISOString().split('T')[0];const all=lG('pa_center_exercise',{});let rows=[];Object.entries(all).forEach(([c,a])=>a.forEach(r=>rows.push({code:c,name:S[c]?.name||c,...r})));rows.sort((a,b)=>b.date.localeCompare(a.date));return`<h3 style="font-size:14px;margin-bottom:14px;">센터 운동 칼로리 입력</h3><div class="ar"><label>학생</label><select id="acS">${Object.entries(S).map(([c,s])=>`<option value="${c}">${s.name} (${c})</option>`).join('')}</select><label>날짜</label><input type="date" id="acD" value="${td}"><label>kcal</label><input type="number" id="acK" placeholder="소모 kcal" style="width:100px"><button class="ab ab-b" onclick="aSC()">저장</button></div><table class="at" style="margin-top:12px;"><tr><th>학생</th><th>날짜</th><th>kcal</th><th>등록시간</th></tr>${rows.slice(0,15).map(r=>`<tr><td>${r.name}</td><td>${r.date}</td><td>${r.kcal}</td><td style="font-size:10px;color:var(--muted);">${r.timestamp}</td></tr>`).join('')}</table>`;}
-function aSC(){const c=document.getElementById('acS').value,d=document.getElementById('acD').value,k=parseInt(document.getElementById('acK').value);if(!k||k<0){toast('kcal 입력','err');return;}const ts=new Date().toLocaleString('ko-KR');const data=lG('pa_center_exercise',{});if(!data[c])data[c]=[];data[c].push({date:d,kcal:k,timestamp:ts});lS('pa_center_exercise',data);toast(`${S[c].name} — ${d} ${k}kcal 저장`);rAB();}
+function aSC(){const c=arStu,d=arDate,k=parseInt(document.getElementById('acK').value);if(!k||k<0){toast('kcal 입력','err');return;}const ts=new Date().toLocaleString('ko-KR');const data=lG('pa_center_exercise',{});if(!data[c])data[c]=[];data[c].push({date:d,kcal:k,timestamp:ts});lS('pa_center_exercise',data);document.getElementById('acK').value='';toast(`${S[c].name} — ${d} 센터 ${k}kcal 저장`);rAB();}
 
 function aCo(){const codes=lG('pa_codes_c',{});return`<h3 style="font-size:14px;margin-bottom:14px;">입장 코드 관리</h3><div class="ar"><label>코드</label><input id="ncC" placeholder="코드명"><label>이름</label><input id="ncN" placeholder="사용자명"><label>만료(일)</label><input type="number" id="ncD" value="3" style="width:60px"><button class="ab ab-b" onclick="aAC()">발급</button></div><table class="at" style="margin-top:12px;"><tr><th>코드</th><th>이름</th><th>만료일</th><th>상태</th><th></th></tr>${Object.entries(codes).map(([c,info])=>{const exp=new Date(info.e);const ok=exp>new Date();return`<tr><td>${c}</td><td>${info.n}</td><td>${exp.toLocaleDateString('ko-KR')}</td><td style="color:${ok?'var(--green)':'var(--orange)'}">${ok?'유효':'만료'}</td><td><button class="ab ab-r" onclick="aDC('${c}')">삭제</button></td></tr>`;}).join('')}</table>`;}
 function aAC(){const c=document.getElementById('ncC').value.trim().toUpperCase(),n=document.getElementById('ncN').value.trim(),d=parseInt(document.getElementById('ncD').value)||3;if(!c||!n){toast('코드·이름 입력','err');return;}const codes=lG('pa_codes_c',{});codes[c]={n,e:mkE(d)};lS('pa_codes_c',codes);toast('코드 발급');rAB();}
@@ -1024,21 +1024,27 @@ function aEditH(c){const nv=prompt(`${S[c].name} 키 수정 (현재: ${S[c].h}cm
 /* ===== B. 관리자 학생 기록 수정 ===== */
 let arStu=Object.keys(S)[0],arDate=new Date().toISOString().split('T')[0];
 function aRec(){
+const td=new Date().toISOString().split('T')[0];
+const ceLogs=(lG('pa_center_exercise',{})[arStu]||[]).filter(r=>r.date===arDate);
+const ceTotal=ceLogs.reduce((a,r)=>a+r.kcal,0);
 return`<h3 style="font-size:14px;margin-bottom:14px;">📊 학생 칼로리 기록 관리</h3>
 <div class="ar"><label>학생</label><select id="arS" onchange="arStu=this.value;rAB();">${Object.entries(S).map(([c,s])=>`<option value="${c}"${c===arStu?' selected':''}>${s.name} (${c})</option>`).join('')}</select>
 <label>날짜</label><input type="date" id="arD" value="${arDate}" onchange="arDate=this.value;rAB();"></div>
-<div style="display:flex;gap:12px;margin-bottom:14px;">
-<div style="flex:1;">
+<div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+<div style="flex:1;min-width:250px;">
 <div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:8px;">🍽 섭취 칼로리</div>
 <div class="ar"><label>구분</label><select id="arIL"><option>아침</option><option>점심</option><option>저녁</option><option>간식</option></select><label>kcal</label><input type="number" id="arIK" placeholder="kcal" style="width:80px"><button class="ab ab-b" onclick="arAddI()">등록</button></div>
 ${((lG('pa_student_intake',{})[arStu]||[]).filter(r=>r.date===arDate)).map((r,i)=>`<div class="a-rec-card"><div class="a-rec-hd"><span class="a-pill a-pill-i">${r.label}</span><span class="a-rec-date">${r.timestamp} ${byBadge(r.by)}</span></div><div style="font-size:14px;font-weight:900;">${r.kcal} kcal</div><div style="margin-top:6px;display:flex;gap:4px;"><button class="ab ab-b" style="font-size:10px;padding:4px 10px;" onclick="arEditI(${i})">수정</button><button class="ab ab-r" style="font-size:10px;padding:4px 10px;" onclick="arDelI(${i})">삭제</button></div></div>`).join('')||'<p style="font-size:11px;color:var(--muted);">기록 없음</p>'}
 </div>
-<div style="flex:1;">
-<div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;">🏋️ 운동 소모</div>
+<div style="flex:1;min-width:250px;">
+<div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;">🏋️ 운동 소모 (개인 + 센터)</div>
 <div class="ar"><label>kcal</label><input type="number" id="arEK" placeholder="kcal" style="width:80px"><button class="ab ab-b" onclick="arAddE()">등록</button></div>
 ${((lG('pa_student_exercise',{})[arStu]||[]).filter(r=>r.date===arDate)).map((r,i)=>`<div class="a-rec-card"><div class="a-rec-hd"><span class="a-pill a-pill-e">${i+1}회차</span><span class="a-rec-date">${r.timestamp} ${byBadge(r.by)}</span></div><div style="font-size:14px;font-weight:900;">${r.kcal} kcal</div><div style="margin-top:6px;display:flex;gap:4px;"><button class="ab ab-b" style="font-size:10px;padding:4px 10px;" onclick="arEditE(${i})">수정</button><button class="ab ab-r" style="font-size:10px;padding:4px 10px;" onclick="arDelE(${i})">삭제</button></div></div>`).join('')||'<p style="font-size:11px;color:var(--muted);">기록 없음</p>'}
+<div style="margin-top:10px;padding:10px;background:rgba(100,160,200,.06);border:1px solid rgba(100,160,200,.12);border-radius:8px;">
+<div style="font-size:10px;font-weight:700;color:var(--accent);margin-bottom:6px;">🏋️ 센터 운동 소모 칼로리</div>
+<div class="ar"><label>kcal</label><input type="number" id="acK" placeholder="센터 운동 kcal" style="width:100px"><button class="ab ab-b" style="font-size:10px;" onclick="aSC()">센터 등록</button></div>
+${ceTotal>0?`<div style="font-size:11px;color:var(--accent);font-weight:700;">센터 합계: ${ceTotal} kcal${ceLogs.map(r=>`<span style="font-size:9px;color:var(--muted);margin-left:4px;">(${r.timestamp})</span>`).join('')}</div>`:''}</div>
 </div></div>`;}
-
 function arAddI(){const l=document.getElementById('arIL').value,k=parseInt(document.getElementById('arIK').value);if(!k||k<0){toast('kcal 입력','err');return;}const ts=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});const d=lG('pa_student_intake',{});if(!d[arStu])d[arStu]=[];d[arStu].push({date:arDate,label:l,kcal:k,timestamp:ts,by:'admin'});lS('pa_student_intake',d);document.getElementById('arIK').value='';toast(`${S[arStu].name} ${l} ${k}kcal 등록`);rAB();}
 function arEditI(idx){const d=lG('pa_student_intake',{});const logs=(d[arStu]||[]).filter(r=>r.date===arDate);if(!logs[idx])return;const nv=prompt(`수정 (현재: ${logs[idx].kcal})`,logs[idx].kcal);if(nv===null)return;const n=parseInt(nv);if(!n||n<0){toast('올바른 값','err');return;}let ct=-1;for(let i=0;i<d[arStu].length;i++){if(d[arStu][i].date===arDate){ct++;if(ct===idx){d[arStu][i].kcal=n;d[arStu][i].timestamp+='(관리자수정)';d[arStu][i].by='admin';break;}}}lS('pa_student_intake',d);toast('수정 완료');rAB();}
 function arDelI(idx){if(!confirm('삭제?'))return;const d=lG('pa_student_intake',{});let ct=-1;for(let i=0;i<d[arStu].length;i++){if(d[arStu][i].date===arDate){ct++;if(ct===idx){d[arStu].splice(i,1);break;}}}lS('pa_student_intake',d);toast('삭제');rAB();}
@@ -1083,21 +1089,28 @@ function adReset(){if(!confirm(`${S[adStu].name} 식단을 기본으로 복원?`
 
 /* ===== D-2. 학생 관리 (추가/삭제) ===== */
 function aStuMgr(){
-return`<h3 style="font-size:14px;margin-bottom:14px;">👥 학생 추가 / 관리</h3>
-<div class="ar"><label>코드</label><input id="nsCode" placeholder="예: ABC012" style="width:100px" maxlength="10"></div>
-<div class="ar"><label>이름</label><input id="nsName" placeholder="이름"><label>나이</label><input type="number" id="nsAge" value="17" style="width:60px"><label>성별</label><select id="nsG"><option value="여">여</option><option value="남">남</option></select></div>
-<div class="ar"><label>키(cm)</label><input type="number" id="nsH" placeholder="160" style="width:70px"><label>몸무게</label><input type="number" step="0.1" id="nsW" placeholder="55" style="width:70px"></div>
-<div class="ar"><label>목표</label><select id="nsGoal"><option value="체중감량">체중감량</option><option value="근육증가">근육증가</option><option value="증량+근육">증량+근육</option></select><label>목표kcal</label><input type="number" id="nsTar" placeholder="자동(빈칸)" style="width:100px"></div>
-<button class="ab ab-b" onclick="addStu()" style="margin-bottom:16px;">학생 추가</button>
+const wData=lG('pa_weights',{});
+return`<h3 style="font-size:14px;margin-bottom:14px;">👥 학생 관리</h3>
 
-<div style="font-size:12px;font-weight:700;margin-bottom:10px;">📊 학생별 칼로리 비율 조절</div>
-<p style="font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.6;">감량 비율을 조절하면 TDEE 대비 목표 칼로리가 변경됩니다.<br>예: 감량 80% → TDEE의 80%가 목표 칼로리 (더 공격적 감량)<br>예: 증량 115% → TDEE의 115%가 목표 칼로리</p>
-<table class="at"><tr><th>코드</th><th>이름</th><th>TDEE</th><th>비율</th><th>목표kcal</th><th>목표</th><th>조절</th><th></th></tr>
+<div style="border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;background:rgba(100,160,200,.04);">
+<div style="font-size:12px;font-weight:700;margin-bottom:10px;">➕ 학생 직접 추가</div>
+<div class="ar"><label>코드</label><input id="nsCode" placeholder="예: ABC012" style="width:100px" maxlength="10"><label>이름</label><input id="nsName" placeholder="이름"></div>
+<div class="ar"><label>나이</label><input type="number" id="nsAge" value="17" style="width:55px"><label>성별</label><select id="nsG" style="width:55px"><option value="여">여</option><option value="남">남</option></select><label>키</label><input type="number" id="nsH" placeholder="160" style="width:65px"><label>몸무게</label><input type="number" step="0.1" id="nsW" placeholder="55" style="width:65px"></div>
+<div class="ar"><label>목표</label><select id="nsGoal"><option value="체중감량">체중감량</option><option value="근육증가">근육증가</option><option value="증량+근육">증량+근육</option></select><label>kcal</label><input type="number" id="nsTar" placeholder="자동" style="width:80px"><button class="ab ab-b" onclick="addStu()">추가</button></div>
+<p style="font-size:9px;color:var(--muted);">※ 대기 관리에서 승인하면 자동 추가됩니다. 여기서는 직접 수동 추가할 때 사용.</p>
+</div>
+
+<div style="font-size:12px;font-weight:700;margin-bottom:6px;">⚖ 신체 정보 · 칼로리 비율 조절</div>
+<div class="ar"><label>학생</label><select id="awS">${Object.entries(S).map(([c,s])=>`<option value="${c}">${s.name} (${c})</option>`).join('')}</select><label>키</label><input type="number" step="0.1" id="awH" placeholder="cm" style="width:65px"><button class="ab ab-b" onclick="aAH()" style="font-size:10px;">키수정</button><label>몸무게</label><input type="number" step="0.1" id="awV" placeholder="kg" style="width:65px"><button class="ab ab-b" onclick="aAW()" style="font-size:10px;">추가</button></div>
+<p style="font-size:9px;color:var(--muted);margin-bottom:12px;">키/몸무게 변경 시 BMR·TDEE·목표kcal·식단이 자동으로 재계산됩니다.</p>
+
+<div style="overflow-x:auto;"><table class="at"><tr><th>코드</th><th>이름</th><th>키</th><th>몸무게</th><th>BMR</th><th>TDEE</th><th>비율</th><th>목표kcal</th><th>목표</th><th>비율조절</th><th></th></tr>
 ${Object.entries(S).map(([c,s])=>{
 const ratio=s.tar&&s.tdee?Math.round(s.tar/s.tdee*100):85;
-return`<tr><td>${c}</td><td>${s.name}</td><td>${s.tdee}</td><td style="color:var(--accent);font-weight:900;">${ratio}%</td><td style="color:var(--orange);font-weight:900;">${s.tar}</td><td>${s.goal}</td><td><select onchange="adjRatio('${c}',this.value)" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:11px;width:70px;"><option value="70"${ratio<=72?' selected':''}>70%</option><option value="75"${ratio>72&&ratio<=77?' selected':''}>75%</option><option value="80"${ratio>77&&ratio<=82?' selected':''}>80%</option><option value="85"${ratio>82&&ratio<=87?' selected':''}>85%</option><option value="90"${ratio>87&&ratio<=92?' selected':''}>90%</option><option value="95"${ratio>92&&ratio<=97?' selected':''}>95%</option><option value="100"${ratio>97&&ratio<=102?' selected':''}>100%</option><option value="105"${ratio>102&&ratio<=107?' selected':''}>105%</option><option value="110"${ratio>107&&ratio<=112?' selected':''}>110%</option><option value="115"${ratio>112&&ratio<=117?' selected':''}>115%</option><option value="120"${ratio>117?' selected':''}>120%</option></select></td><td><button class="ab ab-r" onclick="delStu('${c}')">삭제</button></td></tr>`;
-}).join('')}</table>`;}
-
+const ws=(wData[c])||s.wts;
+const latestW=ws[ws.length-1];
+return`<tr><td style="font-size:10px;">${c}</td><td>${s.name}</td><td>${s.h}<button class="ab" style="font-size:8px;padding:1px 4px;margin-left:2px;color:var(--accent);border:1px solid rgba(100,160,200,.2);" onclick="aEditH('${c}')">✎</button></td><td>${latestW}kg<span style="font-size:9px;color:var(--muted);"> (${ws.length}회)</span></td><td style="font-size:10px;">${s.bmr}</td><td style="font-size:10px;">${s.tdee}</td><td style="color:var(--accent);font-weight:900;">${ratio}%</td><td style="color:var(--orange);font-weight:900;">${s.tar}</td><td style="font-size:10px;">${s.goal}</td><td><select onchange="adjRatio('${c}',this.value)" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:2px 4px;border-radius:5px;font-size:10px;width:60px;"><option value="70"${ratio<=72?' selected':''}>70%</option><option value="75"${ratio>72&&ratio<=77?' selected':''}>75%</option><option value="80"${ratio>77&&ratio<=82?' selected':''}>80%</option><option value="85"${ratio>82&&ratio<=87?' selected':''}>85%</option><option value="90"${ratio>87&&ratio<=92?' selected':''}>90%</option><option value="95"${ratio>92&&ratio<=97?' selected':''}>95%</option><option value="100"${ratio>97&&ratio<=102?' selected':''}>100%</option><option value="105"${ratio>102&&ratio<=107?' selected':''}>105%</option><option value="110"${ratio>107&&ratio<=112?' selected':''}>110%</option><option value="115"${ratio>112&&ratio<=117?' selected':''}>115%</option><option value="120"${ratio>117?' selected':''}>120%</option></select></td><td><button class="ab ab-r" style="font-size:9px;" onclick="delStu('${c}')">삭제</button></td></tr>`;
+}).join('')}</table></div>`;}
 function adjRatio(c,pct){
 const s=S[c];if(!s)return;
 const ratio=parseInt(pct)/100;
