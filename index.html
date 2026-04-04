@@ -535,6 +535,36 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 <div id="btResult" class="bt-result"></div>
 </div>
 
+<div class="bt-scan" style="margin-bottom:20px;">
+<div class="bt-scan-title">📋 셀프 체형 진단 체크리스트</div>
+<div class="bt-scan-desc">줄자 측정 + 10문항 체크로 직접 체형을 판단할 수 있습니다</div>
+
+<details style="margin-top:12px;"><summary style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;padding:10px 0;">📏 STEP 1. 줄자 측정 (7부위)</summary>
+<div style="padding:12px;background:rgba(255,255,255,.02);border-radius:10px;margin-top:6px;">
+<p style="font-size:10px;color:var(--muted);margin-bottom:10px;">얇은 옷 또는 맨살 측정 · 2인 1조 권장 · cm 단위</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+<div class="ar" style="margin:0;"><label style="min-width:55px;font-size:10px;">①어깨너비</label><input type="number" step="0.1" id="selfM1" placeholder="cm" style="width:65px;"></div>
+<div class="ar" style="margin:0;"><label style="min-width:55px;font-size:10px;">②가슴둘레</label><input type="number" step="0.1" id="selfM2" placeholder="cm" style="width:65px;"></div>
+<div class="ar" style="margin:0;"><label style="min-width:55px;font-size:10px;">③허리둘레</label><input type="number" step="0.1" id="selfM3" placeholder="cm" style="width:65px;"></div>
+<div class="ar" style="margin:0;"><label style="min-width:55px;font-size:10px;">④골반둘레</label><input type="number" step="0.1" id="selfM4" placeholder="cm" style="width:65px;"></div>
+<div class="ar" style="margin:0;"><label style="min-width:55px;font-size:10px;">⑤손목둘레</label><input type="number" step="0.1" id="selfM5" placeholder="cm" style="width:65px;"></div>
+<div class="ar" style="margin:0;"><label style="min-width:55px;font-size:10px;">⑥무릎둘레</label><input type="number" step="0.1" id="selfM6" placeholder="cm" style="width:65px;"></div>
+<div class="ar" style="margin:0;"><label style="min-width:55px;font-size:10px;">⑦발목둘레</label><input type="number" step="0.1" id="selfM7" placeholder="cm" style="width:65px;"></div>
+</div>
+<div id="selfRatio" style="margin-top:8px;font-size:10px;color:var(--muted);"></div>
+</div></details>
+
+<details style="margin-top:8px;"><summary style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;padding:10px 0;">👁 STEP 2. 시진/촉진 10문항</summary>
+<div style="padding:12px;background:rgba(255,255,255,.02);border-radius:10px;margin-top:6px;font-size:10px;" id="selfStep2">
+</div></details>
+
+<details style="margin-top:8px;"><summary style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;padding:10px 0;">🔍 STEP 3. 결과 확인</summary>
+<div style="padding:12px;background:rgba(255,255,255,.02);border-radius:10px;margin-top:6px;">
+<button class="bt-scan-btn cam" onclick="selfCalcResult()" style="width:100%;margin-bottom:8px;">🤖 자동 판정하기</button>
+<div id="selfResult" style="font-size:12px;"></div>
+</div></details>
+</div>
+
 <div style="font-size:12px;font-weight:700;margin-bottom:12px;color:var(--muted);letter-spacing:.1em;">6가지 골격 타입</div>
 <div class="bt-grid" id="btGrid"></div>
 
@@ -784,7 +814,7 @@ const firebaseConfig={apiKey:"AIzaSyCICKJ00FCnb780oQ9_mZTgszG0FL64eFU",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const _cache={};let _fsReady=false;
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody'];
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses'];
 async function fsInit(){
   try{const snap=await db.collection('pa_data').get();
   snap.forEach(doc=>{_cache[doc.id]=doc.data().value;});
@@ -1267,21 +1297,56 @@ ${[70,75,80,85,90,95,100,105,110,115,120].map(v=>`<button onclick="adjRatio('${c
 </div>
 
 <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;">
-<div style="font-size:11px;font-weight:700;margin-bottom:10px;">🦴 골격 체형</div>
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-${btype?`<div style="width:10px;height:10px;border-radius:50%;background:${btype.color};"></div><div style="font-size:14px;font-weight:900;color:${btype.color};">${btype.name}</div><div style="font-size:10px;padding:3px 8px;border-radius:6px;background:${btype.color}15;color:${btype.color};">${btype.parent}</div>`:`<div style="font-size:12px;color:var(--muted);">미설정</div>`}
+<div style="font-size:13px;font-weight:900;margin-bottom:12px;">🦴 골격 체형 진단</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+${btype?`<div style="width:10px;height:10px;border-radius:50%;background:${btype.color};"></div><div style="font-size:16px;font-weight:900;color:${btype.color};">${btype.name}</div><div style="font-size:10px;padding:3px 8px;border-radius:6px;background:${btype.color}15;color:${btype.color};">${btype.parent}</div>`:`<div style="font-size:12px;color:var(--muted);">미설정 — 아래 체크리스트로 진단하세요</div>`}
 </div>
 
-${(m.shoulder||m.waist||m.hip||m.wrist)?`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">
-${m.shoulder?`<div style="text-align:center;padding:6px;background:rgba(255,255,255,.03);border-radius:6px;font-size:10px;"><span style="color:var(--muted);">어깨</span><br><strong>${m.shoulder}cm</strong></div>`:''}
-${m.waist?`<div style="text-align:center;padding:6px;background:rgba(255,255,255,.03);border-radius:6px;font-size:10px;"><span style="color:var(--muted);">허리</span><br><strong>${m.waist}cm</strong></div>`:''}
-${m.hip?`<div style="text-align:center;padding:6px;background:rgba(255,255,255,.03);border-radius:6px;font-size:10px;"><span style="color:var(--muted);">골반</span><br><strong>${m.hip}cm</strong></div>`:''}
-${m.wrist?`<div style="text-align:center;padding:6px;background:rgba(255,255,255,.03);border-radius:6px;font-size:10px;"><span style="color:var(--muted);">손목</span><br><strong>${m.wrist}cm</strong></div>`:''}
-</div>`:''}
+<details style="margin-bottom:12px;"><summary style="font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;padding:8px 0;">📏 STEP 1. 줄자 측정 (7부위)</summary>
+<div style="padding:10px;background:rgba(255,255,255,.02);border-radius:8px;margin-top:6px;">
+<p style="font-size:9px;color:var(--muted);margin-bottom:8px;">얇은 옷 또는 맨살 / 2인 1조 권장</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+<div class="ar" style="margin:0;"><label style="min-width:50px;font-size:10px;">어깨너비</label><input type="number" step="0.1" id="btM1" placeholder="cm" style="width:60px;font-size:11px;" value="${m.shoulder||''}"></div>
+<div class="ar" style="margin:0;"><label style="min-width:50px;font-size:10px;">가슴둘레</label><input type="number" step="0.1" id="btM2" placeholder="cm" style="width:60px;font-size:11px;" value="${m.chest||''}"></div>
+<div class="ar" style="margin:0;"><label style="min-width:50px;font-size:10px;">허리둘레</label><input type="number" step="0.1" id="btM3" placeholder="cm" style="width:60px;font-size:11px;" value="${m.waist||''}"></div>
+<div class="ar" style="margin:0;"><label style="min-width:50px;font-size:10px;">골반둘레</label><input type="number" step="0.1" id="btM4" placeholder="cm" style="width:60px;font-size:11px;" value="${m.hip||''}"></div>
+<div class="ar" style="margin:0;"><label style="min-width:50px;font-size:10px;">손목둘레</label><input type="number" step="0.1" id="btM5" placeholder="cm" style="width:60px;font-size:11px;" value="${m.wrist||''}"></div>
+<div class="ar" style="margin:0;"><label style="min-width:50px;font-size:10px;">무릎둘레</label><input type="number" step="0.1" id="btM6" placeholder="cm" style="width:60px;font-size:11px;" value="${m.knee||''}"></div>
+<div class="ar" style="margin:0;"><label style="min-width:50px;font-size:10px;">발목둘레</label><input type="number" step="0.1" id="btM7" placeholder="cm" style="width:60px;font-size:11px;" value="${m.ankle||''}"></div>
+</div>
+${m.shoulder&&m.hip?`<div style="font-size:10px;margin-top:8px;padding:6px 10px;background:rgba(100,160,200,.08);border-radius:6px;color:var(--accent);">어깨÷골반 = <strong>${(m.shoulder/m.hip).toFixed(2)}</strong> (>1.0 역삼각 | ≈1.0 직사각 | <1.0 삼각)</div>`:''}
+</div></details>
 
-<div class="ar"><label>타입</label><select id="btType"><option value="">미설정</option>${BODY_TYPES.map(t=>`<option value="${t.id}"${bt?.type===t.id?' selected':''}>${t.name} (${t.parent})</option>`).join('')}</select></div>
-<div class="ar"><label>어깨</label><input type="number" step="0.1" id="btShoulder" placeholder="cm" style="width:65px" value="${m.shoulder||''}"><label>허리</label><input type="number" step="0.1" id="btWaist" placeholder="cm" style="width:65px" value="${m.waist||''}"><label>골반</label><input type="number" step="0.1" id="btHip" placeholder="cm" style="width:65px" value="${m.hip||''}"><label>손목</label><input type="number" step="0.1" id="btWrist" placeholder="cm" style="width:55px" value="${m.wrist||''}">
-<button class="ab ab-b" onclick="smSaveBT('${c}')">저장</button></div>
+<details style="margin-bottom:12px;"><summary style="font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;padding:8px 0;">👁 STEP 2. 시진/촉진 10문항 (A=스트레이트 B=웨이브 C=내추럴)</summary>
+<div style="padding:10px;background:rgba(255,255,255,.02);border-radius:8px;margin-top:6px;font-size:10px;">
+${[
+{q:'Q1. 전체 인상',a:'두께감 있고 육감적',b:'평면적이고 얇음',c:'골격/프레임 눈에 띔'},
+{q:'Q2. 손 크기',a:'신장 대비 작음',b:'밸런스',c:'신장 대비 큼'},
+{q:'Q3. 손가락 관절',a:'작고 매끈',b:'보통',c:'크고 울퉁불퉁'},
+{q:'Q4. 손목 형태',a:'가늘고 둥근형',b:'너비 있고 납작형',c:'손목뼈 돌출'},
+{q:'Q5. 손등',a:'두께감·탄탄',b:'얇고 부드러움',c:'힘줄 눈에 띔'},
+{q:'Q6. 목 길이',a:'짧은 편',b:'긴 편',c:'뼈/관절 눈에 띔'},
+{q:'Q7. 쇄골 형태',a:'거의 안 보임',b:'가냘프게 보임',c:'크고 돌출'},
+{q:'Q8. 무릎뼈',a:'작고 매끈',b:'보통',c:'크고 뚜렷'},
+{q:'Q9. 피부 질감',a:'탄력·팽팽',b:'폭신·부드러움',c:'두껍고 드라이'},
+{q:'Q10. 신발 사이즈',a:'신장 대비 작음',b:'밸런스',c:'신장 대비 큼'}
+].map((item,i)=>`<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+<div style="font-weight:700;margin-bottom:4px;color:var(--text);">${item.q}</div>
+<div style="display:flex;gap:4px;">
+<label style="flex:1;padding:5px 6px;border-radius:6px;background:rgba(255,255,255,.03);cursor:pointer;text-align:center;"><input type="radio" name="sq${i}" value="A" style="margin-right:3px;" ${bt?.checklist?.[i]==='A'?'checked':''}><span style="color:#FF6B6B;">A</span> ${item.a}</label>
+<label style="flex:1;padding:5px 6px;border-radius:6px;background:rgba(255,255,255,.03);cursor:pointer;text-align:center;"><input type="radio" name="sq${i}" value="B" style="margin-right:3px;" ${bt?.checklist?.[i]==='B'?'checked':''}><span style="color:#8B7BF7;">B</span> ${item.b}</label>
+<label style="flex:1;padding:5px 6px;border-radius:6px;background:rgba(255,255,255,.03);cursor:pointer;text-align:center;"><input type="radio" name="sq${i}" value="C" style="margin-right:3px;" ${bt?.checklist?.[i]==='C'?'checked':''}><span style="color:#2EC4B6;">C</span> ${item.c}</label>
+</div></div>`).join('')}
+<button class="ab ab-b" onclick="calcStep2('${c}')" style="margin-top:8px;width:100%;">STEP 2 결과 계산</button>
+<div id="step2Result_${c}" style="margin-top:6px;font-size:11px;"></div>
+</div></details>
+
+<details style="margin-bottom:12px;"><summary style="font-size:11px;font-weight:700;color:var(--accent);cursor:pointer;padding:8px 0;">🔍 STEP 3. 6타입 세분화 + 최종 판정</summary>
+<div style="padding:10px;background:rgba(255,255,255,.02);border-radius:8px;margin-top:6px;">
+<div class="ar"><label style="font-size:10px;">최종 타입</label><select id="btType"><option value="">자동판정 또는 직접 선택</option>${BODY_TYPES.map(t=>`<option value="${t.id}"${bt?.type===t.id?' selected':''}>${t.name} (${t.parent})</option>`).join('')}</select></div>
+<button class="ab ab-b" onclick="autoJudge('${c}')" style="margin-bottom:8px;font-size:10px;">🤖 STEP 1+2 기반 자동 판정</button>
+<button class="ab ab-b" onclick="smSaveBT('${c}')" style="font-size:10px;">💾 체형 저장</button>
+</div></details>
 </div>
 
 ${ib?`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;">
@@ -1295,20 +1360,123 @@ ${ib.bmi?`<div style="text-align:center;padding:6px;background:rgba(255,255,255,
 ${ib.score?`<div style="text-align:center;padding:6px;background:rgba(255,255,255,.03);border-radius:6px;"><span style="color:var(--muted);">점수</span><br><strong>${ib.score}</strong></div>`:''}
 </div>
 ${ib.analysis?`<div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.6;">💡 ${ib.analysis}</div>`:''}
-</div>`:''}`;}
+</div>`:''}
+
+${(function(){const analyses=lG('pa_body_analyses',{})[c]||[];if(!analyses.length)return'';const latest=analyses[0];const at=BODY_TYPES.find(x=>x.id===latest.type);return`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;">
+<div style="font-size:11px;font-weight:700;margin-bottom:8px;">🤖 AI 체형 분석 기록 (${analyses.length}건)</div>
+<div style="padding:10px;background:rgba(255,255,255,.02);border-radius:8px;margin-bottom:8px;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+<div style="font-size:13px;font-weight:900;color:${at?.color||'#fff'};">${latest.typeName}</div>
+<div style="font-size:10px;padding:2px 6px;border-radius:4px;background:${at?.color||'#64A0C8'}15;color:${at?.color||'#64A0C8'};">${latest.parentType} · ${latest.confidence}%</div>
+<div style="font-size:9px;color:var(--muted);margin-left:auto;">${latest.date}</div>
+</div>
+<div style="font-size:10px;color:var(--muted);line-height:1.6;">${latest.analysis}</div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:6px;font-size:9px;">
+<div style="text-align:center;padding:3px;background:rgba(255,255,255,.03);border-radius:4px;">어깨<br><strong>${latest.features?.shoulderWidth||'-'}</strong></div>
+<div style="text-align:center;padding:3px;background:rgba(255,255,255,.03);border-radius:4px;">골반<br><strong>${latest.features?.hipWidth||'-'}</strong></div>
+<div style="text-align:center;padding:3px;background:rgba(255,255,255,.03);border-radius:4px;">허리<br><strong>${latest.features?.waistDef||'-'}</strong></div>
+<div style="text-align:center;padding:3px;background:rgba(255,255,255,.03);border-radius:4px;">상체<br><strong>${latest.features?.upperBody||'-'}</strong></div>
+<div style="text-align:center;padding:3px;background:rgba(255,255,255,.03);border-radius:4px;">하체<br><strong>${latest.features?.lowerBody||'-'}</strong></div>
+<div style="text-align:center;padding:3px;background:rgba(255,255,255,.03);border-radius:4px;">골격<br><strong>${latest.features?.frame||'-'}</strong></div>
+</div>
+${latest.recommendation?`<div style="font-size:10px;color:var(--accent);margin-top:6px;">💡 ${latest.recommendation}</div>`:''}
+</div>
+${analyses.length>1?`<details><summary style="font-size:9px;color:var(--muted);cursor:pointer;">이전 분석 ${analyses.length-1}건 보기</summary>
+${analyses.slice(1).map(a=>`<div style="padding:6px;border-bottom:1px solid rgba(255,255,255,.04);font-size:9px;color:var(--muted);">${a.date} — ${a.typeName} (${a.parentType}, ${a.confidence}%) ${a.analysis?.slice(0,40)}...</div>`).join('')}
+</details>`:''}
+</div>`;})()}`;}
 
 function smSaveBT(code){
 const typeId=document.getElementById('btType').value;
-if(!typeId){toast('체형 타입을 선택하세요','err');return;}
+if(!typeId){toast('체형 타입을 선택하세요 (직접 선택 또는 자동판정)','err');return;}
 const m={
-shoulder:parseFloat(document.getElementById('btShoulder').value)||0,
-waist:parseFloat(document.getElementById('btWaist').value)||0,
-hip:parseFloat(document.getElementById('btHip').value)||0,
-wrist:parseFloat(document.getElementById('btWrist').value)||0
+shoulder:parseFloat(document.getElementById('btM1')?.value)||0,
+chest:parseFloat(document.getElementById('btM2')?.value)||0,
+waist:parseFloat(document.getElementById('btM3')?.value)||0,
+hip:parseFloat(document.getElementById('btM4')?.value)||0,
+wrist:parseFloat(document.getElementById('btM5')?.value)||0,
+knee:parseFloat(document.getElementById('btM6')?.value)||0,
+ankle:parseFloat(document.getElementById('btM7')?.value)||0
 };
-setStudentBodyType(code,typeId,m);
+/* 10문항 체크리스트 저장 */
+const checklist=[];
+for(let i=0;i<10;i++){const r=document.querySelector(`input[name="sq${i}"]:checked`);checklist.push(r?r.value:'');}
+const bt=lG('pa_body_types',{});
+bt[code]={type:typeId,measurements:m,checklist,updatedAt:new Date().toISOString()};
+lS('pa_body_types',bt);
 const t=BODY_TYPES.find(x=>x.id===typeId);
 toast(`${S[code]?.name} → ${t?.name||typeId} 체형 저장 완료`);rAB();
+}
+
+/* STEP 2 결과 계산 */
+function calcStep2(code){
+const counts={A:0,B:0,C:0};
+for(let i=0;i<10;i++){const r=document.querySelector(`input[name="sq${i}"]:checked`);if(r)counts[r.value]++;}
+const el=document.getElementById('step2Result_'+code);
+if(!el)return;
+const max=Math.max(counts.A,counts.B,counts.C);
+let result3='';
+if(counts.A===max)result3='스트레이트 (근육형)';
+else if(counts.B===max)result3='웨이브 (지방형)';
+else result3='내추럴 (골격형)';
+el.innerHTML=`<div style="padding:8px 12px;background:rgba(100,160,200,.08);border-radius:8px;">
+<strong>A(스트레이트)=${counts.A}</strong> / <strong>B(웨이브)=${counts.B}</strong> / <strong>C(내추럴)=${counts.C}</strong><br>
+→ <strong style="color:var(--orange);">${result3}</strong> — STEP 3에서 6타입 세분화하세요</div>`;
+}
+
+/* 자동 판정 (STEP 1 측정 + STEP 2 문항 기반) */
+function autoJudge(code){
+/* STEP 2: 3타입 판정 */
+const counts={A:0,B:0,C:0};
+for(let i=0;i<10;i++){const r=document.querySelector(`input[name="sq${i}"]:checked`);if(r)counts[r.value]++;}
+const total=counts.A+counts.B+counts.C;
+if(total<5){toast('STEP 2 문항을 5개 이상 체크해주세요','err');return;}
+
+const max=Math.max(counts.A,counts.B,counts.C);
+let parent3='';
+if(counts.A>=max)parent3='straight';
+if(counts.B>=max)parent3='wave';
+if(counts.C>=max)parent3='natural';
+
+/* STEP 1: 측정값으로 세분화 */
+const shoulder=parseFloat(document.getElementById('btM1')?.value)||0;
+const hip=parseFloat(document.getElementById('btM4')?.value)||0;
+const waist=parseFloat(document.getElementById('btM3')?.value)||0;
+const knee=parseFloat(document.getElementById('btM6')?.value)||0;
+const ankle=parseFloat(document.getElementById('btM7')?.value)||0;
+const shRatio=hip>0?shoulder/hip:0;
+
+let typeId='';
+if(parent3==='wave'){
+/* 삼각형 vs 다이아몬드: 무릎·발목 두께, 하체 볼륨 */
+let triScore=0,diaScore=0;
+if(knee>0&&knee>=37)triScore++;else if(knee>0)diaScore++;
+if(ankle>0&&ankle>=22)triScore++;else if(ankle>0)diaScore++;
+if(shRatio>0&&shRatio<0.85)triScore++;else diaScore++;
+typeId=triScore>=diaScore?'tri':'dia';
+}else if(parent3==='natural'){
+/* 역삼각형 vs 직사각형: 어깨÷골반 비율 */
+if(shRatio>1.0)typeId='inv';
+else if(shRatio>0)typeId='rec';
+else{
+/* 측정값 없으면 문항 기반 추정 */
+const q1=document.querySelector('input[name="sq0"]:checked')?.value;
+typeId=(q1==='C')?'inv':'rec';
+}
+}else{
+/* 하트형 vs 타원형: 허리 잘록함 */
+const chest=parseFloat(document.getElementById('btM2')?.value)||0;
+const waistDiff=hip>0&&waist>0?hip-waist:0;
+if(waistDiff>=10)typeId='heart';
+else if(waistDiff>0)typeId='oval';
+else{
+const q1=document.querySelector('input[name="sq0"]:checked')?.value;
+typeId=(q1==='A')?'heart':'oval';
+}
+}
+document.getElementById('btType').value=typeId;
+const t=BODY_TYPES.find(x=>x.id===typeId);
+toast(`자동 판정: ${t?.name} (${t?.parent}) — 확인 후 저장 버튼을 눌러주세요`);
 }function adjRatio(c,pct){
 const s=S[c];if(!s)return;
 const ratio=parseInt(pct)/100;
@@ -1863,6 +2031,124 @@ return JSON.parse(text.replace(/```json|```/g,'').trim());
 function initBodyPage(){
 const grid=document.getElementById('btGrid');if(!grid)return;
 grid.innerHTML=BODY_TYPES.map(t=>`<div class="bt-card" style="border-color:${t.color}33;" onclick="showBodyType('${t.id}')"><div class="bt-parent" style="background:${t.color}15;color:${t.color};">${t.parent}</div><div class="bt-name" style="color:${t.color};">${t.name}</div><div class="bt-desc">${t.desc.slice(0,30)}...</div></div>`).join('');
+/* 셀프 체크리스트 10문항 렌더 */
+renderSelfStep2();
+}
+
+const SELF_QS=[
+{q:'Q1. 전체 인상 (정면+측면)',a:'두께감 있고 육감적',b:'평면적이고 얇은 느낌',c:'골격/프레임이 눈에 띔'},
+{q:'Q2. 손 크기 (신장 대비)',a:'신장 대비 작음',b:'신장과 밸런스',c:'신장 대비 큼'},
+{q:'Q3. 손가락 관절',a:'작고 매끈 (반지가 쑥)',b:'보통',c:'크고 울퉁불퉁 (반지 걸림)'},
+{q:'Q4. 손목 형태',a:'가늘고 둥근형',b:'너비 있고 납작형',c:'손목뼈 확실히 돌출'},
+{q:'Q5. 손등',a:'두께감·탄탄',b:'얇고 부드러움',c:'힘줄이 눈에 띔'},
+{q:'Q6. 목 길이',a:'짧은 편',b:'긴 편',c:'뼈/관절이 눈에 띔'},
+{q:'Q7. 쇄골 형태',a:'거의 안 보임',b:'가냘프게 살짝 보임',c:'크고 확실히 돌출'},
+{q:'Q8. 무릎뼈 (슬개골)',a:'작고 매끈',b:'보통 크기',c:'크고 뚜렷'},
+{q:'Q9. 피부 질감 (상완 안쪽)',a:'탄력·팽팽',b:'폭신·부드러움',c:'두껍고 드라이'},
+{q:'Q10. 신발 사이즈 (신장 대비)',a:'신장 대비 작음',b:'밸런스',c:'신장 대비 큼'}
+];
+
+function renderSelfStep2(){
+const el=document.getElementById('selfStep2');if(!el)return;
+el.innerHTML=`<p style="font-size:10px;color:var(--muted);margin-bottom:8px;">A가 많으면 스트레이트(근육형) / B가 많으면 웨이브(지방형) / C가 많으면 내추럴(골격형)</p>`+
+SELF_QS.map((item,i)=>`<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+<div style="font-weight:700;margin-bottom:5px;color:var(--text);font-size:11px;">${item.q}</div>
+<div style="display:flex;gap:4px;flex-wrap:wrap;">
+<label style="flex:1;min-width:80px;padding:6px;border-radius:6px;background:rgba(255,107,107,.05);border:1px solid rgba(255,107,107,.15);cursor:pointer;text-align:center;font-size:10px;"><input type="radio" name="selfQ${i}" value="A" style="margin-right:2px;"><span style="color:#FF6B6B;font-weight:700;">A</span> ${item.a}</label>
+<label style="flex:1;min-width:80px;padding:6px;border-radius:6px;background:rgba(139,123,247,.05);border:1px solid rgba(139,123,247,.15);cursor:pointer;text-align:center;font-size:10px;"><input type="radio" name="selfQ${i}" value="B" style="margin-right:2px;"><span style="color:#8B7BF7;font-weight:700;">B</span> ${item.b}</label>
+<label style="flex:1;min-width:80px;padding:6px;border-radius:6px;background:rgba(46,196,182,.05);border:1px solid rgba(46,196,182,.15);cursor:pointer;text-align:center;font-size:10px;"><input type="radio" name="selfQ${i}" value="C" style="margin-right:2px;"><span style="color:#2EC4B6;font-weight:700;">C</span> ${item.c}</label>
+</div></div>`).join('');
+}
+
+function selfCalcResult(){
+/* STEP 2 집계 */
+const counts={A:0,B:0,C:0};
+for(let i=0;i<10;i++){const r=document.querySelector(`input[name="selfQ${i}"]:checked`);if(r)counts[r.value]++;}
+const total=counts.A+counts.B+counts.C;
+if(total<5){toast('10문항 중 최소 5개 이상 체크해주세요','err');return;}
+
+const max=Math.max(counts.A,counts.B,counts.C);
+let parent3='';
+if(counts.A>=max)parent3='straight';
+if(counts.B>=max)parent3='wave';
+if(counts.C>=max)parent3='natural';
+
+/* STEP 1 측정값 */
+const shoulder=parseFloat(document.getElementById('selfM1')?.value)||0;
+const chest=parseFloat(document.getElementById('selfM2')?.value)||0;
+const waist=parseFloat(document.getElementById('selfM3')?.value)||0;
+const hip=parseFloat(document.getElementById('selfM4')?.value)||0;
+const knee=parseFloat(document.getElementById('selfM6')?.value)||0;
+const ankle=parseFloat(document.getElementById('selfM7')?.value)||0;
+const shRatio=hip>0?shoulder/hip:0;
+
+/* 세분화 */
+let typeId='';
+if(parent3==='wave'){
+let tri=0,dia=0;
+if(knee>0&&knee>=37)tri++;else if(knee>0)dia++;
+if(ankle>0&&ankle>=22)tri++;else if(ankle>0)dia++;
+if(shRatio>0&&shRatio<0.85)tri++;else dia++;
+typeId=tri>=dia?'tri':'dia';
+}else if(parent3==='natural'){
+typeId=(shRatio>1.0)?'inv':'rec';
+}else{
+const waistDiff=hip>0&&waist>0?hip-waist:0;
+typeId=(waistDiff>=10)?'heart':'oval';
+}
+
+const t=BODY_TYPES.find(x=>x.id===typeId);
+const parent3Name={wave:'웨이브 (지방형)',natural:'내추럴 (골격형)',straight:'스트레이트 (근육형)'}[parent3];
+const el=document.getElementById('selfResult');
+el.innerHTML=`<div style="padding:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;">
+<div style="font-size:10px;color:var(--muted);margin-bottom:8px;">STEP 2 결과: A(스트레이트)=${counts.A} / B(웨이브)=${counts.B} / C(내추럴)=${counts.C} → <strong>${parent3Name}</strong></div>
+${shRatio>0?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px;">어깨÷골반 비율: <strong>${shRatio.toFixed(2)}</strong></div>`:''}
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+<div style="width:12px;height:12px;border-radius:50%;background:${t?.color||'#64A0C8'};"></div>
+<div style="font-size:20px;font-weight:900;color:${t?.color||'#fff'};">${t?.name||'판정 불가'}</div>
+<div style="font-size:10px;padding:3px 8px;border-radius:6px;background:${t?.color||'#64A0C8'}15;color:${t?.color||'#64A0C8'};">${t?.parent||''}</div>
+</div>
+<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px;">${t?.desc||''}</div>
+${t?`<button class="btnp" onclick="showBodyType('${t.id}')" style="width:100%;justify-content:center;">📋 ${t.name} 맞춤 운동 프로그램 보기</button>`:''}
+${LC?`<button style="width:100%;margin-top:8px;padding:10px;background:rgba(100,160,200,.1);color:var(--accent);font-size:11px;font-weight:700;border-radius:10px;border:1px solid rgba(100,160,200,.2);cursor:pointer;" onclick="saveSelfDiagnosis('${typeId}')">💾 내 체형으로 저장하기</button>`:''}
+</div>`;
+}
+
+/* 셀프 진단 결과 저장 (로그인 사용자) */
+function saveSelfDiagnosis(typeId){
+if(!LC||!S[LC]){toast('로그인 후 저장할 수 있습니다','err');return;}
+const m={
+shoulder:parseFloat(document.getElementById('selfM1')?.value)||0,
+chest:parseFloat(document.getElementById('selfM2')?.value)||0,
+waist:parseFloat(document.getElementById('selfM3')?.value)||0,
+hip:parseFloat(document.getElementById('selfM4')?.value)||0,
+wrist:parseFloat(document.getElementById('selfM5')?.value)||0,
+knee:parseFloat(document.getElementById('selfM6')?.value)||0,
+ankle:parseFloat(document.getElementById('selfM7')?.value)||0
+};
+const checklist=[];
+for(let i=0;i<10;i++){const r=document.querySelector(`input[name="selfQ${i}"]:checked`);checklist.push(r?r.value:'');}
+setStudentBodyType(LC,typeId,m);
+/* 체크리스트도 저장 */
+const bt=lG('pa_body_types',{});
+if(bt[LC])bt[LC].checklist=checklist;
+bt[LC].selfDiagnosis=true;
+lS('pa_body_types',bt);
+const t=BODY_TYPES.find(x=>x.id===typeId);
+toast(`${S[LC].name} → ${t?.name} 체형 저장 완료!`);
+}
+
+/* AI 분석 결과를 Firestore에 저장 */
+function saveAIAnalysis(code,result){
+const analyses=lG('pa_body_analyses',{});
+if(!analyses[code])analyses[code]=[];
+analyses[code].unshift({
+...result,
+date:new Date().toISOString().split('T')[0],
+timestamp:new Date().toISOString()
+});
+if(analyses[code].length>10)analyses[code]=analyses[code].slice(0,10);
+lS('pa_body_analyses',analyses);
 }
 
 function showBodyType(id,goalOverride){
@@ -2007,6 +2293,8 @@ function showBtResult(r){
 const el=document.getElementById('btResult');
 const t=BODY_TYPES.find(x=>x.id===r.type);
 const color=t?.color||'#64A0C8';
+/* AI 분석 결과 Firestore에 저장 (로그인 사용자) */
+if(LC)saveAIAnalysis(LC,r);
 el.className='bt-result on';
 el.innerHTML=`
 <div class="bt-result-type" style="color:${color};">${r.typeName}</div>
@@ -2022,6 +2310,7 @@ el.innerHTML=`
 </div>
 <div style="font-size:11px;color:var(--accent);line-height:1.7;padding:10px;background:rgba(100,160,200,.06);border-radius:8px;margin-bottom:12px;">💡 ${r.recommendation}</div>
 ${t?`<button class="btnp" onclick="showBodyType('${t.id}')" style="width:100%;justify-content:center;margin-top:4px;">📋 ${t.name} 맞춤 운동 프로그램 보기</button>`:''}
+${LC&&t?`<button style="width:100%;margin-top:8px;padding:10px;background:rgba(111,207,151,.1);color:var(--green);font-size:11px;font-weight:700;border-radius:10px;border:1px solid rgba(111,207,151,.2);cursor:pointer;" onclick="saveSelfDiagnosis('${t.id}')">💾 내 체형으로 저장 (${t.name})</button>`:''}
 <button style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,.05);color:var(--muted);font-size:12px;font-weight:700;border-radius:10px;border:1px solid rgba(255,255,255,.08);" onclick="document.getElementById('btResult').className='bt-result';document.getElementById('btPreview').style.display='none';btImgData=null;">다시 분석하기</button>`;
 }
 
