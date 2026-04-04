@@ -81,7 +81,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .smore{font-size:12px;color:var(--muted);border:1px solid rgba(255,255,255,.1);padding:7px 16px;border-radius:8px;transition:all .2s;cursor:pointer;}
 .smore:hover{color:var(--text);}
 .ng{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;}
-.nc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:21px 23px;transition:all .22s;position:relative;overflow:hidden;}
+.nc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:21px 23px;transition:all .22s;position:relative;overflow:hidden;cursor:pointer;max-height:160px;}
 .nc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);opacity:0;transition:opacity .2s;}
 .nc:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.3);}
 .nc:hover::before,.nc.pin::before{opacity:1;}
@@ -92,8 +92,12 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .tn{background:rgba(100,160,200,.15);color:var(--accent);}
 .ts{background:rgba(111,207,151,.15);color:var(--green);}
 .nt{font-size:15px;font-weight:700;margin-bottom:7px;line-height:1.4;}
-.nd{font-size:12px;color:var(--muted);line-height:1.65;}
+.nd{font-size:12px;color:var(--muted);line-height:1.65;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;}
 .ndt{font-size:10px;color:rgba(255,255,255,.18);margin-top:13px;}
+.nc-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:20px;}
+.nc-modal-bg.on{display:flex;}
+.nc-modal{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:28px 24px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;position:relative;}
+.nc-modal .nd{display:block;-webkit-line-clamp:unset;overflow:visible;white-space:pre-wrap;}
 .my-wrap{max-width:680px;margin:0 auto;padding:48px 24px 80px;position:relative;z-index:1;}
 .kcard{background:var(--card2);border:1px solid var(--border);border-radius:24px;padding:44px 36px;max-width:420px;margin:0 auto;text-align:center;}
 .kcard-ico{font-size:44px;margin-bottom:16px;}
@@ -742,7 +746,7 @@ const cs=lG('pa_custom_students',null)||{};cs[c]={...s};lS('pa_custom_students',
 const allS=lG('pa_students',{});allS[c]={...s};lS('pa_students',allS);
 }
 
-const NA=[{t:"tn",l:"📚 참고문헌",title:"운동 프로그램 · 식단 설계 참고 논문 및 학술 자료",desc:"[운동 처방] ACSM Guidelines for Exercise Testing and Prescription 12th Ed (2024) — FITT 원칙 기반 국제 표준 | ACSM Position Stand: Progression Models in Resistance Training (Med Sci Sports Exerc, 2009, PMID:19204579) — 근비대 6~12RM, 근력 1~6RM | ACSM Resistance Training Guidelines Update (2026) — 17년 만의 업데이트, 근비대 주당 10세트+ [유산소] ACSM Position Stand: Weight Loss Physical Activity (Med Sci Sports Exerc, 2009, PMID:19127177) — 감량 주 250분+ | Venables et al: Fat Oxidation Determinants, 300명 대상 (J Appl Physiol, 2005, PMID:15333616) — Fatmax=최대심박수 61.5%, BPM 125~140 근거 | Achten & Jeukendrup: Optimizing Fat Oxidation (Nutrition, 2004) — VO₂max 45~65%에서 지방연소 극대화 [세트·반복수] Schoenfeld et al: Repetition Continuum 재검토 (Sports, 2021, PMC7927075) | NSCA Essentials of Strength Training 4th Ed (2016) [성장기] NSCA Youth Resistance Training Position Statement (JSCR, 2009) | Lloyd et al: Long-Term Athletic Development (JSCR, 2016) [칼로리] Mifflin-St Jeor BMR 공식 (Am J Clin Nutr, 1990) | WHO/FAO/UNU Human Energy Requirements (2001) [체형] 한국골격스타일협회 3타입 분류 | 컬러랩 임상 기반 6타입 세분화 ※ 본 프로그램은 의료 행위가 아닙니다. 설계: 이태경 (연세대 스포츠응용산업학과)",date:"2026.04.04",pin:true},{t:"td",l:"🍽 식단표",title:"4월 1주차 식단표 업로드 완료",desc:"전원 개인별 7일 식단표가 업데이트되었습니다.",date:"2026.03.31",pin:true},{t:"ts",l:"📅 일정",title:"4월 수업 시작 안내",desc:"4월 7일(월)부터 정규 수업이 시작됩니다.",date:"2026.03.30"},{t:"tn",l:"📢 공지",title:"수분 섭취 목표 안내",desc:"하루 최소 1.5L 이상 수분 섭취를 권장합니다.",date:"2026.03.28"},{t:"tn",l:"📢 공지",title:"식단 질문 안내",desc:"식단 관련 문의는 카카오톡으로 문의해주세요.",date:"2026.03.25"}];
+const NA=[{t:"tn",l:"📚 참고문헌",title:"운동 프로그램 · 식단 설계 참고 논문 및 학술 자료",desc:"본 프로그램은 국제 학술 기관 가이드라인 및 peer-reviewed 논문에 근거하여 설계되었습니다.\n\n━━ 운동 처방 기준 ━━\n\n[1] ACSM. Guidelines for Exercise Testing and Prescription, 12th Ed. Wolters Kluwer, 2024.\n→ FITT 원칙(빈도·강도·시간·유형) 기반 운동 처방 국제 표준\n→ 근력 운동 주 2~3회, 유산소 주 150~300분 권장\n\n[2] ACSM Position Stand. Progression Models in Resistance Training for Healthy Adults.\nMedicine & Science in Sports & Exercise, 41(3), 687-708, 2009. (PMID: 19204579)\n→ 근비대: 6~12RM, 60~80% 1RM, 휴식 60~90초\n→ 근력: 1~6RM, 80~100% 1RM, 휴식 3~5분\n→ 근지구력: 15RM+, 40~60% 1RM\n\n[3] ACSM Resistance Training Guidelines Update 2026.\nMedicine & Science in Sports & Exercise, 2026.\n→ 근력: 80%+ 1RM, 2~3세트\n→ 근비대: 주당 근육군별 10세트 이상\n→ 17년 만의 가이드라인 업데이트\n\n━━ 유산소 처방 근거 ━━\n\n[4] ACSM Position Stand. Appropriate Physical Activity Intervention Strategies for Weight Loss.\nMedicine & Science in Sports & Exercise, 41(2), 459-471, 2009. (PMID: 19127177)\n→ 체중 유지: 주 150~250분 중강도 유산소\n→ 체중 감량: 주 250분 이상 필요\n\n[5] Venables MC, Achten J, Jeukendrup AE.\nDeterminants of Fat Oxidation During Exercise in Healthy Men and Women.\nJournal of Applied Physiology, 98(1), 160-167, 2005. (PMID: 15333616)\n→ 300명 대상 연구\n→ Fatmax = 최대심박수의 약 61.5%에서 발생\n→ BPM 125~140 유산소 처방 근거\n\n[6] Achten J, Jeukendrup AE.\nOptimizing Fat Oxidation Through Exercise and Diet.\nNutrition, 20(7-8), 716-727, 2004.\n→ 지방 산화 최적 강도: VO₂max의 45~65%\n→ 60분 이상 유산소 시 지방 연소 극대화\n\n━━ 세트·반복수 근거 ━━\n\n[7] Schoenfeld BJ et al.\nLoading Recommendations for Muscle Strength, Hypertrophy, and Local Endurance.\nSports, 9(2), 32, 2021. (PMC7927075)\n→ 근력: 1~5회/세트, 80~100% 1RM\n→ 근비대: 8~12회/세트, 60~80% 1RM\n→ 근지구력: 15회+, 60% 1RM 이하\n\n[8] NSCA. Essentials of Strength Training and Conditioning, 4th Ed.\nHuman Kinetics, 2016.\n→ 근비대: 6~12회 × 3~4세트, 67~85% 1RM\n→ 근력: 6회 이하 × 3세트+, 85%+ 1RM\n\n━━ 성장기 안전 ━━\n\n[9] NSCA Position Statement.\nYouth Resistance Training: Updated Position Statement.\nJournal of Strength and Conditioning Research, 23(S5), S60-S79, 2009.\n→ 청소년 근력 운동은 안전하며 효과적\n→ RPE 기반 강도 조절, 자격 있는 지도자 감독 권장\n\n[10] Lloyd RS et al.\nNSCA Position Statement on Long-Term Athletic Development.\nJournal of Strength and Conditioning Research, 30(6), 1491-1509, 2016.\n→ 중경량·고반복 우선, 관절 통증 시 즉시 중단\n\n━━ 칼로리 계산 ━━\n\n[11] Mifflin MD et al.\nA New Predictive Equation for Resting Energy Expenditure.\nAmerican Journal of Clinical Nutrition, 51(2), 241-247, 1990.\n→ BMR 계산 표준 공식\n\n[12] WHO/FAO/UNU.\nHuman Energy Requirements. Joint Expert Consultation, 2001.\n→ 활동계수(PAL) 1.375 기반 TDEE 산출\n\n━━ 골격 체형 분류 ━━\n\n[13] 한국골격스타일협회 (bodystyle.kr)\n→ 스트레이트/웨이브/내추럴 3타입 분류 체계\n\n[14] 컬러랩 (몽끄컬러랩) 임상 기반 연구\n→ 3타입을 6타입으로 세분화\n→ 어깨/골반/무릎/발목 비율 판별\n\n━━━━━━━━━━━━━━━━━━━━\n※ 본 프로그램은 의료 행위가 아닙니다.\n건강 문제가 있는 경우 전문의와 상담하시기 바랍니다.\n\n프로그램 설계: 이태경\n연세대학교 스포츠응용산업학과 / 전 현역 아이스하키 선수",date:"2026.04.04",pin:true},{t:"td",l:"🍽 식단표",title:"4월 1주차 식단표 업로드 완료",desc:"전원 개인별 7일 식단표가 업데이트되었습니다.",date:"2026.03.31",pin:true},{t:"ts",l:"📅 일정",title:"4월 수업 시작 안내",desc:"4월 7일(월)부터 정규 수업이 시작됩니다.",date:"2026.03.30"},{t:"tn",l:"📢 공지",title:"수분 섭취 목표 안내",desc:"하루 최소 1.5L 이상 수분 섭취를 권장합니다.",date:"2026.03.28"},{t:"tn",l:"📢 공지",title:"식단 질문 안내",desc:"식단 관련 문의는 카카오톡으로 문의해주세요.",date:"2026.03.25"}];
 const cp=q=>`https://www.coupang.com/np/search?q=${encodeURIComponent(q)}&channel=user`;
 const PRODS=[
 {cat:"chicken",em:"🍗",name:"하림 냉장 닭가슴살 블랙페퍼",kcal:"100g / 115kcal",url:"https://harimmall.com/product/%ED%95%98%EB%A6%BC-%EB%83%89%EC%9E%A5-%EB%8B%AD%EA%B0%80%EC%8A%B4%EC%82%B4-%EB%B8%94%EB%9E%99%ED%8E%98%ED%8D%BC-100g/58"},
@@ -807,8 +811,20 @@ function chkHash(){if(location.hash==='#admin')go('admin');}
 window.addEventListener('hashchange',chkHash);
 
 /* 공지 */
-function rHN(){const ns=lG('pa_notices_c',[]);const all=[...ns.map(n=>({...n,t:'tn',l:'📢 공지',pin:false})),...NA];document.getElementById('homeN').innerHTML=all.slice(0,4).map(n=>`<div class="nc${n.pin?' pin':''}"><span class="ntag ${n.t}">${n.l}</span><div class="nt">${esc(n.title)}</div><div class="nd">${esc(n.desc)}</div><div class="ndt">${n.date}</div></div>`).join('');}
-function rAN(){const ns=lG('pa_notices_c',[]);const all=[...ns.map(n=>({...n,t:'tn',l:'📢 공지',pin:false})),...NA];document.getElementById('allN').innerHTML=all.map(n=>`<div class="nc${n.pin?' pin':''}"><span class="ntag ${n.t}">${n.l}</span><div class="nt">${esc(n.title)}</div><div class="nd">${esc(n.desc)}</div><div class="ndt">${n.date}</div></div>`).join('');}
+function _getAllNotices(){const ns=lG('pa_notices_c',[]);return[...ns.map(n=>({...n,t:'tn',l:'📢 공지',pin:false})),...NA];}
+function rHN(){const all=_getAllNotices();document.getElementById('homeN').innerHTML=all.slice(0,4).map((n,i)=>`<div class="nc${n.pin?' pin':''}" onclick="showNotice(${i})"><span class="ntag ${n.t}">${n.l}</span><div class="nt">${esc(n.title)}</div><div class="nd">${esc(n.desc)}</div><div class="ndt">${n.date}</div></div>`).join('');}
+function rAN(){const all=_getAllNotices();document.getElementById('allN').innerHTML=all.map((n,i)=>`<div class="nc${n.pin?' pin':''}" onclick="showNotice(${i})"><span class="ntag ${n.t}">${n.l}</span><div class="nt">${esc(n.title)}</div><div class="nd">${esc(n.desc)}</div><div class="ndt">${n.date}</div></div>`).join('');}
+function showNotice(idx){
+const all=_getAllNotices();const n=all[idx];if(!n)return;
+document.getElementById('ncModalBody').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+<span class="ntag ${n.t}">${n.l}</span>
+<button onclick="document.getElementById('ncModal').classList.remove('on')" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
+</div>
+<div class="nt" style="font-size:17px;margin-bottom:10px;">${esc(n.title)}</div>
+<div class="ndt" style="margin-bottom:14px;">${n.date}</div>
+<div class="nd" style="font-size:13px;line-height:1.8;">${esc(n.desc)}</div>`;
+document.getElementById('ncModal').classList.add('on');
+}
 
 /* 제품 */
 function rP(cat){const prods=typeof getAllProds==='function'?getAllProds():PRODS;document.getElementById('pf').innerHTML=CATS.map(c=>`<button class="pfb${c.id===cat?' on':''}" onclick="rP('${c.id}')">${c.em?c.em+' ':''}${c.l}</button>`).join('');document.getElementById('pg2').innerHTML=prods.filter(p=>cat==='all'||p.cat===cat).map(p=>`<div class="pcard"><div class="pimg">${p.em}</div><div class="pbody"><div class="pcat">${CN[p.cat]||''}</div><div class="pname">${p.name}</div><div class="pkcal">${p.kcal}</div><a class="pbuy" href="${p.url}" target="_blank" rel="noopener">구매하기 →</a></div></div>`).join('');}
@@ -2615,5 +2631,6 @@ btns.insertBefore(b,btns.firstChild.nextSibling);
 }
 })();
 </script>
+<div class="nc-modal-bg" id="ncModal" onclick="if(event.target===this)this.classList.remove('on')"><div class="nc-modal" id="ncModalBody"></div></div>
 </body>
 </html>
