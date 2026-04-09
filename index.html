@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <meta name="theme-color" content="#09111C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>P.A 트레이닝 · Performance Achievement</title>
@@ -15,12 +15,12 @@
 :root{--bg:#09111C;--bg2:#0F1923;--card:#152234;--card2:#1A2E4A;--accent:#64A0C8;--a2:#4A88B8;--orange:#E8622A;--o2:#C84E1A;--green:#6FCF97;--yellow:#FEE500;--text:#FFF;--muted:rgba(255,255,255,.45);--border:rgba(100,160,200,.14);--r:16px;--nav:64px;}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
 a{text-decoration:none;color:inherit;}
 button{font-family:inherit;cursor:pointer;border:none;background:none;}
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 90% 55% at 65% 38%,rgba(100,160,200,.07) 0%,transparent 65%),radial-gradient(ellipse 50% 40% at 15% 85%,rgba(232,98,42,.05) 0%,transparent 60%);}
 body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(100,160,200,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(100,160,200,.03) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse 100% 100% at 50% 0%,black 20%,transparent 80%);}
-.nav{position:fixed;top:0;left:0;right:0;z-index:200;height:var(--nav);display:flex;align-items:center;justify-content:space-between;padding:0 40px;background:rgba(9,17,28,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;height:calc(var(--nav) + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top) 40px 0;background:rgba(9,17,28,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.1em;color:var(--accent);display:flex;align-items:baseline;gap:3px;cursor:pointer;}
 .logo .dot{color:var(--orange);}
 .logo .sub{font-size:8px;font-family:'Noto Sans KR',sans-serif;font-weight:700;letter-spacing:.14em;color:rgba(255,255,255,.2);margin-left:7px;}
@@ -525,8 +525,8 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 <div class="bt-scan-title">📷 AI 체형 분석</div>
 <div class="bt-scan-desc">전신 사진을 촬영하거나 업로드하면<br>AI가 골격 타입을 분석합니다</div>
 <div class="bt-scan-btns">
-<button class="bt-scan-btn cam" onclick="document.getElementById('btCam').click()">📷 사진 촬영</button>
-<button class="bt-scan-btn gal" onclick="document.getElementById('btGal').click()">🖼 갤러리</button>
+<button class="bt-scan-btn cam" onclick="openCamera('btCam',btPhotoSelected)">📷 사진 촬영</button>
+<button class="bt-scan-btn gal" onclick="openGallery('btGal',btPhotoSelected)">🖼 갤러리</button>
 </div>
 <input type="file" id="btCam" accept="image/*" capture="environment" style="display:none" onchange="btPhotoSelected(this)">
 <input type="file" id="btGal" accept="image/*" style="display:none" onchange="btPhotoSelected(this)">
@@ -635,6 +635,54 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 function toast(m,t){const w=document.getElementById('tw'),e=document.createElement('div');e.className='toast'+(t==='err'?' err':'');e.textContent=m;w.appendChild(e);setTimeout(()=>{e.style.opacity='0';e.style.transition='opacity .3s';setTimeout(()=>e.remove(),300);},2500);}
 let isL=false;try{if(location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')isL=true;if(!isL&&window.Kakao){if(!Kakao.isInitialized()){Kakao.init('a1ca85645cfb642c43ac95082a46e872');}}}catch(e){console.warn('Kakao init:',e);}
+
+/* ===== Capacitor 앱 감지 ===== */
+let isApp=false;
+try{isApp=!!(window.Capacitor&&Capacitor.isNativePlatform());}catch(e){}
+
+/* 앱: 상태바 + 스플래시 초기화 */
+async function initAppPlugins(){
+if(!isApp)return;
+try{
+const{StatusBar,Style}=await import('@capacitor/status-bar');
+await StatusBar.setStyle({style:Style.Dark});
+await StatusBar.setBackgroundColor({color:'#09111C'});
+}catch(e){console.warn('[PA] StatusBar:',e);}
+try{
+const{SplashScreen}=await import('@capacitor/splash-screen');
+await SplashScreen.hide();
+}catch(e){console.warn('[PA] Splash:',e);}
+}
+initAppPlugins();
+
+/* 앱: Android 하드웨어 백 버튼 처리 */
+if(isApp){
+import('@capacitor/app').then(({App})=>{
+App.addListener('backButton',({canGoBack})=>{
+const openModal=document.querySelector('.nc-modal-bg.on,.mob.on');
+if(openModal){openModal.classList.remove('on');return;}
+const currentPg=document.querySelector('.pg.on');
+if(currentPg&&currentPg.id!=='pg-home'){go('home');return;}
+if(confirm('앱을 종료하시겠습니까?')){App.exitApp();}
+});
+}).catch(e=>console.warn('[PA] App plugin:',e));
+}
+/* ===== 수정 7: Capacitor HTTP 분기 (CORS 대비) ===== */
+async function appFetch(url,options){
+if(isApp&&window.Capacitor){
+try{
+const{CapacitorHttp}=await import('@capacitor/core');
+const resp=await CapacitorHttp.request({
+url:url,
+method:options.method||'GET',
+headers:options.headers||{},
+data:options.body?JSON.parse(options.body):undefined
+});
+return{ok:resp.status>=200&&resp.status<300,status:resp.status,json:()=>Promise.resolve(typeof resp.data==='string'?JSON.parse(resp.data):resp.data)};
+}catch(e){console.warn('[PA] CapacitorHttp fallback:',e);}
+}
+return fetch(url,options);
+}
 const mkE=d=>{const x=new Date();x.setDate(x.getDate()+d);return x.toISOString();};
 const CODES={};
 const S={};
@@ -861,7 +909,23 @@ function rP(cat){const prods=typeof getAllProds==='function'?getAllProds():PRODS
 
 /* 로그인 */
 let LC=null;
-function kakaoLogin(){if(isL){toast('로컬 환경 — 아래 코드 로그인 이용','err');document.getElementById('dbox').classList.add('on');return;}if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
+function kakaoLogin(){if(isL){toast('로컬 환경 — 아래 코드 로그인 이용','err');document.getElementById('dbox').classList.add('on');return;}
+if(isApp){
+/* 앱: 카카오 SDK 팝업 방식 */
+if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중...','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
+Kakao.Auth.login({
+success:function(authObj){
+Kakao.API.request({
+url:'/v2/user/me',
+success:function(r){handleKakaoUser(r);},
+fail:function(e){console.warn('Kakao API:',e);toast('카카오 정보 조회 실패','err');}
+});
+},
+fail:function(e){console.warn('Kakao login:',e);toast('카카오 로그인 실패','err');document.getElementById('dbox').classList.add('on');}
+});
+return;
+}
+if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
 try{Kakao.Auth.authorize({redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}
 /* 카카오 유저 처리 (공용) */
 function handleKakaoUser(r){const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
@@ -932,7 +996,7 @@ const cL=(lG('pa_center_exercise',{})[c]||[]).filter(r=>r.date===td);
 const iT=iL.reduce((a,r)=>a+r.kcal,0);const eT=eL.reduce((a,r)=>a+r.kcal,0);const cT=cL.reduce((a,r)=>a+r.kcal,0);
 const db=document.getElementById('myDB');db.style.display='block';document.getElementById('loginBox').style.display='none';
 db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.name[0]}</span></div><div><div class="mname">${s.name}</div><div class="mmeta">${s.age}세 · ${s.h}cm · ${wts[wts.length-1]}kg · ${s.g}</div><span class="mgoal ${s.gc}">${s.goal}</span></div></div><div class="mst"><div class="ms"><div class="msl">BMR</div><div class="msv bl">${s.bmr.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">TDEE</div><div class="msv">${s.tdee.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">목표</div><div class="msv og">${s.tar.toLocaleString()}</div><div class="msu">kcal/일</div></div></div></div>
-<div class="my-tabs"><button class="my-tab on" onclick="myTab('dash',this)">📊 대시보드</button><button class="my-tab" onclick="myTab('diet',this)">🍽 식단</button><button class="my-tab" onclick="myTab('sched',this)">📅 스케줄</button><button class="my-tab" onclick="myTab('bodytype',this)">🦴 내 체형</button></div>
+<div class="my-tabs"><button class="my-tab on" onclick="myTab('dash',this)">📊 대시보드</button><button class="my-tab" onclick="myTab('exercise',this)">💪 운동</button><button class="my-tab" onclick="myTab('diet',this)">🍽 식단</button><button class="my-tab" onclick="myTab('sched',this)">📅 스케줄</button><button class="my-tab" onclick="myTab('bodytype',this)">🦴 내 체형</button></div>
 <div class="my-panel on" id="pnl-dash">
 <div class="cc"><div class="ct">⚖ 몸무게 변화 (kg)</div><div class="cw"><svg class="wsvg" id="wsvg" viewBox="0 0 600 112" preserveAspectRatio="none"></svg></div><div class="xlbl"><span>1주</span><span>2주</span><span>3주</span><span>4주</span><span>5주</span><span>6주</span></div></div>
 <div class="calsec"><h4>🔥 오늘의 칼로리 기록</h4><div class="caldate">📅 ${td}</div>
@@ -940,8 +1004,8 @@ db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.nam
 <div class="food-scan-title">📷 음식 사진으로 칼로리 분석</div>
 <div class="food-scan-desc">음식 사진을 찍거나 선택하면 AI가 칼로리와 영양소를 자동 분석합니다</div>
 <div class="food-scan-btns">
-<button class="food-scan-btn camera" onclick="document.getElementById('foodCam').click()">📷 사진 촬영</button>
-<button class="food-scan-btn gallery" onclick="document.getElementById('foodGal').click()">🖼 갤러리</button>
+<button class="food-scan-btn camera" onclick="openCamera('foodCam',foodSelected)">📷 사진 촬영</button>
+<button class="food-scan-btn gallery" onclick="openGallery('foodGal',foodSelected)">🖼 갤러리</button>
 </div>
 <input type="file" id="foodCam" accept="image/*" capture="environment" style="display:none" onchange="foodSelected(this)">
 <input type="file" id="foodGal" accept="image/*" style="display:none" onchange="foodSelected(this)">
@@ -963,15 +1027,53 @@ ${eL.map((r,i)=>`<div class="logitem"><div class="li"><span class="ll">${i+1}회
 ${cT>0?`<div class="cex" style="margin-top:8px;">🏋️ 센터 운동 소모: <strong>${cT} kcal</strong>${cL.map(r=>`<span class="ct2">(${r.timestamp})</span>`).join('')}</div>`:''}</div></div>
 <div class="cc"><div class="ct">🔥 이번 주 칼로리 (kcal)</div><div style="display:flex;gap:12px;font-size:10px;margin-bottom:10px;"><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,var(--accent),rgba(100,160,200,.35));"></span>섭취</span><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,#E85D75,rgba(232,93,117,.35));"></span>운동</span><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,var(--orange),rgba(232,98,42,.35));"></span>목표 초과</span></div><div class="cw"><div class="cbars" id="cbars"></div></div><div class="xlbl"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div></div>
 <div class="dwl">📋 이번 주 7일 식단표</div><div id="dlist"></div></div>
+<div class="my-panel" id="pnl-exercise"><div id="exProgramWrap"></div></div>
 <div class="my-panel" id="pnl-diet"><div class="dwl" style="font-size:12px;margin-bottom:14px;">📋 이번 주 7일 식단표</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">목표 칼로리에 맞춰 구성된 개인별 식단입니다.<br>끼니별 메뉴와 칼로리를 확인하세요.</div><div id="waterInfo"></div><div id="dlist2"></div></div>
 <div class="my-panel" id="pnl-sched"><div class="cal-wrap"><div class="cal-hd"><h3 id="calTitle"></h3><div class="cal-nav"><button onclick="calNav(-1)">◀</button><button onclick="calNav(0)">오늘</button><button onclick="calNav(1)">▶</button></div></div><div class="cal-grid" id="calGrid"></div></div><div id="schedDetail"></div></div>
 <div class="my-panel" id="pnl-bodytype"><div id="myBodyType"></div></div>
 <button class="blo" onclick="doLogout()">로그아웃</button>`;
 rWSVG(wts);rCB(c,s.tar,diet);rMP(diet);}
 
+/* ===== Capacitor 카메라 플러그인 분기 ===== */
+async function openCamera(targetId,handler){
+if(isApp&&window.Capacitor){
+try{
+const{Camera,CameraResultType,CameraSource}=await import('@capacitor/camera');
+const photo=await Camera.getPhoto({
+quality:85,allowEditing:false,
+resultType:CameraResultType.DataUrl,
+source:CameraSource.Camera
+});
+if(photo.dataUrl){handler({_capDataUrl:photo.dataUrl});}
+}catch(e){if(e.message&&!e.message.includes('cancel'))toast('카메라 오류: '+e.message,'err');}
+}else{document.getElementById(targetId).click();}
+}
+async function openGallery(targetId,handler){
+if(isApp&&window.Capacitor){
+try{
+const{Camera,CameraResultType,CameraSource}=await import('@capacitor/camera');
+const photo=await Camera.getPhoto({
+quality:85,allowEditing:false,
+resultType:CameraResultType.DataUrl,
+source:CameraSource.Photos
+});
+if(photo.dataUrl){handler({_capDataUrl:photo.dataUrl});}
+}catch(e){if(e.message&&!e.message.includes('cancel'))toast('갤러리 오류: '+e.message,'err');}
+}else{document.getElementById(targetId).click();}
+}
+
 /* ===== 음식 사진 분석 (Claude Vision API) ===== */
 let foodImgData=null;
 function foodSelected(inp){
+  if(inp._capDataUrl){
+    foodImgData=inp._capDataUrl;
+    const preview=document.getElementById('foodPreview');
+    preview.src=foodImgData;preview.style.display='block';
+    document.getElementById('foodResult').className='food-result';
+    document.getElementById('foodResult').innerHTML='';
+    analyzeFoodPhoto(foodImgData);
+    return;
+  }
   const file=inp.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=function(e){
@@ -990,7 +1092,7 @@ async function analyzeFoodPhoto(dataUrl){
   const base64=dataUrl.split(',')[1];
   const mediaType=dataUrl.split(';')[0].split(':')[1]||'image/jpeg';
   try{
-    const resp=await fetch('https://analyzefood-cqtmksnvya-du.a.run.app',{
+    const resp=await appFetch('https://analyzefood-cqtmksnvya-du.a.run.app',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
@@ -1082,7 +1184,84 @@ const dateStr=`${dt.getMonth()+1}/${dt.getDate()}`;
 const el=document.createElement('div');el.className='dd';el.innerHTML=`<div class="ddh" onclick="this.nextElementSibling.classList.toggle('on');this.querySelector('.chev').classList.toggle('on')"><div class="ddl"><div class="dpill">${d.d}<br><span style="font-size:8px;opacity:.6">${d.e}</span></div><div class="ddn">${dateStr}</div></div><div style="display:flex;align-items:center;gap:11px;"><div class="ddk">${d.k.toLocaleString()} kcal</div><div class="chev${i===0?' on':''}">▼</div></div></div><div class="ddb${i===0?' on':''}"><div class="mg2"><div><div class="mt">🌅 아침</div><div class="mk">${d.am.k} kcal</div><div class="mc">${d.am.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">☀️ 점심</div><div class="mk">${d.lu.k} kcal</div><div class="mc">${d.lu.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🍪 간식</div><div class="mk">${d.sn.k} kcal</div><div class="mc">${d.sn.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🌙 저녁</div><div class="mk">${d.di.k} kcal</div><div class="mc">${d.di.c.replace(/\n/g,'<br>')}</div></div></div><div style="margin-top:10px;padding:8px 10px;background:rgba(100,160,200,.05);border-radius:8px;font-size:10px;color:var(--accent);display:flex;align-items:center;gap:6px;">💧 수분 섭취 목표: ${(water/1000).toFixed(1)}L</div></div>`;dl.appendChild(el);});});}
 
 /* MY 탭 전환 */
-function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='sched')rCal();if(id==='diet'){const diet=gDiet(LC);rMP(diet);}if(id==='bodytype')renderMyBodyType();}
+function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='sched')rCal();if(id==='diet'){const diet=gDiet(LC);rMP(diet);}if(id==='bodytype')renderMyBodyType();if(id==='exercise')rExProgram();}
+
+/* ===== 운동 프로그램 짐/홈 데이터 ===== */
+const EX_DATA={
+'삼각형':{name:'삼각형 (하체 발달형)',color:'var(--orange)',desc:'골반 > 어깨, 하체에 지방 축적 경향',strategy:'상체 보강 + 하체 유산소 집중',
+gym:{cardio:[{n:'Steady State 러닝',d:'40분, BPM 125~135'},{n:'인클라인 워킹',d:'20분, 경사 8~12%'},{n:'스텝밀',d:'15분, 레벨 6~8'},{n:'로잉머신',d:'15분, SPM 22~26'}],
+upper:[{n:'덤벨 숄더프레스',d:'3×12'},{n:'시티드 로우',d:'3×12'},{n:'랫풀다운',d:'3×10'},{n:'덤벨 플라이',d:'3×12'},{n:'사이드 레터럴레이즈',d:'3×15'}],
+lower:[{n:'와이드 스쿼트',d:'3×15'},{n:'런지 워킹',d:'3×12(양쪽)'},{n:'힙쓰러스트',d:'3×15'},{n:'레그컬',d:'3×12'},{n:'카프레이즈',d:'3×20'}],
+core:[{n:'플랭크',d:'3×40초'},{n:'사이드플랭크',d:'3×30초'},{n:'바이시클크런치',d:'3×20'},{n:'데드버그',d:'3×12'}]},
+home:{cardio:[{n:'제자리 달리기',d:'10분'},{n:'점핑잭',d:'3×1분'},{n:'하이니',d:'3×1분'},{n:'버피',d:'3×10회'},{n:'마운틴클라이머',d:'3×30초'},{n:'스타점프',d:'3×15회'}],
+upper:[{n:'와이드 푸시업',d:'3×12'},{n:'파이크 푸시업',d:'3×10'},{n:'슈퍼맨',d:'3×15'},{n:'YTW 레이즈',d:'3×10(각)'},{n:'무릎 푸시업',d:'3×15'},{n:'다이아몬드 푸시업',d:'3×10'}],
+lower:[{n:'와이드 스쿼트',d:'3×20'},{n:'런지 (제자리)',d:'3×15(양쪽)'},{n:'글루트 브릿지',d:'3×20'},{n:'싱글레그 브릿지',d:'3×12(양쪽)'},{n:'사이드 런지',d:'3×12(양쪽)'},{n:'도키킥',d:'3×15(양쪽)'}],
+core:[{n:'플랭크',d:'3×40초'},{n:'사이드플랭크',d:'3×30초'},{n:'바이시클크런치',d:'3×20'},{n:'데드버그',d:'3×12'},{n:'레그레이즈',d:'3×15'},{n:'V업',d:'3×10'}]}},
+'역삼각형':{name:'역삼각형 (상체 발달형)',color:'var(--accent)',desc:'어깨 > 골반, 상체 넓음',strategy:'하체 볼륨 보강 + 상체 톤업(고반복)',
+gym:{cardio:[{n:'인클라인 워킹',d:'30분, 경사 8~10%'},{n:'로잉머신',d:'20분'}],upper:[{n:'푸시업',d:'3×15 (톤업)'},{n:'트라이셉 딥스',d:'3×12'}],lower:[{n:'바벨 스쿼트',d:'3×12'},{n:'레그프레스',d:'3×15'},{n:'런지',d:'3×12'},{n:'힙쓰러스트',d:'3×15'},{n:'레그컬',d:'3×12'}],core:[{n:'플랭크',d:'3×40초'},{n:'데드버그',d:'3×12'},{n:'사이드플랭크',d:'3×30초'}]},
+home:{cardio:[{n:'제자리 달리기',d:'10분'},{n:'마운틴클라이머',d:'3×30초'},{n:'하이니',d:'3×1분'}],upper:[{n:'무릎 푸시업',d:'3×15 (톤업)'},{n:'슈퍼맨',d:'3×15'}],lower:[{n:'스쿼트',d:'3×20'},{n:'런지',d:'3×15(양쪽)'},{n:'싱글레그 브릿지',d:'3×12(양쪽)'},{n:'점프스쿼트',d:'3×12'},{n:'사이드 런지',d:'3×15'}],core:[{n:'플랭크',d:'3×40초'},{n:'바이시클크런치',d:'3×20'},{n:'레그레이즈',d:'3×15'}]}},
+'직사각형':{name:'직사각형 (일자형)',color:'var(--green)',desc:'어깨 ≈ 골반, 잘록함 부족',strategy:'어깨+힙 라인 만들기 + 코어 강화',
+gym:{cardio:[{n:'러닝',d:'30분, BPM 130~140'},{n:'로잉머신',d:'15분'}],upper:[{n:'숄더프레스',d:'3×12'},{n:'사이드 레이즈',d:'3×15'}],lower:[{n:'힙쓰러스트',d:'3×15'},{n:'와이드 스쿼트',d:'3×15'}],core:[{n:'사이드플랭크',d:'3×30초'},{n:'러시안 트위스트',d:'3×20'},{n:'플랭크',d:'3×40초'}]},
+home:{cardio:[{n:'버피',d:'3×10'},{n:'스타점프',d:'3×15'},{n:'점핑잭',d:'3×1분'}],upper:[{n:'파이크 푸시업',d:'3×10'},{n:'YTW 레이즈',d:'3×10'}],lower:[{n:'글루트 브릿지',d:'3×20'},{n:'도키킥',d:'3×15(양쪽)'},{n:'런지',d:'3×15(양쪽)'}],core:[{n:'사이드플랭크',d:'3×30초'},{n:'바이시클크런치',d:'3×20'},{n:'플랭크',d:'3×40초'}]}},
+'다이아몬드':{name:'다이아몬드 (중심 발달형)',color:'#FF6B6B',desc:'허리 넓음, 복부 지방 축적',strategy:'코어 집중 + 어깨/힙 라인 + 전신 유산소',
+gym:{cardio:[{n:'러닝',d:'40분, BPM 130~140'},{n:'로잉머신',d:'20분'}],upper:[{n:'숄더프레스',d:'3×12'},{n:'힙쓰러스트',d:'3×15'}],lower:[],core:[{n:'플랭크',d:'3×40초'},{n:'데드버그',d:'3×12'},{n:'행잉 레그레이즈',d:'3×10'},{n:'바이시클크런치',d:'3×20'}]},
+home:{cardio:[{n:'점핑잭',d:'3×1분'},{n:'하이니',d:'3×1분'},{n:'제자리 달리기',d:'10분'}],upper:[{n:'버피',d:'3×10'},{n:'마운틴클라이머',d:'3×30초'}],lower:[],core:[{n:'플랭크',d:'3×40초'},{n:'바이시클크런치',d:'3×20'},{n:'V업',d:'3×10'},{n:'러시안 트위스트',d:'3×20'}]}},
+'하트형':{name:'하트형 (상체 넓은형)',color:'#8B7BF7',desc:'어깨 넓고 하체 가늘음',strategy:'하체 볼륨 UP + 상체 고반복 톤업',
+gym:{cardio:[{n:'인클라인 워킹',d:'30분'}],upper:[{n:'푸시업',d:'3×20 (톤업)'},{n:'레터럴 레이즈',d:'3×15'}],lower:[{n:'스쿼트',d:'3×15'},{n:'런지',d:'3×12'},{n:'레그프레스',d:'3×15'},{n:'힙쓰러스트',d:'3×15'},{n:'카프레이즈',d:'3×20'}],core:[{n:'플랭크',d:'3×40초'},{n:'데드버그',d:'3×12'}]},
+home:{cardio:[{n:'하이니',d:'3×1분'},{n:'스타점프',d:'3×15'}],upper:[{n:'무릎 푸시업',d:'3×20 (톤업)'}],lower:[{n:'스쿼트',d:'3×20'},{n:'런지',d:'3×15(양쪽)'},{n:'글루트 브릿지',d:'3×20'},{n:'점프런지',d:'3×10(양쪽)'},{n:'카프레이즈',d:'3×25'}],core:[{n:'플랭크',d:'3×40초'},{n:'레그레이즈',d:'3×15'}]}},
+'타원형':{name:'타원형 (전체 둥근형)',color:'rgba(255,255,255,.6)',desc:'전체적으로 둥근 체형, 전신 지방',strategy:'전신 유산소 극대화 + 전신 근력 균형',
+gym:{cardio:[{n:'러닝',d:'40분, BPM 130~140'},{n:'로잉머신',d:'20분'},{n:'스텝밀',d:'15분'}],upper:[{n:'숄더프레스',d:'3×12'},{n:'시티드 로우',d:'3×12'}],lower:[{n:'스쿼트',d:'3×15'},{n:'데드리프트',d:'3×10'}],core:[{n:'플랭크',d:'3×40초'},{n:'데드버그',d:'3×12'}]},
+home:{cardio:[{n:'점핑잭',d:'3×1분'},{n:'하이니',d:'3×1분'},{n:'제자리 달리기',d:'15분'}],upper:[{n:'푸시업',d:'3×10'},{n:'슈퍼맨',d:'3×15'}],lower:[{n:'스쿼트',d:'3×15'},{n:'런지',d:'3×12(양쪽)'}],core:[{n:'플랭크',d:'3×30초'},{n:'마운틴클라이머',d:'3×30초'},{n:'버피',d:'3×10'}]}}
+};
+const BT_NAME_MAP={'tri':'삼각형','dia':'다이아몬드','inv':'역삼각형','rec':'직사각형','heart':'하트형','oval':'타원형'};
+let exMode='gym';
+function rExProgram(){
+const w=document.getElementById('exProgramWrap');if(!w||!LC||!S[LC])return;
+const s=S[LC];
+const btRaw=lG('pa_body_types',{})[LC];
+const btType=btRaw?.type||'';
+const btName=BT_NAME_MAP[btType]||'';
+const data=EX_DATA[btName];
+const goal=s.goal||'체중감량';
+if(!btName||!data){
+w.innerHTML=`<div style="text-align:center;padding:40px 20px;"><div style="font-size:40px;margin-bottom:12px;">💪</div><h3 style="margin-bottom:8px;">체형 분석이 필요합니다</h3><p style="font-size:12px;color:var(--muted);line-height:1.7;">체형 분석을 먼저 완료하면<br>맞춤 운동 프로그램(짐+홈)이 자동으로 생성됩니다.</p><button class="btnp" onclick="go('body')" style="display:inline-flex;margin-top:14px;">🦴 체형분석 하러가기</button></div>`;
+return;}
+const p=exMode==='gym'?data.gym:data.home;
+const mIcon=exMode==='gym'?'🏋️':'🏠';
+const mName=exMode==='gym'?'짐 (기구 사용)':'홈 (맨몸)';
+const rl=(arr)=>arr.length?arr.map(e=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;"><span style="color:var(--text);">${e.n}</span><span style="color:var(--muted);white-space:nowrap;margin-left:8px;">${e.d}</span></div>`).join(''):'<div style="font-size:11px;color:var(--muted);padding:8px 0;">해당 없음</div>';
+w.innerHTML=`
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+<div><div style="font-size:10px;color:var(--muted);letter-spacing:.1em;">EXERCISE PROGRAM</div><div style="font-size:18px;font-weight:900;margin-top:2px;">${mIcon} 맞춤 운동 프로그램</div></div>
+<div style="display:flex;gap:4px;">
+<button onclick="exMode='gym';rExProgram()" style="padding:8px 16px;border-radius:8px;border:1px solid ${exMode==='gym'?'var(--accent)':'rgba(255,255,255,.1)'};background:${exMode==='gym'?'rgba(100,160,200,.15)':'transparent'};color:${exMode==='gym'?'var(--accent)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;">🏋️ 짐</button>
+<button onclick="exMode='home';rExProgram()" style="padding:8px 16px;border-radius:8px;border:1px solid ${exMode==='home'?'var(--accent)':'rgba(255,255,255,.1)'};background:${exMode==='home'?'rgba(100,160,200,.15)':'transparent'};color:${exMode==='home'?'var(--accent)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;">🏠 홈</button>
+</div>
+</div>
+<div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid ${data.color};">
+<div style="font-size:14px;font-weight:900;color:${data.color};margin-bottom:4px;">${data.name}</div>
+<div style="font-size:11px;color:var(--muted);line-height:1.6;">${data.desc}<br><strong style="color:var(--text);">전략:</strong> ${data.strategy}</div>
+<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
+<span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(255,107,107,.15);color:#FF6B6B;">${goal}</span>
+<span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(100,160,200,.15);color:var(--accent);">${mName}</span>
+</div>
+</div>
+<div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:8px;">
+<div style="font-size:12px;font-weight:700;margin-bottom:6px;">🔥 유산소 ${exMode==='gym'?'(BPM 125~140)':'(맨몸)'}</div>${rl(p.cardio)}
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+<div style="background:var(--card);border-radius:10px;padding:14px;"><div style="font-size:12px;font-weight:700;margin-bottom:6px;">💪 상체</div>${rl(p.upper)}</div>
+<div style="background:var(--card);border-radius:10px;padding:14px;"><div style="font-size:12px;font-weight:700;margin-bottom:6px;">🦵 하체</div>${rl(p.lower)}</div>
+</div>
+<div style="background:var(--card);border-radius:10px;padding:14px;margin-top:8px;">
+<div style="font-size:12px;font-weight:700;margin-bottom:6px;">🎯 코어</div>${rl(p.core)}
+</div>
+<div style="background:var(--card);border-radius:10px;padding:12px;margin-top:8px;font-size:10px;color:var(--muted);line-height:1.7;">
+<strong style="color:var(--text);">💡 무용수 핵심 원칙</strong><br>
+하체 고반복(15+) 저중량 = 비대 방지 · 상체 중반복(10~12) = 균형 보강 · RPE 6~7 유지<br>
+유산소 BPM 125~140 (Fatmax Zone) · 코어 매일 · 수분 체중×33ml
+</div>`;
+}
 
 /* 스케줄/달력 */
 let calY,calM,calSel;
@@ -2009,7 +2188,7 @@ async function analyzeInbody(dataUrl,code){
 const base64=dataUrl.split(',')[1];
 const mediaType=dataUrl.split(';')[0].split(':')[1]||'image/jpeg';
 try{
-const resp=await fetch('https://analyzefood-cqtmksnvya-du.a.run.app',{
+const resp=await appFetch('https://analyzefood-cqtmksnvya-du.a.run.app',{
 method:'POST',headers:{'Content-Type':'application/json'},
 body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
 {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
@@ -2235,6 +2414,14 @@ el.scrollIntoView({behavior:'smooth',block:'start'});
 /* AI 체형 분석 (사진) */
 let btImgData=null;
 function btPhotoSelected(inp){
+if(inp._capDataUrl){
+btImgData=inp._capDataUrl;
+const preview=document.getElementById('btPreview');
+preview.src=btImgData;preview.style.display='block';
+document.getElementById('btResult').className='bt-result';
+analyzeBodyType(btImgData);
+return;
+}
 const file=inp.files[0];if(!file)return;
 const reader=new FileReader();
 reader.onload=function(e){
@@ -2252,7 +2439,7 @@ loading.style.display='block';
 const base64=dataUrl.split(',')[1];
 const mediaType=dataUrl.split(';')[0].split(':')[1]||'image/jpeg';
 try{
-const resp=await fetch('https://analyzefood-cqtmksnvya-du.a.run.app',{
+const resp=await appFetch('https://analyzefood-cqtmksnvya-du.a.run.app',{
 method:'POST',headers:{'Content-Type':'application/json'},
 body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:[
 {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
@@ -2397,7 +2584,7 @@ ${latestIB.analysis?`<div style="font-size:10px;color:var(--muted);margin-top:6p
 
 /* 인바디 업로드 */
 html+=`<div style="text-align:center;margin-bottom:12px;">
-<button onclick="document.getElementById('ibUpload').click()" style="padding:8px 16px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(100,160,200,.1);color:var(--accent);border:1px solid rgba(100,160,200,.2);cursor:pointer;">📷 인바디 사진 업로드</button>
+<button onclick="openGallery('ibUpload',handleInbodyUpload)" style="padding:8px 16px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(100,160,200,.1);color:var(--accent);border:1px solid rgba(100,160,200,.2);cursor:pointer;">📷 인바디 사진 업로드</button>
 <input type="file" id="ibUpload" accept="image/*" style="display:none" onchange="handleInbodyUpload(this)">
 <div id="ibLoading" style="display:none;padding:10px;font-size:11px;color:var(--muted);">📊 인바디 분석 중...</div>
 </div>`;
@@ -2449,6 +2636,31 @@ el.innerHTML=html;
 
 /* 인바디 업로드 처리 */
 function handleInbodyUpload(inp){
+if(inp._capDataUrl){
+if(!LC)return;
+(async()=>{
+const loading=document.getElementById('ibLoading');
+if(loading)loading.style.display='block';
+const result=await analyzeInbody(inp._capDataUrl,LC);
+if(loading)loading.style.display='none';
+if(result){
+saveInbody(LC,result);
+if(result.weight&&S[LC]){
+const wData=lG('pa_weights',{});
+if(!wData[LC])wData[LC]=[...S[LC].wts];
+wData[LC].push(result.weight);
+lS('pa_weights',wData);
+S[LC].w=result.weight;
+S[LC].wts=wData[LC];
+if(result.bmr)S[LC].bmr=result.bmr;
+recalcStudent(LC);
+}
+toast('인바디 분석 완료! 체중·식단 자동 업데이트');
+renderMyBodyType();
+}else{toast('인바디 분석 실패. 선명한 사진으로 다시 시도해주세요.','err');}
+})();
+return;
+}
 const file=inp.files[0];if(!file||!LC)return;
 const reader=new FileReader();
 reader.onload=async function(e){
