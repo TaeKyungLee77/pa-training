@@ -500,6 +500,43 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 .ex-targets-row{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap;}
 .ex-tg{font-size:8px;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);}
 @media(max-width:640px){.bt-grid{grid-template-columns:repeat(2,1fr);}.bt-card .bt-name{font-size:13px;}.bt-wrap{padding:32px 16px 60px;}}
+/* TODAY 페이지 */
+.td-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.td-date{font-size:20px;font-weight:900;display:flex;align-items:center;gap:8px;}
+.td-dow{font-size:12px;font-weight:700;color:var(--accent);padding:4px 10px;border-radius:8px;background:rgba(100,160,200,.12);}
+.td-sec{margin-bottom:18px;}
+.td-sec-h{font-size:13px;font-weight:900;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.td-sec-h .td-ico{font-size:18px;}
+.td-meal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.td-meal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;transition:transform .15s;}
+.td-meal:hover{transform:translateY(-2px);}
+.td-meal-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+.td-meal-kcal{font-size:14px;font-weight:900;color:var(--orange);margin-bottom:6px;}
+.td-meal-menu{font-size:11px;color:var(--muted);line-height:1.65;}
+.td-water{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(100,160,200,.06);border:1px solid rgba(100,160,200,.12);border-radius:10px;margin-top:10px;}
+.td-water-ico{font-size:20px;}
+.td-water-txt{font-size:11px;font-weight:700;color:var(--accent);}
+.td-water-sub{font-size:10px;color:var(--muted);}
+.td-ex-mode{display:flex;gap:6px;margin-bottom:12px;}
+.td-ex-btn{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--muted);transition:all .2s;cursor:pointer;}
+.td-ex-btn.on{background:rgba(100,160,200,.15);color:var(--accent);border-color:rgba(100,160,200,.3);}
+.td-ex-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;}
+.td-ex-card-h{font-size:13px;font-weight:900;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.td-ex-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
+.td-ex-item:last-child{border-bottom:none;}
+.td-ex-item .td-en{color:var(--text);font-weight:500;}
+.td-ex-item .td-ed{color:var(--muted);font-size:11px;white-space:nowrap;margin-left:8px;}
+.td-rest{text-align:center;padding:32px 20px;background:var(--card);border:1px solid var(--border);border-radius:14px;}
+.td-rest-ico{font-size:40px;margin-bottom:10px;}
+.td-rest-h{font-size:16px;font-weight:900;margin-bottom:6px;}
+.td-rest-p{font-size:12px;color:var(--muted);line-height:1.7;}
+.td-sched-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;background:rgba(232,98,42,.1);color:var(--orange);display:inline-flex;align-items:center;gap:4px;}
+.td-tip{padding:10px 14px;background:rgba(100,160,200,.05);border-radius:10px;margin-top:10px;font-size:10px;color:var(--muted);line-height:1.7;}
+.td-tip strong{color:var(--text);}
+@media(max-width:640px){.td-meal-grid{grid-template-columns:1fr 1fr;gap:6px;}.td-meal{padding:10px;}.td-meal-kcal{font-size:13px;}.td-meal-menu{font-size:10px;}}
+@media(max-width:380px){.td-meal-grid{grid-template-columns:1fr;}}
+/* MY탭 모바일 스크롤 */
+@media(max-width:640px){.my-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;gap:3px;}.my-tab{flex:0 0 auto;padding:8px 12px;font-size:11px;white-space:nowrap;}}
 </style>
 </head>
 <body>
@@ -996,8 +1033,9 @@ const cL=(lG('pa_center_exercise',{})[c]||[]).filter(r=>r.date===td);
 const iT=iL.reduce((a,r)=>a+r.kcal,0);const eT=eL.reduce((a,r)=>a+r.kcal,0);const cT=cL.reduce((a,r)=>a+r.kcal,0);
 const db=document.getElementById('myDB');db.style.display='block';document.getElementById('loginBox').style.display='none';
 db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.name[0]}</span></div><div><div class="mname">${s.name}</div><div class="mmeta">${s.age}세 · ${s.h}cm · ${wts[wts.length-1]}kg · ${s.g}</div><span class="mgoal ${s.gc}">${s.goal}</span></div></div><div class="mst"><div class="ms"><div class="msl">BMR</div><div class="msv bl">${s.bmr.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">TDEE</div><div class="msv">${s.tdee.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">목표</div><div class="msv og">${s.tar.toLocaleString()}</div><div class="msu">kcal/일</div></div></div></div>
-<div class="my-tabs"><button class="my-tab on" onclick="myTab('dash',this)">📊 대시보드</button><button class="my-tab" onclick="myTab('exercise',this)">💪 운동</button><button class="my-tab" onclick="myTab('diet',this)">🍽 식단</button><button class="my-tab" onclick="myTab('sched',this)">📅 스케줄</button><button class="my-tab" onclick="myTab('bodytype',this)">🦴 내 체형</button></div>
-<div class="my-panel on" id="pnl-dash">
+<div class="my-tabs"><button class="my-tab on" onclick="myTab('today',this)">📌 TODAY</button><button class="my-tab" onclick="myTab('dash',this)">📊 대시보드</button><button class="my-tab" onclick="myTab('exercise',this)">💪 운동</button><button class="my-tab" onclick="myTab('diet',this)">🍽 식단</button><button class="my-tab" onclick="myTab('sched',this)">📅 스케줄</button><button class="my-tab" onclick="myTab('bodytype',this)">🦴 내 체형</button></div>
+<div class="my-panel on" id="pnl-today"><div id="todayWrap"></div></div>
+<div class="my-panel" id="pnl-dash">
 <div class="cc"><div class="ct">⚖ 몸무게 변화 (kg)</div><div class="cw"><svg class="wsvg" id="wsvg" viewBox="0 0 600 112" preserveAspectRatio="none"></svg></div><div class="xlbl"><span>1주</span><span>2주</span><span>3주</span><span>4주</span><span>5주</span><span>6주</span></div></div>
 <div class="calsec"><h4>🔥 오늘의 칼로리 기록</h4><div class="caldate">📅 ${td}</div>
 <div class="food-scan">
@@ -1032,7 +1070,7 @@ ${cT>0?`<div class="cex" style="margin-top:8px;">🏋️ 센터 운동 소모: <
 <div class="my-panel" id="pnl-sched"><div class="cal-wrap"><div class="cal-hd"><h3 id="calTitle"></h3><div class="cal-nav"><button onclick="calNav(-1)">◀</button><button onclick="calNav(0)">오늘</button><button onclick="calNav(1)">▶</button></div></div><div class="cal-grid" id="calGrid"></div></div><div id="schedDetail"></div></div>
 <div class="my-panel" id="pnl-bodytype"><div id="myBodyType"></div></div>
 <button class="blo" onclick="doLogout()">로그아웃</button>`;
-rWSVG(wts);rCB(c,s.tar,diet);rMP(diet);}
+rWSVG(wts);rCB(c,s.tar,diet);rMP(diet);rToday();}
 
 /* ===== Capacitor 카메라 플러그인 분기 ===== */
 async function openCamera(targetId,handler){
@@ -1184,9 +1222,112 @@ const dateStr=`${dt.getMonth()+1}/${dt.getDate()}`;
 const el=document.createElement('div');el.className='dd';el.innerHTML=`<div class="ddh" onclick="this.nextElementSibling.classList.toggle('on');this.querySelector('.chev').classList.toggle('on')"><div class="ddl"><div class="dpill">${d.d}<br><span style="font-size:8px;opacity:.6">${d.e}</span></div><div class="ddn">${dateStr}</div></div><div style="display:flex;align-items:center;gap:11px;"><div class="ddk">${d.k.toLocaleString()} kcal</div><div class="chev${i===0?' on':''}">▼</div></div></div><div class="ddb${i===0?' on':''}"><div class="mg2"><div><div class="mt">🌅 아침</div><div class="mk">${d.am.k} kcal</div><div class="mc">${d.am.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">☀️ 점심</div><div class="mk">${d.lu.k} kcal</div><div class="mc">${d.lu.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🍪 간식</div><div class="mk">${d.sn.k} kcal</div><div class="mc">${d.sn.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🌙 저녁</div><div class="mk">${d.di.k} kcal</div><div class="mc">${d.di.c.replace(/\n/g,'<br>')}</div></div></div><div style="margin-top:10px;padding:8px 10px;background:rgba(100,160,200,.05);border-radius:8px;font-size:10px;color:var(--accent);display:flex;align-items:center;gap:6px;">💧 수분 섭취 목표: ${(water/1000).toFixed(1)}L</div></div>`;dl.appendChild(el);});});}
 
 /* MY 탭 전환 */
-function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='sched')rCal();if(id==='diet'){const diet=gDiet(LC);rMP(diet);}if(id==='bodytype')renderMyBodyType();if(id==='exercise')rExProgram();}
+function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='today')rToday();if(id==='sched')rCal();if(id==='diet'){const diet=gDiet(LC);rMP(diet);}if(id==='bodytype')renderMyBodyType();if(id==='exercise')rExProgram();}
 
-/* ===== 운동 프로그램 짐/홈 데이터 ===== */
+/* ===== TODAY 페이지 ===== */
+const DAY_SCHED={
+1:{label:'💪 상체 + 유산소',time:'90분',parts:['cardio','upper','core']},
+2:{label:'🦵 하체 + 유산소',time:'60분',parts:['cardio','lower']},
+3:{label:'🎯 코어 + 전신 서킷',time:'60분',parts:['cardio','core','upper','lower']},
+4:{label:'🔥 유산소 집중',time:'60분',parts:['cardio']},
+5:{label:'🏋️ 하체 + 상체 + 코어',time:'90분',parts:['cardio','lower','upper','core']}
+};
+const PART_NAMES={cardio:'🔥 유산소',upper:'💪 상체',lower:'🦵 하체',core:'🎯 코어'};
+
+function getWeekSeed(){const now=new Date();return Math.floor((now.getTime()-new Date(now.getFullYear(),0,1).getTime())/(7*86400000));}
+
+function getTodayExProgram(mode){
+if(!LC||!S[LC])return null;
+const btRaw=lG('pa_body_types',{})[LC];
+const btType=btRaw?.type||'';
+const btName=BT_NAME_MAP[btType]||'';
+const data=EX_DATA[btName];
+if(!data)return null;
+const dow=new Date().getDay();
+const sched=DAY_SCHED[dow];
+if(!sched)return{rest:true};
+const pool=mode==='gym'?data.gym:data.home;
+const wk=getWeekSeed();
+const result={label:sched.label,time:sched.time,btName:data.name,btColor:data.color,strategy:data.strategy,sections:[]};
+sched.parts.forEach(part=>{
+const items=pool[part]||[];
+if(!items.length)return;
+/* weekNum 시드로 순환: 매주 3개씩 다른 세트 */
+const count=Math.min(3,items.length);
+const start=(wk*(part.charCodeAt(0)||1))%items.length;
+const picked=[];
+for(let i=0;i<count;i++){picked.push(items[(start+i)%items.length]);}
+result.sections.push({part,name:PART_NAMES[part]||part,items:picked});
+});
+return result;
+}
+
+let tdMode='gym';
+function rToday(){
+const w=document.getElementById('todayWrap');if(!w||!LC||!S[LC])return;
+const s=S[LC],c=LC;
+const now=new Date();
+const dowNum=now.getDay();
+const dowNames=['일','월','화','수','목','금','토'];
+const dowFull=['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+const dateStr=`${now.getMonth()+1}월 ${now.getDate()}일`;
+const diet=gDiet(c);
+/* 오늘 요일에 맞는 식단 찾기 */
+const dowMap={'일':6,'월':0,'화':1,'수':2,'목':3,'금':4,'토':5};
+const todayIdx=dowMap[dowNames[dowNum]]??0;
+const todayDiet=diet[todayIdx]||diet[0];
+const water=todayDiet?.water||(s.w*33);
+/* 오늘 운동 */
+const ex=getTodayExProgram(tdMode);
+/* 스케줄 확인 */
+const td=now.toISOString().split('T')[0];
+const schedData=lG('pa_schedules',{});
+const mySchedToday=(schedData[LC]||[]).filter(e=>e.date===td);
+
+let exHTML='';
+if(!ex){
+exHTML=`<div style="text-align:center;padding:24px;background:var(--card);border-radius:12px;border:1px solid var(--border);">
+<div style="font-size:28px;margin-bottom:8px;">💪</div>
+<div style="font-size:13px;font-weight:700;margin-bottom:4px;">체형 분석이 필요합니다</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">체형 분석 후 맞춤 운동이 표시됩니다</div>
+<button class="btnp" onclick="go('body')" style="display:inline-flex;font-size:12px;padding:10px 18px;">🦴 체형분석 하러가기</button></div>`;
+}else if(ex.rest){
+exHTML=`<div class="td-rest"><div class="td-rest-ico">🧘</div><div class="td-rest-h">오늘은 휴식일</div><div class="td-rest-p">충분한 수분 섭취와 스트레칭으로<br>내일을 준비하세요!</div></div>`;
+}else{
+exHTML=`<div class="td-ex-mode">
+<button class="td-ex-btn${tdMode==='gym'?' on':''}" onclick="tdMode='gym';rToday()">🏋️ 짐 (기구)</button>
+<button class="td-ex-btn${tdMode==='home'?' on':''}" onclick="tdMode='home';rToday()">🏠 홈 (맨몸)</button>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+<span class="td-sched-badge">${ex.label} · ${ex.time}</span>
+</div>
+<div style="font-size:10px;color:var(--muted);margin-bottom:10px;padding:8px 12px;background:var(--card);border-radius:8px;border-left:3px solid ${ex.btColor};">
+<strong style="color:${ex.btColor};">${ex.btName}</strong> — ${ex.strategy}
+</div>
+${ex.sections.map(sec=>`<div class="td-ex-card"><div class="td-ex-card-h">${sec.name}</div>${sec.items.map(e=>`<div class="td-ex-item"><span class="td-en">${e.n}</span><span class="td-ed">${e.d}</span></div>`).join('')}</div>`).join('')}
+<div class="td-tip"><strong>💡 무용수 원칙</strong> · 하체 고반복(15+) 저중량 · 상체 중반복(10~12) · RPE 6~7 유지 · 유산소 BPM 125~140</div>`;
+}
+
+w.innerHTML=`
+<div class="td-header">
+<div class="td-date">📌 ${dateStr} <span class="td-dow">${dowFull[dowNum]}</span></div>
+</div>
+${mySchedToday.length?`<div style="margin-bottom:12px;">${mySchedToday.map(e=>`<div class="sched-item" style="margin-bottom:4px;"><div class="sched-dot ${e.type||'lesson'}"></div><div class="sched-time">${e.time||''}</div><div class="sched-info"><div class="sched-title">${esc(e.title)}</div>${e.desc?`<div class="sched-desc">${esc(e.desc)}</div>`:''}</div></div>`).join('')}</div>`:''}
+<div class="td-sec">
+<div class="td-sec-h"><span class="td-ico">🍽</span> 오늘의 식단 <span style="font-size:10px;font-weight:500;color:var(--orange);margin-left:4px;">${todayDiet.k.toLocaleString()} kcal</span></div>
+<div class="td-meal-grid">
+<div class="td-meal"><div class="td-meal-label">🌅 아침</div><div class="td-meal-kcal">${todayDiet.am.k} kcal</div><div class="td-meal-menu">${todayDiet.am.c.replace(/\n/g,'<br>')}</div></div>
+<div class="td-meal"><div class="td-meal-label">☀️ 점심</div><div class="td-meal-kcal">${todayDiet.lu.k} kcal</div><div class="td-meal-menu">${todayDiet.lu.c.replace(/\n/g,'<br>')}</div></div>
+<div class="td-meal"><div class="td-meal-label">🍪 간식</div><div class="td-meal-kcal">${todayDiet.sn.k} kcal</div><div class="td-meal-menu">${todayDiet.sn.c.replace(/\n/g,'<br>')}</div></div>
+<div class="td-meal"><div class="td-meal-label">🌙 저녁</div><div class="td-meal-kcal">${todayDiet.di.k} kcal</div><div class="td-meal-menu">${todayDiet.di.c.replace(/\n/g,'<br>')}</div></div>
+</div>
+<div class="td-water"><span class="td-water-ico">💧</span><div><div class="td-water-txt">수분 ${(water/1000).toFixed(1)}L (${water}ml)</div><div class="td-water-sub">체중 ${s.w}kg 기준 · 운동 시 +500ml</div></div></div>
+</div>
+<div class="td-sec">
+<div class="td-sec-h"><span class="td-ico">💪</span> 오늘의 운동</div>
+${exHTML}
+</div>`;
+}
 const EX_DATA={
 '삼각형':{name:'삼각형 (하체 발달형)',color:'var(--orange)',desc:'골반 > 어깨, 하체에 지방 축적 경향',strategy:'상체 보강 + 하체 유산소 집중',
 gym:{cardio:[{n:'Steady State 러닝',d:'40분, BPM 125~135'},{n:'인클라인 워킹',d:'20분, 경사 8~12%'},{n:'스텝밀',d:'15분, 레벨 6~8'},{n:'로잉머신',d:'15분, SPM 22~26'}],
