@@ -39,8 +39,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .nav-nm{font-size:12px;font-weight:700;}
 .nav-lo{font-size:11px;color:var(--muted);border:1px solid rgba(255,255,255,.1);padding:5px 12px;border-radius:7px;transition:all .2s;}
 .nav-lo:hover{color:var(--text);}
-.hbg{display:none;flex-direction:column;gap:5px;width:32px;padding:5px 0;flex-shrink:0;}
-.hbg span{display:block;height:2px;border-radius:2px;background:var(--muted);}
+.hbg{display:none;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);flex-shrink:0;font-size:18px;color:var(--text);line-height:1;}
 .mob{display:none;position:fixed;top:var(--nav);left:0;right:0;background:rgba(9,17,28,.97);backdrop-filter:blur(20px);padding:12px 20px 20px;z-index:199;border-bottom:1px solid var(--border);flex-direction:column;gap:3px;}
 .mob.on{display:flex;}
 .ml{font-size:15px;font-weight:600;color:var(--muted);padding:13px 16px;border-radius:10px;display:block;transition:all .2s;cursor:pointer;}
@@ -561,7 +560,7 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 </head>
 <body>
 <div class="tw" id="tw"></div>
-<nav class="nav"><div class="logo" onclick="go('home')">P<span class="dot">.</span>A<span class="dot">·</span>TRAINING<span class="sub">PERFORMANCE ACHIEVEMENT</span></div><div class="navlinks"><div class="nl on" id="nl-home" onclick="go('home')">홈</div><div class="nl" id="nl-notice" onclick="go('notice')">공지사항</div><div class="nl" id="nl-reserve" onclick="goReserve()">예약하기</div><div class="nl" id="nl-body" onclick="go('body')">체형분석</div><div class="nl" id="nl-my" onclick="goMY()">MY</div><div class="nl" id="nl-prod" onclick="go('prod')">추천제품</div><div class="nl" id="nl-coach" onclick="go('coach')">강사소개</div></div><div class="nav-right"><div class="nav-prof" id="navProf"><div class="nav-av" id="navAv"><span id="navAvT">😊</span></div><span class="nav-nm" id="navNm">-</span><button class="nav-lo" onclick="doLogout()">로그아웃</button></div><button class="hbg" onclick="togMob()"><span></span><span></span><span></span></button></div></nav>
+<nav class="nav"><div class="logo" onclick="go('home')">P<span class="dot">.</span>A<span class="dot">·</span>TRAINING<span class="sub">PERFORMANCE ACHIEVEMENT</span></div><div class="navlinks"><div class="nl on" id="nl-home" onclick="go('home')">홈</div><div class="nl" id="nl-notice" onclick="go('notice')">공지사항</div><div class="nl" id="nl-reserve" onclick="goReserve()">예약하기</div><div class="nl" id="nl-body" onclick="go('body')">체형분석</div><div class="nl" id="nl-my" onclick="goMY()">MY</div><div class="nl" id="nl-prod" onclick="go('prod')">추천제품</div><div class="nl" id="nl-coach" onclick="go('coach')">강사소개</div></div><div class="nav-right"><div class="nav-prof" id="navProf"><div class="nav-av" id="navAv"><span id="navAvT">😊</span></div><span class="nav-nm" id="navNm">-</span><button class="nav-lo" onclick="doLogout()">로그아웃</button></div><button class="hbg" onclick="togMob()">☰</button></div></nav>
 <div class="mob" id="mob"><div class="ml" onclick="go('home');cMob()">홈</div><div class="ml" onclick="go('notice');cMob()">공지사항</div><div class="ml" onclick="goReserve();cMob()">예약하기</div><div class="ml" onclick="go('body');cMob()">체형분석</div><div class="ml" onclick="goMY();cMob()">MY</div><div class="ml" onclick="go('prod');cMob()">추천제품</div><div class="ml" onclick="go('coach');cMob()">강사소개</div></div>
 
 <div class="pg on" id="pg-home">
