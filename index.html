@@ -1212,35 +1212,84 @@ function foodSelected(inp){
 async function analyzeFoodPhoto(dataUrl){
   const loading=document.getElementById('foodLoading');
   loading.classList.add('on');
+  const loadText=document.querySelector('.food-loading-text');
   /* 이미지 리사이즈 (1024px 이하로) */
   const resized=await resizeImage(dataUrl,1024);
   const base64=resized.split(',')[1];
   const mediaType=resized.split(';')[0].split(':')[1]||'image/jpeg';
+  const imgBlock={type:'image',source:{type:'base64',media_type:mediaType,data:base64}};
   try{
-    const resp=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
+    /* ===== 1차 분석 ===== */
+    if(loadText)loadText.textContent='AI가 음식을 분석하고 있어요...';
+    const resp1=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
-        {type:'text',text:`당신은 한국 영양사 전문가입니다. 이 음식 사진을 분석해주세요.
+        imgBlock,
+        {type:'text',text:`당신은 한국 영양사(10년 경력)입니다. 이 음식 사진을 정밀 분석해주세요.
 
-중요 규칙:
-1. 한국 식품영양성분 데이터베이스 기준으로 분석할 것
-2. 사진 속 음식의 양(그릇 크기, 접시 대비 비율)을 현실적으로 추정할 것
-3. 밥 한 공기는 약 300kcal, 국/찌개 1인분 150-250kcal, 고기반찬 1인분 200-350kcal
-4. 한식 1끼 평균은 500-800kcal임을 참고할 것
-5. 칼로리를 과소평가하지 말 것 — 실제 한국인 1끼 식사량 기준으로 넉넉하게 산정
-6. 소스, 기름, 양념의 칼로리도 반드시 포함할 것
-7. 음료가 보이면 음료 칼로리도 포함할 것
+[분석 프로토콜]
+1단계 — 음식 식별: 보이는 모든 음식/음료를 빠짐없이 나열
+2단계 — 용량 추정: 그릇/접시 크기(성인 밥공기 지름 약 11cm)를 기준으로 각 음식의 중량(g)을 추정
+3단계 — 칼로리 산출: 한국 식품영양성분 DB(식약처 기준) 참조
 
-아래 JSON 형식으로만 응답해줘. 다른 텍스트 없이 JSON만:
-{"name":"음식이름(한국어)","kcal":총칼로리숫자,"carb":탄수화물g숫자,"protein":단백질g숫자,"fat":지방g숫자,"detail":"보이는 음식 구성과 추정 중량을 상세히 설명(한국어, 3~4줄)","items":[{"name":"개별음식(추정중량포함)","kcal":숫자}],"advice":"이 사용자의 목표(${S[LC]?.goal||'체중감량'}, 일일 ${S[LC]?.tar||1800}kcal)에 맞는 짧은 영양 코멘트"}`}
+[한식 기준 앵커]
+- 쌀밥 1공기(210g) = 313kcal
+- 된장찌개 1인분 = 120~180kcal
+- 김치찌개 1인분 = 150~220kcal  
+- 불고기 1인분(150g) = 280~350kcal
+- 삼겹살 1인분(180g) = 470~550kcal
+- 제육볶음 1인분 = 350~420kcal
+- 계란후라이 1개 = 90kcal
+- 김치 1접시(40g) = 15~20kcal
+- 나물반찬 1접시 = 30~60kcal
+- 한식 1끼 총합 평균 = 500~800kcal (반찬 수에 따라)
+
+[주의]
+- 조리유, 양념, 소스 칼로리 반드시 포함
+- 국/찌개 국물의 칼로리도 포함
+- 과소추정보다 약간 넉넉하게 산정 (실제 식당 포션 기준)
+- 음료가 보이면 반드시 포함
+
+아래 JSON 형식으로만 응답. 다른 텍스트 없이:
+{"name":"음식이름(한국어)","kcal":총칼로리숫자,"carb":탄수화물g숫자,"protein":단백질g숫자,"fat":지방g숫자,"detail":"보이는 음식 구성과 추정 중량을 상세히 설명(한국어, 3~4줄)","items":[{"name":"개별음식(추정중량포함)","kcal":숫자}],"confidence":"high/medium/low"}`}
       ]}]})
     },1);
-    const data=await resp.json();
-    const text=data.content?.map(c=>c.text||'').join('')||'';
-    const result=safeParseJSON(text);
-    if(!result||!result.kcal){throw new Error('Invalid AI response');}
-    showFoodResult(result);
+    const d1=await resp1.json();
+    const t1=d1.content?.map(c=>c.text||'').join('')||'';
+    const r1=safeParseJSON(t1);
+    if(!r1||!r1.kcal){throw new Error('1차 분석 실패');}
+
+    /* ===== 2차 교차검증 ===== */
+    if(loadText)loadText.textContent='교차 검증 중...';
+    const resp2=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:[
+        imgBlock,
+        {type:'text',text:`동일한 음식 사진입니다. 이전 영양사의 분석 결과를 검증해주세요.
+
+[이전 분석 결과]
+${JSON.stringify(r1)}
+
+[검증 과제]
+1. 각 음식 항목이 사진과 일치하는가? 빠진 음식이 있는가?
+2. 추정 중량이 현실적인가? (그릇 크기, 음식 높이 고려)
+3. 칼로리가 해당 중량에 적합한가?
+4. 탄/단/지 비율이 음식 구성에 맞는가?
+
+검증 후 보정된 최종 결과를 JSON으로만 응답:
+{"name":"음식이름","kcal":보정된총칼로리,"carb":보정g,"protein":보정g,"fat":보정g,"detail":"보정된 설명","items":[{"name":"개별음식(보정중량)","kcal":보정숫자}],"correction":"보정 사유 1줄(없으면 '검증 완료')"}`}
+      ]}]})
+    },1);
+    const d2=await resp2.json();
+    const t2=d2.content?.map(c=>c.text||'').join('')||'';
+    const r2=safeParseJSON(t2);
+
+    /* 2차 성공시 2차 사용, 실패시 1차 사용 */
+    const final=r2&&r2.kcal?r2:r1;
+    /* 사용자 목표 기반 조언 추가 */
+    final.advice=final.advice||`목표: ${S[LC]?.goal||'체중감량'} (일일 ${S[LC]?.tar||1800}kcal). 이 식사는 목표의 약 ${Math.round((final.kcal/(S[LC]?.tar||1800))*100)}%입니다.`;
+    final.verified=!!r2?.kcal;
+    showFoodResult(final);
   }catch(e){
     console.warn('Food analysis error:',e);
     document.getElementById('foodResult').className='food-result on';
@@ -1250,26 +1299,54 @@ async function analyzeFoodPhoto(dataUrl){
 function showFoodResult(r){
   const el=document.getElementById('foodResult');
   const maxNutri=Math.max(r.carb||0,r.protein||0,r.fat||0,1);
+  const baseKcal=r.kcal;const baseCarb=r.carb||0;const baseProt=r.protein||0;const baseFat=r.fat||0;
+  const vBadge=r.verified?`<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(111,207,151,.15);color:var(--green);margin-left:6px;">✓ 교차검증 완료</span>`:`<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(232,98,42,.15);color:var(--orange);margin-left:6px;">1차 분석</span>`;
+  const corrNote=r.correction&&r.correction!=='검증 완료'?`<div style="font-size:10px;color:var(--muted);padding:6px 10px;background:rgba(111,207,151,.05);border-radius:6px;margin-bottom:8px;">🔍 보정: ${esc(r.correction)}</div>`:'';
   el.className='food-result on';
   el.innerHTML=`
-    <div class="food-name">${esc(r.name)}</div>
-    <div class="food-kcal">${r.kcal}<span> kcal</span></div>
+    <div class="food-name">${esc(r.name)} ${vBadge}</div>
+    <div class="food-kcal" id="foodKcalDisp">${r.kcal}<span> kcal</span></div>
+    ${corrNote}
     <div class="nutri-bars">
-      <div class="nutri-bar"><div class="nutri-label">탄수화물</div><div class="nutri-track"><div class="nutri-fill carb" style="width:${Math.round((r.carb/maxNutri)*100)}%"></div></div><div class="nutri-val carb">${r.carb}g</div></div>
-      <div class="nutri-bar"><div class="nutri-label">단백질</div><div class="nutri-track"><div class="nutri-fill prot" style="width:${Math.round((r.protein/maxNutri)*100)}%"></div></div><div class="nutri-val prot">${r.protein}g</div></div>
-      <div class="nutri-bar"><div class="nutri-label">지방</div><div class="nutri-track"><div class="nutri-fill fat" style="width:${Math.round((r.fat/maxNutri)*100)}%"></div></div><div class="nutri-val fat">${r.fat}g</div></div>
+      <div class="nutri-bar"><div class="nutri-label">탄수화물</div><div class="nutri-track"><div class="nutri-fill carb" id="nfCarb" style="width:${Math.round((r.carb/maxNutri)*100)}%"></div></div><div class="nutri-val carb" id="nvCarb">${r.carb}g</div></div>
+      <div class="nutri-bar"><div class="nutri-label">단백질</div><div class="nutri-track"><div class="nutri-fill prot" id="nfProt" style="width:${Math.round((r.protein/maxNutri)*100)}%"></div></div><div class="nutri-val prot" id="nvProt">${r.protein}g</div></div>
+      <div class="nutri-bar"><div class="nutri-label">지방</div><div class="nutri-track"><div class="nutri-fill fat" id="nfFat" style="width:${Math.round((r.fat/maxNutri)*100)}%"></div></div><div class="nutri-val fat" id="nvFat">${r.fat}g</div></div>
     </div>
     ${r.items&&r.items.length?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:700;">구성</div>${r.items.map(it=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04);"><span>${esc(it.name)}</span><span style="color:var(--orange);font-weight:700;">${it.kcal}kcal</span></div>`).join('')}`:''}
     ${r.detail?`<div class="food-detail" style="margin-top:10px;">${esc(r.detail)}</div>`:''}
-    ${r.advice?`<div style="background:rgba(100,160,200,.08);border:1px solid rgba(100,160,200,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--accent);margin-bottom:12px;line-height:1.6;">💡 ${esc(r.advice)}</div>`:''}
+    <div style="margin-top:12px;padding:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;">
+      <div style="font-size:11px;font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between;">🍽 양 보정 <span id="portionPct" style="color:var(--accent);">100%</span></div>
+      <input type="range" id="portionSlider" min="50" max="150" value="100" step="5" style="width:100%;accent-color:var(--accent);cursor:pointer;" oninput="adjustPortion(${baseKcal},${baseCarb},${baseProt},${baseFat},this.value)">
+      <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:2px;"><span>적게 먹음 (50%)</span><span>기본</span><span>많이 먹음 (150%)</span></div>
+    </div>
+    ${r.advice?`<div style="background:rgba(100,160,200,.08);border:1px solid rgba(100,160,200,.15);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--accent);margin-bottom:12px;line-height:1.6;margin-top:10px;">💡 ${esc(r.advice)}</div>`:''}
     <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">어느 끼니에 등록할까요?</div>
     <div class="food-actions">
-      <button class="food-add" onclick="foodAddMeal('아침',${r.kcal})">🌅 아침</button>
-      <button class="food-add" onclick="foodAddMeal('점심',${r.kcal})">☀️ 점심</button>
-      <button class="food-add" onclick="foodAddMeal('저녁',${r.kcal})">🌙 저녁</button>
-      <button class="food-add" onclick="foodAddMeal('간식',${r.kcal})" style="background:rgba(100,160,200,.15);color:var(--accent);">🍪 간식</button>
+      <button class="food-add" onclick="foodAddMeal('아침',getFoodKcal())">🌅 아침</button>
+      <button class="food-add" onclick="foodAddMeal('점심',getFoodKcal())">☀️ 점심</button>
+      <button class="food-add" onclick="foodAddMeal('저녁',getFoodKcal())">🌙 저녁</button>
+      <button class="food-add" onclick="foodAddMeal('간식',getFoodKcal())" style="background:rgba(100,160,200,.15);color:var(--accent);">🍪 간식</button>
     </div>
     <button class="food-retry" onclick="document.getElementById('foodResult').className='food-result';document.getElementById('foodPreview').style.display='none';foodImgData=null;" style="width:100%;margin-top:8px;">다시 분석하기</button>`;
+}
+let _foodBaseKcal=0;
+function adjustPortion(base,carb,prot,fat,pct){
+  _foodBaseKcal=Math.round(base*pct/100);
+  document.getElementById('foodKcalDisp').innerHTML=`${_foodBaseKcal}<span> kcal</span>`;
+  document.getElementById('portionPct').textContent=pct+'%';
+  document.getElementById('nvCarb').textContent=Math.round(carb*pct/100)+'g';
+  document.getElementById('nvProt').textContent=Math.round(prot*pct/100)+'g';
+  document.getElementById('nvFat').textContent=Math.round(fat*pct/100)+'g';
+  const mx=Math.max(carb,prot,fat,1);
+  document.getElementById('nfCarb').style.width=Math.round((carb/mx)*100)+'%';
+  document.getElementById('nfProt').style.width=Math.round((prot/mx)*100)+'%';
+  document.getElementById('nfFat').style.width=Math.round((fat/mx)*100)+'%';
+}
+function getFoodKcal(){
+  const slider=document.getElementById('portionSlider');
+  const pct=slider?parseInt(slider.value):100;
+  const base=parseInt(document.getElementById('foodKcalDisp')?.textContent)||0;
+  return base||_foodBaseKcal;
 }
 function foodAddMeal(label,kcal){
   const td=new Date().toISOString().split('T')[0];
@@ -2674,38 +2751,107 @@ loading.style.display='block';
 const resized=await resizeImage(dataUrl,1024);
 const base64=resized.split(',')[1];
 const mediaType=resized.split(';')[0].split(':')[1]||'image/jpeg';
+
+/* 기존 셀프 체크리스트 데이터 수집 */
+let selfData='';
+const chkCounts={A:0,B:0,C:0};
+for(let i=0;i<10;i++){const r=document.querySelector(`input[name="selfQ${i}"]:checked`);if(r)chkCounts[r.value]++;}
+const chkTotal=chkCounts.A+chkCounts.B+chkCounts.C;
+if(chkTotal>=3){
+selfData=`\n\n[셀프 체크리스트 결과 (${chkTotal}문항 응답)]
+A(스트레이트/근육형): ${chkCounts.A}회 · B(웨이브/지방형): ${chkCounts.B}회 · C(내추럴/골격형): ${chkCounts.C}회
+→ 이 결과를 사진 분석과 함께 종합적으로 고려하세요. 특히 손목/관절 등 사진에서 보기 어려운 부분은 셀프 응답을 가중치 높게 반영하세요.`;
+}
+
+/* 기존 신체 측정 데이터 수집 */
+let measData='';
+const selfM={
+shoulder:parseFloat(document.getElementById('selfM1')?.value)||0,
+chest:parseFloat(document.getElementById('selfM2')?.value)||0,
+waist:parseFloat(document.getElementById('selfM3')?.value)||0,
+hip:parseFloat(document.getElementById('selfM4')?.value)||0,
+wrist:parseFloat(document.getElementById('selfM5')?.value)||0
+};
+if(selfM.shoulder>0||selfM.waist>0||selfM.hip>0){
+measData=`\n\n[신체 치수 (cm)]`;
+if(selfM.shoulder>0)measData+=`\n어깨너비: ${selfM.shoulder}cm`;
+if(selfM.chest>0)measData+=`\n가슴둘레: ${selfM.chest}cm`;
+if(selfM.waist>0)measData+=`\n허리둘레: ${selfM.waist}cm`;
+if(selfM.hip>0)measData+=`\n엉덩이둘레: ${selfM.hip}cm`;
+if(selfM.wrist>0)measData+=`\n손목둘레: ${selfM.wrist}cm`;
+measData+=`\n→ 이 실측 데이터는 사진보다 신뢰도가 높으니 반드시 우선 반영하세요.`;
+}
+
+/* 인바디 데이터 수집 (로그인 시) */
+let inbodyData='';
+if(LC){
+const ib=getInbody(LC);
+if(ib.length>0){
+const latest=ib[0];
+inbodyData=`\n\n[최근 인바디 데이터 (${latest.date||'최근'})]`;
+if(latest.weight)inbodyData+=`\n체중: ${latest.weight}kg`;
+if(latest.skeletalMuscle)inbodyData+=`\n골격근량: ${latest.skeletalMuscle}kg`;
+if(latest.bodyFat)inbodyData+=`\n체지방량: ${latest.bodyFat}kg`;
+if(latest.bodyFatPct)inbodyData+=`\n체지방률: ${latest.bodyFatPct}%`;
+if(latest.bmi)inbodyData+=`\n BMI: ${latest.bmi}`;
+if(latest.segmental){
+const seg=latest.segmental;
+inbodyData+=`\n부위별 근육: 우팔(${seg.rightArm}) 좌팔(${seg.leftArm}) 몸통(${seg.trunk}) 우다리(${seg.rightLeg}) 좌다리(${seg.leftLeg})`;
+}
+inbodyData+=`\n→ 인바디 체성분 데이터는 체형 분류의 핵심 지표입니다. 사진+인바디를 종합하여 판단하세요.`;
+}
+}
+
+/* 로그인 사용자 기본 정보 */
+let userInfo='';
+if(LC&&S[LC]){
+const s=S[LC];
+userInfo=`\n\n[사용자 기본정보]\n${s.g==='여'?'여성':'남성'} · ${s.age}세 · ${s.h}cm · ${s.w}kg`;
+}
+
 try{
 const resp=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
 method:'POST',headers:{'Content-Type':'application/json'},
 body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:[
 {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
-{type:'text',text:`당신은 골격 체형 분석 전문가입니다. 이 전신 사진을 보고 골격 타입을 분석하세요.
+{type:'text',text:`당신은 골격 체형 분석 전문가(10년 경력)입니다. 아래 모든 데이터를 종합하여 체형을 분석하세요.
 
-6가지 골격 타입 중 하나로 분류하세요:
-1. 삼각형 (웨이브): 상체 약하고 하체 발달. 무릎 통통, 발목 두툼.
-2. 다이아몬드 (웨이브): 전체적으로 가늘고 얇음. 무릎 작고 발목 얇음.
-3. 역삼각형 (내추럴): 어깨 넓고 골격 튼튼. 어깨 대비 골반 좁음.
-4. 직사각형 (내추럴): 어깨~골반 비슷한 일자. 골격 튼튼하나 각지지 않음.
-5. 하트형 (스트레이트): S곡선, 볼륨감. 허리 잘록, 근육 탄력.
-6. 타원형 (스트레이트): 매끈한 원통형. 굴곡 적고 동그란 라인.
+[분석 소스 우선순위]
+1순위: 신체 실측 치수 (가장 객관적)
+2순위: 인바디 체성분 데이터 (근육/지방 분포)
+3순위: 사진 분석 (어깨-골반 비율, 실루엣)
+4순위: 셀프 체크리스트 (주관적이지만 촉각 정보 포함)
+${userInfo}${measData}${inbodyData}${selfData}
 
-분석 기준:
-- 어깨 너비 vs 골반 너비 비율
-- 상하체 볼륨 차이
-- 허리 잘록함 정도
-- 전체적인 뼈대 크기와 두께
-- 사지(팔다리)의 두께와 길이 비율
+[6가지 골격 타입]
+1. 삼각형 tri (웨이브): 상체 약하고 하체 발달. 무릎 통통, 발목 두툼. 어깨<골반.
+2. 다이아몬드 dia (웨이브): 전체적으로 가늘고 얇음. 무릎 작고 발목 얇음. 허리 넓음.
+3. 역삼각형 inv (내추럴): 어깨 넓고 골격 튼튼. 어깨>골반. 골격이 눈에 띔.
+4. 직사각형 rec (내추럴): 어깨≈골반 일자형. 골격 튼튼하나 잘록함 없음.
+5. 하트형 heart (스트레이트): S곡선, 볼륨감. 허리 잘록, 근육 탄력. 어깨>골반.
+6. 타원형 oval (스트레이트): 매끈한 원통형. 굴곡 적고 동그란 라인. 전신 지방.
 
-주의: 이 분석은 사진 한 장 기반이므로 참고용입니다. 정확한 진단은 전문가 상담을 권장합니다.
+[판별 핵심 기준]
+- 어깨너비 vs 골반너비 비율 (실측 우선)
+- 상하체 근육량 차이 (인바디 segmental 우선)
+- 체지방 분포 (인바디 체지방률 참조)
+- 허리 잘록함 (허리/엉덩이 비율)
+- 뼈대 크기 (손목둘레: 남 <17cm 소골, 17~20 중골, >20 대골 / 여 <15 소골, 15~17 중골, >17 대골)
 
 아래 JSON 형식으로만 응답. 다른 텍스트 없이 JSON만:
-{"type":"타입ID(tri/dia/inv/rec/heart/oval)","typeName":"한글 타입명","parentType":"웨이브/내추럴/스트레이트","confidence":0~100숫자,"analysis":"이 사진에서 보이는 체형 특징 3~4줄 설명(한국어)","features":{"shoulderWidth":"넓음/보통/좁음","hipWidth":"넓음/보통/좁음","waistDef":"잘록/보통/일자","upperBody":"볼륨/보통/얇음","lowerBody":"볼륨/보통/얇음","frame":"큼/보통/작음"},"recommendation":"이 체형에 맞는 운동 방향 2~3줄 조언(한국어)"}`}
+{"type":"타입ID(tri/dia/inv/rec/heart/oval)","typeName":"한글 타입명","parentType":"웨이브/내추럴/스트레이트","confidence":0~100숫자,"dataSources":"사용된 데이터 소스 나열","analysis":"종합 분석 4~5줄(어떤 데이터가 결론을 뒷받침하는지 명시)","features":{"shoulderWidth":"넓음/보통/좁음","hipWidth":"넓음/보통/좁음","waistDef":"잘록/보통/일자","upperBody":"볼륨/보통/얇음","lowerBody":"볼륨/보통/얇음","frame":"큼/보통/작음"},"recommendation":"이 체형에 맞는 운동 방향 2~3줄 조언(한국어)"}`}
 ]}]})
 },1);
 const data=await resp.json();
 const text=data.content?.map(c=>c.text||'').join('')||'';
 const result=safeParseJSON(text);
 if(!result||!result.type){throw new Error('Invalid AI response');}
+/* 사용된 데이터 소스 수에 따라 confidence 보정 */
+let srcCount=1;
+if(chkTotal>=3)srcCount++;
+if(selfM.shoulder>0||selfM.waist>0)srcCount++;
+if(inbodyData)srcCount++;
+result.srcCount=srcCount;
 showBtResult(result);
 }catch(e){
 console.warn('Body type analysis error:',e);
@@ -2720,10 +2866,20 @@ const t=BODY_TYPES.find(x=>x.id===r.type);
 const color=t?.color||'#64A0C8';
 /* AI 분석 결과 Firestore에 저장 (로그인 사용자) */
 if(LC)saveAIAnalysis(LC,r);
+/* 데이터 소스 수에 따른 신뢰도 등급 */
+const sc=r.srcCount||1;
+const reliLabel=sc>=3?'높음 (다중 데이터)':sc>=2?'보통 (2개 소스)':'참고용 (사진만)';
+const reliColor=sc>=3?'var(--green)':sc>=2?'var(--accent)':'var(--orange)';
+const srcBadge=r.dataSources?`<div style="font-size:9px;color:var(--muted);margin-top:4px;">📊 ${r.dataSources}</div>`:'';
 el.className='bt-result on';
 el.innerHTML=`
 <div class="bt-result-type" style="color:${color};">${r.typeName}</div>
-<div class="bt-result-parent" style="background:${color}15;color:${color};">${r.parentType} · 신뢰도 ${r.confidence}%</div>
+<div class="bt-result-parent" style="background:${color}15;color:${color};">${r.parentType} · AI 신뢰도 ${r.confidence}%</div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:8px;">
+<span style="width:8px;height:8px;border-radius:50%;background:${reliColor};flex-shrink:0;"></span>
+<span style="font-size:10px;font-weight:700;color:${reliColor};">분석 신뢰도: ${reliLabel}</span>
+</div>
+${srcBadge}
 <div class="bt-result-desc">${r.analysis}</div>
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;font-size:10px;">
 <div style="padding:6px;background:rgba(255,255,255,.03);border-radius:6px;text-align:center;"><span style="color:var(--muted);">어깨</span><br><strong>${r.features.shoulderWidth}</strong></div>
@@ -2734,6 +2890,7 @@ el.innerHTML=`
 <div style="padding:6px;background:rgba(255,255,255,.03);border-radius:6px;text-align:center;"><span style="color:var(--muted);">골격</span><br><strong>${r.features.frame}</strong></div>
 </div>
 <div style="font-size:11px;color:var(--accent);line-height:1.7;padding:10px;background:rgba(100,160,200,.06);border-radius:8px;margin-bottom:12px;">💡 ${r.recommendation}</div>
+${sc<3?`<div style="font-size:10px;color:var(--muted);padding:8px 10px;background:rgba(232,98,42,.05);border:1px solid rgba(232,98,42,.1);border-radius:8px;margin-bottom:10px;line-height:1.6;">💡 <strong style="color:var(--orange);">정확도를 높이려면:</strong> ${sc<2?'위의 셀프 체크리스트 10문항을 체크한 뒤 사진을 다시 분석하면 정확도가 올라갑니다. 인바디 데이터가 있다면 관리자에게 등록을 요청하세요.':'인바디 데이터를 추가하면 체성분 기반 분석이 가능해져 정확도가 크게 올라갑니다.'}</div>`:''}\
 ${t?`<button class="btnp" onclick="showBodyType('${t.id}')" style="width:100%;justify-content:center;margin-top:4px;">📋 ${t.name} 맞춤 운동 프로그램 보기</button>`:''}
 ${LC&&t?`<button style="width:100%;margin-top:8px;padding:10px;background:rgba(111,207,151,.1);color:var(--green);font-size:11px;font-weight:700;border-radius:10px;border:1px solid rgba(111,207,151,.2);cursor:pointer;" onclick="saveSelfDiagnosis('${t.id}')">💾 내 체형으로 저장 (${t.name})</button>`:''}
 <button style="width:100%;margin-top:8px;padding:10px;background:rgba(255,255,255,.05);color:var(--muted);font-size:12px;font-weight:700;border-radius:10px;border:1px solid rgba(255,255,255,.08);" onclick="document.getElementById('btResult').className='bt-result';document.getElementById('btPreview').style.display='none';btImgData=null;">다시 분석하기</button>`;
