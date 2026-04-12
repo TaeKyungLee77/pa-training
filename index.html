@@ -998,7 +998,7 @@ function lG(k,d){if(_cache[k]!==undefined)return JSON.parse(JSON.stringify(_cach
 function lS(k,v){const c=JSON.parse(JSON.stringify(v));_cache[k]=c;localStorage.setItem(k,JSON.stringify(v));if(_fsReady)db.collection('pa_data').doc(k).set({value:c}).catch(e=>console.warn('[PA] 저장오류:',e));}
 function fsListen(){db.collection('pa_data').onSnapshot(snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='modified'||ch.type==='added'){const k=ch.doc.id;if(k==='_migrated')return;_cache[k]=ch.doc.data().value;}});},e=>console.warn('[PA] 리스너:',e));}
 /* 현재 로그인 역할 감지 */
-function getCurRole(){if(aOK)return'admin';const sv=sessionStorage.getItem('pa_login');if(sv){try{const d=JSON.parse(sv);if(d.name&&d.name.includes('학부모'))return'parent';}catch(e){}}return'student';}
+function getCurRole(){if(aOK)return'admin';const sv=sessionStorage.getItem('pa_login');if(sv){try{const d=JSON.parse(sv);if(d.name&&(d.name.includes('학부모')||d.name.includes('아버님')||d.name.includes('어머님')))return'parent';}catch(e){}}return'student';}
 function byBadge(by){if(!by)return'';const cls=by==='admin'?'by-admin':by==='parent'?'by-parent':'by-student';const lbl=by==='admin'?'관리자':by==='parent'?'학부모':'학생';return`<span class="by-badge ${cls}">${lbl}</span>`;}
 function getStudents(){const custom=lG('pa_custom_students',null);return custom||S;}
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
@@ -1056,7 +1056,7 @@ if(kid===getAdminKakaoId()){setN('관리자 ('+nn+')',img);toast(nn+' 관리자�
 const map=lG('pa_kakao_users',{});const mapped=map[kid];
 const c=typeof mapped==='string'?mapped:mapped?.code;
 const role=typeof mapped==='string'?'student':mapped?.role||'student';
-if(c&&S[c]){const displayName=role==='parent'?nn+' (학부모)':nn;logIn(c,displayName,img);go('my');return;}
+if(c&&S[c]){const isParent=role==='father'||role==='mother'||role==='parent';const honorific=role==='father'?'아버님':role==='mother'?'어머님':role==='parent'?'학부모':'';const displayName=isParent?S[c].name+' '+honorific:nn;logIn(c,displayName,img);go('my');return;}
 sessionStorage.setItem('pa_kakao_pending',JSON.stringify({kid,nn,img}));go('my');showKakaoLink(nn);}
 /* 관리자 카카오 ID — Firestore pa_admin_config에서 로드 */
 function getAdminKakaoId(){
@@ -1068,39 +1068,91 @@ const ADMIN_KAKAO_ID_FALLBACK='4824357984';
 /* 리다이렉트 인가코드 처리 */
 function processKakaoAuth(){const params=new URLSearchParams(location.search);const code=params.get('code');if(!code)return;history.replaceState(null,'',location.pathname+location.hash);fetch('https://kauth.kakao.com/oauth/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:'a1ca85645cfb642c43ac95082a46e872',redirect_uri:location.origin+'/',code})}).then(r=>r.json()).then(data=>{if(data.access_token){Kakao.Auth.setAccessToken(data.access_token);Kakao.API.request({url:'/v2/user/me'}).then(r=>{handleKakaoUser(r);}).catch(e=>{console.warn('API error:',e);toast('사용자 정보 조회 실패','err');});}else{console.warn('Token fail:',data);toast('토큰 발급 실패','err');}}).catch(e=>{console.warn('Token error:',e);toast('인증 처리 오류','err');});}
 
-/* 미등록 카카오 유저 → 코드 입력 UI (본인/학부모 선택) */
+/* 미등록 카카오 유저 → 스텝 기반 연결 UI */
 function showKakaoLink(nn){
 const lb=document.getElementById('loginBox');if(!lb)return;
 lb.style.display='block';
 document.getElementById('myDB').style.display='none';
-lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class="kcard-h">${esc(nn)}님 환영합니다!</div><p class="kcard-p">카카오 로그인 성공!<br>선생님께 받은 <strong style="color:var(--text)">입장 코드</strong>를 입력하면<br>계정이 자동으로 연결됩니다.</p>
-<div style="display:flex;gap:8px;margin-bottom:16px;">
-<button id="roleStudent" class="my-tab on" onclick="setRole('student')" style="flex:1;padding:12px;text-align:center;font-size:13px;font-weight:700;">🏋️ 본인 (학생)</button>
-<button id="roleParent" class="my-tab" onclick="setRole('parent')" style="flex:1;padding:12px;text-align:center;font-size:13px;font-weight:700;">👨‍👩‍👧 학부모</button>
+lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class="kcard-h">${esc(nn)}님 환영합니다!</div><p class="kcard-p">카카오 로그인 성공!<br>어떤 분이신가요?</p>
+<div id="linkStep1">
+<button class="dbe" onclick="linkChoose('student')" style="width:100%;margin-bottom:10px;background:var(--accent);color:#fff;border:none;padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">🏋️ 본인 (학생)</button>
+<button class="dbe" onclick="linkChoose('parent')" style="width:100%;background:rgba(111,207,151,.15);color:var(--green);border:1px solid rgba(111,207,151,.25);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">👨‍👩‍👧 학부모</button>
 </div>
-<div id="roleDesc" style="font-size:11px;color:var(--accent);margin-bottom:14px;text-align:center;">본인의 입장 코드를 입력하세요</div>
-<label class="di">입장 코드</label><input class="dc" id="linkCode" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="linkEm"></div><button class="dbe" onclick="doKakaoLink()" style="background:var(--accent);color:#fff;border:none;">계정 연결하기</button><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:14px;">코드를 모르시면 선생님께 문의하세요<br>ltk6154@gmail.com</div></div>`;
-const inp=document.getElementById('linkCode');
-inp.addEventListener('input',function(){this.value=this.value.toUpperCase();});
-inp.addEventListener('keydown',e=>{if(e.key==='Enter')doKakaoLink();});
+<div id="linkStep2S" style="display:none;">
+<div style="font-size:12px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">📋 본인 확인을 위해 정보를 입력하세요</div>
+<label class="di">입장 코드</label><input class="dc" id="linkCodeS" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false">
+<div class="em" id="linkEmS"></div>
+<button class="dbe" onclick="doKakaoLinkStudent()" style="width:100%;background:var(--accent);color:#fff;border:none;margin-top:8px;">계정 연결하기</button>
+<button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
+</div>
+<div id="linkStep2P" style="display:none;">
+<div style="font-size:12px;color:var(--green);margin-bottom:14px;text-align:center;font-weight:700;">👨‍👩‍👧 학부모 인증</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;">관계를 선택해주세요</div>
+<div style="display:flex;gap:8px;margin-bottom:16px;">
+<button id="linkFather" class="my-tab on" onclick="linkParentType('father')" style="flex:1;padding:12px;text-align:center;font-size:14px;font-weight:700;">👨 아버지</button>
+<button id="linkMother" class="my-tab" onclick="linkParentType('mother')" style="flex:1;padding:12px;text-align:center;font-size:14px;font-weight:700;">👩 어머니</button>
+</div>
+<label class="di">자녀의 입장 코드</label><input class="dc" id="linkCodeP" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false">
+<div class="em" id="linkEmP"></div>
+<button class="dbe" onclick="doKakaoLinkParent()" style="width:100%;background:var(--green);color:#fff;border:none;margin-top:8px;">학부모 계정 연결하기</button>
+<button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
+</div>
+<div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:18px;">코드를 모르시면 선생님께 문의하세요<br>ltk6154@gmail.com</div></div>`;
+/* 입력 이벤트 바인딩 */
+['linkCodeS','linkCodeP'].forEach(id=>{const inp=document.getElementById(id);if(inp){inp.addEventListener('input',function(){this.value=this.value.toUpperCase();});inp.addEventListener('keydown',e=>{if(e.key==='Enter'){id==='linkCodeS'?doKakaoLinkStudent():doKakaoLinkParent();}});}});
 }
-let linkRole='student';
-function setRole(r){linkRole=r;document.getElementById('roleStudent').className='my-tab'+(r==='student'?' on':'');document.getElementById('roleParent').className='my-tab'+(r==='parent'?' on':'');document.getElementById('roleDesc').textContent=r==='student'?'본인의 입장 코드를 입력하세요':'자녀의 입장 코드를 입력하세요';}
+let linkPType='father';
+function linkChoose(type){
+document.getElementById('linkStep1').style.display='none';
+if(type==='student'){document.getElementById('linkStep2S').style.display='block';document.getElementById('linkCodeS').focus();}
+else{document.getElementById('linkStep2P').style.display='block';document.getElementById('linkCodeP').focus();}
+}
+function linkBack(){
+document.getElementById('linkStep1').style.display='block';
+document.getElementById('linkStep2S').style.display='none';
+document.getElementById('linkStep2P').style.display='none';
+}
+function linkParentType(t){linkPType=t;document.getElementById('linkFather').className='my-tab'+(t==='father'?' on':'');document.getElementById('linkMother').className='my-tab'+(t==='mother'?' on':'');}
 
-function doKakaoLink(){
-const inp=document.getElementById('linkCode'),v=inp.value.trim().toUpperCase(),em=document.getElementById('linkEm');
+function doKakaoLinkStudent(){
+const inp=document.getElementById('linkCodeS'),v=inp.value.trim().toUpperCase(),em=document.getElementById('linkEmS');
 if(!v){em.textContent='코드를 입력하세요';em.classList.add('on');return;}
 if(!S[v]){em.textContent='❌ 존재하지 않는 코드입니다';em.classList.add('on');inp.classList.add('err');return;}
 const pending=JSON.parse(sessionStorage.getItem('pa_kakao_pending')||'null');
 if(!pending){em.textContent='카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';em.classList.add('on');return;}
-/* 매핑 저장 (역할 포함) */
-const map=lG('pa_kakao_users',{});map[pending.kid]={code:v,role:linkRole};lS('pa_kakao_users',map);
+const map=lG('pa_kakao_users',{});map[pending.kid]={code:v,role:'student'};lS('pa_kakao_users',map);
 sessionStorage.removeItem('pa_kakao_pending');
-const label=linkRole==='parent'?S[v].name+' 학부모':S[v].name;
-toast(`${label}님 계정 연결 완료!`);
-logIn(v,pending.nn+(linkRole==='parent'?' (학부모)':''),pending.img);go('my');
+toast(`${S[v].name}님 계정 연결 완료!`);
+logIn(v,pending.nn,pending.img);go('my');
 }
-function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');logIn(v,S[v].name,null);go('my');}
+function doKakaoLinkParent(){
+const inp=document.getElementById('linkCodeP'),v=inp.value.trim().toUpperCase(),em=document.getElementById('linkEmP');
+if(!v){em.textContent='자녀의 코드를 입력하세요';em.classList.add('on');return;}
+if(!S[v]){em.textContent='❌ 존재하지 않는 코드입니다';em.classList.add('on');inp.classList.add('err');return;}
+const pending=JSON.parse(sessionStorage.getItem('pa_kakao_pending')||'null');
+if(!pending){em.textContent='카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';em.classList.add('on');return;}
+const map=lG('pa_kakao_users',{});map[pending.kid]={code:v,role:linkPType};lS('pa_kakao_users',map);
+sessionStorage.removeItem('pa_kakao_pending');
+const honorific=linkPType==='father'?'아버님':'어머님';
+toast(`${S[v].name} ${honorific} 계정 연결 완료!`);
+logIn(v,S[v].name+' '+honorific,pending.img);go('my');
+}
+function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');
+/* 코드 확인 성공 → 역할 선택 UI 표시 */
+const lb=document.getElementById('loginBox');
+lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">✅</div><div class="kcard-h">${esc(S[v].name)}님 확인!</div><p class="kcard-p">어떤 분이신가요?</p>
+<button class="dbe" onclick="codeLoginAs('student','${v}')" style="width:100%;margin-bottom:10px;background:var(--accent);color:#fff;border:none;padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">🏋️ 본인 (학생)</button>
+<div style="display:flex;gap:8px;">
+<button class="dbe" onclick="codeLoginAs('father','${v}')" style="flex:1;background:rgba(111,207,151,.15);color:var(--green);border:1px solid rgba(111,207,151,.25);padding:14px;font-size:14px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:6px;">👨 아버지</button>
+<button class="dbe" onclick="codeLoginAs('mother','${v}')" style="flex:1;background:rgba(111,207,151,.15);color:var(--green);border:1px solid rgba(111,207,151,.25);padding:14px;font-size:14px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:6px;">👩 어머니</button>
+</div>
+</div>`;
+}
+function codeLoginAs(role,code){
+if(role==='student'){logIn(code,S[code].name,null);}
+else{const h=role==='father'?'아버님':'어머님';logIn(code,S[code].name+' '+h,null);}
+go('my');
+}
 document.addEventListener('DOMContentLoaded',async()=>{await fsInit();await loadStudents();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
 function setN(n,img){const prof=document.getElementById('navProf');if(prof)prof.classList.add('show');const nm=document.getElementById('navNm');if(nm)nm.textContent=n;const av=document.getElementById('navAv');if(av){if(img)av.innerHTML=`<img src="${img}" alt="">`;else av.innerHTML=`<span id="navAvT">${n?n[0]:'😊'}</span>`;}}
@@ -1118,7 +1170,8 @@ const eL=(lG('pa_student_exercise',{})[c]||[]).filter(r=>r.date===td);
 const cL=(lG('pa_center_exercise',{})[c]||[]).filter(r=>r.date===td);
 const iT=iL.reduce((a,r)=>a+r.kcal,0);const eT=eL.reduce((a,r)=>a+r.kcal,0);const cT=cL.reduce((a,r)=>a+r.kcal,0);
 const db=document.getElementById('myDB');db.style.display='block';document.getElementById('loginBox').style.display='none';
-db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.name[0]}</span></div><div><div class="mname">${s.name}</div><div class="mmeta">${s.age}세 · ${s.h}cm · ${wts[wts.length-1]}kg · ${s.g}</div><span class="mgoal ${s.gc}">${s.goal}</span></div></div><div class="mst"><div class="ms"><div class="msl">BMR</div><div class="msv bl">${s.bmr.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">TDEE</div><div class="msv">${s.tdee.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">목표</div><div class="msv og">${s.tar.toLocaleString()}</div><div class="msu">kcal/일</div></div></div></div>
+const curRole=getCurRole();const loginData=JSON.parse(sessionStorage.getItem('pa_login')||'{}');const profName=curRole==='parent'?(loginData.name||s.name):s.name;const parentBadge=curRole==='parent'?`<span style="display:inline-block;font-size:9px;font-weight:700;padding:3px 10px;border-radius:8px;background:rgba(111,207,151,.15);color:var(--green);margin-left:6px;">👨‍👩‍👧 학부모</span>`:'';
+db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${profName[0]}</span></div><div><div class="mname">${profName} ${parentBadge}</div><div class="mmeta">${s.age}세 · ${s.h}cm · ${wts[wts.length-1]}kg · ${s.g}</div><span class="mgoal ${s.gc}">${s.goal}</span></div></div><div class="mst"><div class="ms"><div class="msl">BMR</div><div class="msv bl">${s.bmr.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">TDEE</div><div class="msv">${s.tdee.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">목표</div><div class="msv og">${s.tar.toLocaleString()}</div><div class="msu">kcal/일</div></div></div></div>
 <div class="my-tabs"><button class="my-tab on" onclick="myTab('today',this)">📌 TODAY</button><button class="my-tab" onclick="myTab('dash',this)">📊 대시보드</button><button class="my-tab" onclick="myTab('exercise',this)">💪 운동</button><button class="my-tab" onclick="myTab('diet',this)">🍽 식단</button><button class="my-tab" onclick="myTab('sched',this)">📅 스케줄</button><button class="my-tab" onclick="myTab('bodytype',this)">🦴 내 체형</button></div>
 <div class="my-panel on" id="pnl-today"><div id="todayWrap"></div></div>
 <div class="my-panel" id="pnl-dash">
