@@ -242,7 +242,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .ar input,.ar select,.ar textarea{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;flex:1;font-family:inherit;outline:none;}
 .ar textarea{min-height:80px;resize:vertical;}
 /* SCHEDULE */
-.my-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.my-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px;position:sticky;top:calc(var(--nav) + env(safe-area-inset-top));z-index:50;background:var(--bg);padding-top:12px;}
 .my-tab{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;transition:all .2s;}
 .my-tab:hover{color:var(--text);}
 .my-tab.on{background:rgba(100,160,200,.15);color:var(--accent);border-color:rgba(100,160,200,.3);}
