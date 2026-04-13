@@ -556,11 +556,28 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 @media(max-width:640px){.coach-wrap{padding:32px 16px 60px;}.coach-grid{grid-template-columns:1fr;}.coach-info{padding:18px;}}
 /* MY탭 모바일 스크롤 */
 @media(max-width:640px){.my-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;gap:3px;}.my-tab{flex:0 0 auto;padding:8px 12px;font-size:11px;white-space:nowrap;}}
+/* AI 코치 채팅 */
+.aic-wrap{display:flex;flex-direction:column;height:calc(100vh - 280px);min-height:400px;}
+.aic-msgs{flex:1;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;gap:10px;}
+.aic-msg{max-width:85%;padding:12px 16px;border-radius:16px;font-size:13px;line-height:1.7;word-break:break-word;}
+.aic-msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px;}
+.aic-msg.bot{align-self:flex-start;background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;}
+.aic-msg.bot .aic-name{font-size:10px;font-weight:700;color:var(--orange);margin-bottom:4px;}
+.aic-msg.typing{color:var(--muted);font-style:italic;}
+.aic-input-wrap{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border);}
+.aic-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:12px;font-size:14px;font-family:inherit;outline:none;resize:none;min-height:44px;max-height:120px;}
+.aic-input:focus{border-color:var(--accent);}
+.aic-send{width:44px;height:44px;border-radius:12px;background:var(--accent);color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;cursor:pointer;}
+.aic-send:hover{background:var(--a2);}
+.aic-send:disabled{opacity:.4;cursor:default;}
+.aic-chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;}
+.aic-chip{font-size:11px;padding:6px 12px;border-radius:20px;background:rgba(100,160,200,.1);border:1px solid rgba(100,160,200,.2);color:var(--accent);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.aic-chip:hover{background:rgba(100,160,200,.2);}
 </style>
 </head>
 <body>
 <div class="tw" id="tw"></div>
-<nav class="nav"><div class="logo" onclick="go('home')">P<span class="dot">.</span>A<span class="dot">·</span>TRAINING<span class="sub">PERFORMANCE ACHIEVEMENT</span></div><div class="navlinks"><div class="nl on" id="nl-home" onclick="go('home')">홈</div><div class="nl" id="nl-notice" onclick="go('notice')">공지사항</div><div class="nl" id="nl-reserve" onclick="goReserve()">예약하기</div><div class="nl" id="nl-body" onclick="go('body')">체형분석</div><div class="nl" id="nl-my" onclick="goMY()">MY</div><div class="nl" id="nl-prod" onclick="go('prod')">추천제품</div><div class="nl" id="nl-coach" onclick="go('coach')">강사소개</div></div><div class="nav-right"><div class="nav-prof" id="navProf"><div class="nav-av" id="navAv"><span id="navAvT">😊</span></div><span class="nav-nm" id="navNm">-</span><button class="nav-lo" onclick="doLogout()">로그아웃</button></div><button class="hbg" onclick="togMob()">☰</button></div></nav>
+<nav class="nav"><div class="logo" onclick="go('home')">P<span class="dot">.</span>A<span class="dot">·</span>TRAINING<span class="sub">PERFORMANCE ACHIEVEMENT</span></div><div class="navlinks"><div class="nl on" id="nl-home" onclick="go('home')">홈</div><div class="nl" id="nl-notice" onclick="go('notice')">공지사항</div><div class="nl" id="nl-reserve" onclick="goReserve()">예약·일정</div><div class="nl" id="nl-body" onclick="go('body')">체형분석</div><div class="nl" id="nl-my" onclick="goMY()">MY</div><div class="nl" id="nl-prod" onclick="go('prod')">추천제품</div><div class="nl" id="nl-coach" onclick="go('coach')">강사소개</div></div><div class="nav-right"><div class="nav-prof" id="navProf"><div class="nav-av" id="navAv"><span id="navAvT">😊</span></div><span class="nav-nm" id="navNm" onclick="openProfile()" style="cursor:pointer;">-</span><button class="nav-lo" onclick="doLogout()">로그아웃</button></div><button class="hbg" onclick="togMob()">☰</button></div></nav>
 <div class="mob" id="mob"><div class="ml" onclick="go('home');cMob()">홈</div><div class="ml" onclick="go('notice');cMob()">공지사항</div><div class="ml" onclick="goReserve();cMob()">예약하기</div><div class="ml" onclick="go('body');cMob()">체형분석</div><div class="ml" onclick="goMY();cMob()">MY</div><div class="ml" onclick="go('prod');cMob()">추천제품</div><div class="ml" onclick="go('coach');cMob()">강사소개</div></div>
 
 <div class="pg on" id="pg-home">
@@ -576,6 +593,7 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 <div class="bt-wrap">
 <div class="sec-top"><div><div class="sey">BODY TYPE ANALYSIS</div><h2 class="st">체형 분석</h2></div></div>
 <div class="bt-hero"><h3>골격 타입별 맞춤 운동 프로그램</h3><p>6가지 골격 타입을 분석하고, 타입에 맞는<br>운동 프로그램과 스타일링 가이드를 제공합니다.</p></div>
+<div id="myBtSummary"></div>
 
 <div class="bt-scan" id="btScan">
 <div class="bt-scan-title">📷 AI 체형 분석</div>
@@ -658,7 +676,7 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 
 <div class="pg" id="pg-reserve">
 <div class="rsv-wrap">
-<div class="sec-top"><div><div class="sey">RESERVATION</div><h2 class="st">레슨 예약</h2></div></div>
+<div class="sec-top"><div><div class="sey">RESERVATION & SCHEDULE</div><h2 class="st">예약 · 일정</h2></div></div>
 <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.7;">원하는 날짜와 시간을 선택하여 레슨을 예약하세요.<br>예약은 <strong style="color:var(--text);">대기 상태</strong>로 접수되며, 선생님 승인 후 확정됩니다.</p>
 <div id="rsvLoginMsg" style="display:none;"><div class="kcard fu" style="max-width:420px;margin:0 auto;"><div class="kcard-ico">📅</div><div class="kcard-h">로그인 필요</div><p class="kcard-p">레슨 예약을 위해 먼저 로그인해주세요.</p><button class="kakao-btn" onclick="goMY()">로그인하러 가기 →</button></div></div>
 <div id="rsvContent" style="display:none;">
@@ -669,6 +687,11 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 </div>
 <div id="rsvSlots"></div>
 <div id="rsvMyList"></div>
+</div>
+<div id="myScheduleInReserve" style="display:none;margin-top:20px;">
+<div style="font-size:12px;font-weight:700;margin-bottom:12px;color:var(--accent);">📅 내 일정</div>
+<div class="cal-wrap"><div class="cal-hd"><h3 id="calTitle"></h3><div class="cal-nav"><button onclick="calNav(-1)">◀</button><button onclick="calNav(0)">오늘</button><button onclick="calNav(1)">▶</button></div></div><div class="cal-grid" id="calGrid"></div></div>
+<div id="schedDetail"></div>
 </div>
 </div>
 </div>
@@ -716,7 +739,7 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 
 <div class="pg" id="pg-admin"><div class="admin-wrap"><div class="sec-top"><div><div class="sey">ADMIN</div><h2 class="st">관리자</h2></div></div><div class="admin-lock" id="aLock"><div style="font-size:36px;margin-bottom:12px;">🔒</div><p style="color:var(--muted);font-size:13px;text-align:center;line-height:1.7;">관리자 페이지는<br><strong style="color:var(--text);">카카오 관리자 계정</strong>으로만 접속할 수 있습니다.</p><button class="kakao-btn" onclick="kakaoLogin()" style="max-width:280px;"><svg viewBox="0 0 24 24" fill="#191919" width="20" height="20"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오 관리자 로그인</button></div><div class="admin-panel" id="aPanel"><div class="atabs" id="aTabs"></div><div id="aBody"></div></div></div></div>
 
-<footer><div class="flogo">P.A TRAINING</div><div class="ftag">PERFORMANCE · ACHIEVEMENT · TRAINING</div><div class="fls"><a href="/cdn-cgi/l/email-protection#305c445b0601050470575d51595c1e535f5d"><span class="__cf_email__" data-cfemail="2448504f12151110644349454d480a474b49">[email&#160;protected]</span></a><a onclick="go('notice')">공지사항</a><a onclick="goReserve()">예약하기</a><a onclick="go('apply')">이용 신청</a><a onclick="go('loc')">위치</a><a onclick="go('prod')">추천제품</a><a onclick="go('coach')">강사소개</a></div><div class="fc">© 2026 P.A Training. All rights reserved.</div></footer>
+<footer><div class="flogo">P.A TRAINING</div><div class="ftag">PERFORMANCE · ACHIEVEMENT · TRAINING</div><div class="fls"><a href="/cdn-cgi/l/email-protection#305c445b0601050470575d51595c1e535f5d"><span class="__cf_email__" data-cfemail="2448504f12151110644349454d480a474b49">[email&#160;protected]</span></a><a onclick="go('notice')">공지사항</a><a onclick="goReserve()">예약·일정</a><a onclick="go('apply')">이용 신청</a><a onclick="go('loc')">위치</a><a onclick="go('prod')">추천제품</a><a onclick="go('coach')">강사소개</a></div><div class="fc">© 2026 P.A Training. All rights reserved.</div></footer>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 function toast(m,t){const w=document.getElementById('tw'),e=document.createElement('div');e.className='toast'+(t==='err'?' err':'');e.textContent=m;w.appendChild(e);setTimeout(()=>{e.style.opacity='0';e.style.transition='opacity .3s';setTimeout(()=>e.remove(),300);},2500);}
@@ -834,8 +857,9 @@ function gDiet(c){const custom=lG('pa_custom_diets',{});if(custom[c])return cust
 function generateDiet(c){
 const s=S[c];if(!s)return [];
 const t=s.tar||1800;
+const sw=s.w||s.wts?.[s.wts.length-1]||60;
 /* 체중 기반 권장 수분 섭취량 (ml) */
-const water=Math.round(s.w*33);
+const water=Math.round(sw*33);
 /* 주차 시드: 주차가 바뀌면 메뉴 조합 변경 */
 const now=new Date();
 const weekNum=Math.floor((now.getTime()-new Date(now.getFullYear(),0,1).getTime())/(7*86400000));
@@ -985,7 +1009,7 @@ const firebaseConfig={apiKey:"AIzaSyCICKJ00FCnb780oQ9_mZTgszG0FL64eFU",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const _cache={};let _fsReady=false;
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses'];
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile'];
 async function fsInit(){
   try{const snap=await db.collection('pa_data').get();
   snap.forEach(doc=>{_cache[doc.id]=doc.data().value;});
@@ -1162,19 +1186,92 @@ document.getElementById('loginBox').style.display='block';document.getElementByI
 const inp=document.getElementById('dcI');if(inp){inp.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});inp.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}
 if(!isL&&window.Kakao)try{Kakao.Auth.setAccessToken(null);}catch(e){}toast('로그아웃 완료');}
 function chkL(){if(!LC){const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);rDB();return;}}}else{rDB();return;}document.getElementById('loginBox').style.display='block';document.getElementById('myDB').style.display='none';}
+/* 네비 이름 클릭 → 개인설정 */
+function openProfile(){if(!LC||!S[LC])return;showProfileModal();}
+function showProfileModal(){
+const s=S[LC],c=LC;
+const pf=lG('pa_user_profile',{})[c]||{};
+const roleChangeUsed=pf.roleChangeUsed||false;
+const curRole=getCurRole();
+const modal=document.getElementById('ncModal');
+const body=document.getElementById('ncModalBody');
+body.innerHTML=`<div style="padding:4px;">
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+<div style="width:48px;height:48px;border-radius:50%;background:rgba(100,160,200,.12);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--accent);">${s.name[0]}</div>
+<div><div style="font-size:18px;font-weight:900;">${s.name}</div><div style="font-size:11px;color:var(--muted);">${c} · ${curRole==='parent'?'학부모':'학생'}</div></div>
+</div>
+<div style="font-size:12px;font-weight:700;margin-bottom:10px;">👤 개인 정보</div>
+<div class="ar"><label>전화번호</label><input id="pfPhone" placeholder="010-0000-0000" value="${pf.phone||''}"></div>
+<div class="ar"><label>이메일</label><input id="pfEmail" placeholder="example@email.com" value="${pf.email||''}"></div>
+<div class="ar"><label>주소</label><input id="pfAddr" placeholder="선택사항" value="${pf.addr||''}"></div>
+<button class="ab ab-b" onclick="saveProfile()" style="width:100%;margin-top:8px;padding:10px;">💾 저장</button>
+<div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+<div style="font-size:12px;font-weight:700;margin-bottom:8px;">🔄 역할 변경</div>
+${roleChangeUsed?`<div style="font-size:11px;color:var(--muted);padding:10px;background:rgba(255,255,255,.03);border-radius:8px;">이미 1회 변경하셨습니다. 추가 변경은 선생님께 문의하세요.<br><span style="font-size:10px;color:rgba(255,255,255,.25);">ltk6154@gmail.com</span></div>`:
+`<div style="font-size:10px;color:var(--muted);margin-bottom:8px;">현재: <strong style="color:var(--text);">${curRole==='parent'?'학부모':'학생'}</strong> · 1회만 변경 가능합니다</div>
+<div style="display:flex;gap:6px;">
+<button class="ab ab-b" style="flex:1;font-size:11px;" onclick="changeRole('student')">🏋️ 학생</button>
+<button class="ab" style="flex:1;font-size:11px;color:var(--green);border:1px solid rgba(111,207,151,.25);" onclick="changeRole('father')">👨 아버지</button>
+<button class="ab" style="flex:1;font-size:11px;color:var(--green);border:1px solid rgba(111,207,151,.25);" onclick="changeRole('mother')">👩 어머니</button>
+</div>`}
+</div>
+</div>`;
+modal.classList.add('on');
+}
+function saveProfile(){
+const pf=lG('pa_user_profile',{});
+if(!pf[LC])pf[LC]={};
+pf[LC].phone=document.getElementById('pfPhone')?.value.trim()||'';
+pf[LC].email=document.getElementById('pfEmail')?.value.trim()||'';
+pf[LC].addr=document.getElementById('pfAddr')?.value.trim()||'';
+lS('pa_user_profile',pf);
+toast('개인정보 저장 완료');
+document.getElementById('ncModal').classList.remove('on');
+}
+function changeRole(role){
+if(!confirm(role==='student'?'학생으로 변경하시겠습니까?':(role==='father'?'아버지로 변경하시겠습니까?':'어머니로 변경하시겠습니까?')))return;
+const h=role==='father'?'아버님':role==='mother'?'어머님':'';
+const newName=h?S[LC].name+' '+h:S[LC].name;
+/* 1회 변경 기록 */
+const pf=lG('pa_user_profile',{});
+if(!pf[LC])pf[LC]={};
+pf[LC].roleChangeUsed=true;
+pf[LC].role=role;
+lS('pa_user_profile',pf);
+/* 세션 업데이트 */
+logIn(LC,newName,JSON.parse(sessionStorage.getItem('pa_login')||'{}').img);
+toast('역할 변경 완료');
+document.getElementById('ncModal').classList.remove('on');
+}
 
 /* 대시보드 */
-function rDB(){if(!LC||!S[LC])return;const s=S[LC],c=LC;const wts=lG('pa_weights',{})[c]||s.wts;const diet=gDiet(c);const td=new Date().toISOString().split('T')[0];
+function rDB(){if(!LC||!S[LC])return;
+/* 휴회/퇴회 학생 차단 */
+const stuStat=getStuStatusInfo(LC);
+if(stuStat.status==='paused'||stuStat.status==='quit'){
+const db=document.getElementById('myDB');db.style.display='block';document.getElementById('loginBox').style.display='none';
+const isP=stuStat.status==='paused';
+db.innerHTML=`<div style="text-align:center;padding:60px 24px;"><div style="font-size:48px;margin-bottom:16px;">${isP?'⏸':'⛔'}</div>
+<h2 style="font-size:20px;font-weight:900;margin-bottom:8px;">${isP?'휴회 중입니다':'퇴회 처리되었습니다'}</h2>
+<p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:6px;">${S[LC].name}님의 계정이 ${isP?'휴회':'퇴회'} 상태입니다.</p>
+${stuStat.reason?`<p style="font-size:12px;color:var(--muted);margin-bottom:6px;">사유: ${stuStat.reason}</p>`:''}
+${stuStat.date?`<p style="font-size:11px;color:rgba(255,255,255,.25);margin-bottom:20px;">${stuStat.date} 처리</p>`:''}
+<p style="font-size:12px;color:var(--accent);line-height:1.7;">${isP?'복귀를 원하시면 선생님께 연락해주세요.':'문의사항은 선생님께 연락해주세요.'}</p>
+<div style="margin-top:20px;font-size:12px;color:var(--muted);">📞 ltk6154@gmail.com</div>
+<button class="blo" onclick="doLogout()" style="margin-top:20px;">로그아웃</button></div>`;
+return;}
+const s=S[LC],c=LC;const wts=lG('pa_weights',{})[c]||s.wts;const diet=gDiet(c);const td=new Date().toISOString().split('T')[0];
 const iL=(lG('pa_student_intake',{})[c]||[]).filter(r=>r.date===td);
 const eL=(lG('pa_student_exercise',{})[c]||[]).filter(r=>r.date===td);
 const cL=(lG('pa_center_exercise',{})[c]||[]).filter(r=>r.date===td);
 const iT=iL.reduce((a,r)=>a+r.kcal,0);const eT=eL.reduce((a,r)=>a+r.kcal,0);const cT=cL.reduce((a,r)=>a+r.kcal,0);
 const db=document.getElementById('myDB');db.style.display='block';document.getElementById('loginBox').style.display='none';
 db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.name[0]}</span></div><div><div class="mname">${s.name}</div><div class="mmeta">${s.age}세 · ${s.h}cm · ${wts[wts.length-1]}kg · ${s.g}</div><span class="mgoal ${s.gc}">${s.goal}</span></div></div><div class="mst"><div class="ms"><div class="msl">BMR</div><div class="msv bl">${s.bmr.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">TDEE</div><div class="msv">${s.tdee.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">목표</div><div class="msv og">${s.tar.toLocaleString()}</div><div class="msu">kcal/일</div></div></div></div>
-<div class="my-tabs"><button class="my-tab on" onclick="myTab('today',this)">📌 TODAY</button><button class="my-tab" onclick="myTab('dash',this)">📊 대시보드</button><button class="my-tab" onclick="myTab('exercise',this)">💪 운동</button><button class="my-tab" onclick="myTab('diet',this)">🍽 식단</button><button class="my-tab" onclick="myTab('sched',this)">📅 스케줄</button><button class="my-tab" onclick="myTab('bodytype',this)">🦴 내 체형</button></div>
+<div class="cc" style="margin-bottom:12px;"><div class="ct">⚖ 몸무게 변화 (kg)</div><div class="cw"><svg class="wsvg" id="wsvg" viewBox="0 0 600 112" preserveAspectRatio="none"></svg></div><div class="xlbl"><span>1주</span><span>2주</span><span>3주</span><span>4주</span><span>5주</span><span>6주</span></div></div>
+<div class="my-tabs"><button class="my-tab on" onclick="myTab('today',this)">📌 TODAY</button><button class="my-tab" onclick="myTab('exercise',this)">💪 운동</button><button class="my-tab" onclick="myTab('diet',this)">🍽 식단</button><button class="my-tab" onclick="myTab('aicoach',this)">🤖 AI코치</button></div>
 <div class="my-panel on" id="pnl-today"><div id="todayWrap"></div></div>
-<div class="my-panel" id="pnl-dash">
-<div class="cc"><div class="ct">⚖ 몸무게 변화 (kg)</div><div class="cw"><svg class="wsvg" id="wsvg" viewBox="0 0 600 112" preserveAspectRatio="none"></svg></div><div class="xlbl"><span>1주</span><span>2주</span><span>3주</span><span>4주</span><span>5주</span><span>6주</span></div></div>
+<div class="my-panel" id="pnl-exercise"><div id="exProgramWrap"></div></div>
+<div class="my-panel" id="pnl-diet">
 <div class="calsec"><h4>🔥 오늘의 칼로리 기록</h4><div class="caldate">📅 ${td}</div>
 <div class="food-scan">
 <div class="food-scan-title">📷 음식 사진으로 칼로리 분석</div>
@@ -1202,11 +1299,10 @@ ${eL.map((r,i)=>`<div class="logitem"><div class="li"><span class="ll">${i+1}회
 <div class="caltotal bl"><span>🏋️ 오늘 운동 합계</span><strong>${eT.toLocaleString()} kcal</strong></div>
 ${cT>0?`<div class="cex" style="margin-top:8px;">🏋️ 센터 운동 소모: <strong>${cT} kcal</strong>${cL.map(r=>`<span class="ct2">(${r.timestamp})</span>`).join('')}</div>`:''}</div></div>
 <div class="cc"><div class="ct">🔥 이번 주 칼로리 (kcal)</div><div style="display:flex;gap:12px;font-size:10px;margin-bottom:10px;"><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,var(--accent),rgba(100,160,200,.35));"></span>섭취</span><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,#E85D75,rgba(232,93,117,.35));"></span>운동</span><span style="display:flex;align-items:center;gap:4px;color:var(--muted);"><span style="width:8px;height:8px;border-radius:2px;background:linear-gradient(180deg,var(--orange),rgba(232,98,42,.35));"></span>목표 초과</span></div><div class="cw"><div class="cbars" id="cbars"></div></div><div class="xlbl"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div></div>
-<div class="dwl">📋 이번 주 7일 식단표</div><div id="dlist"></div></div>
-<div class="my-panel" id="pnl-exercise"><div id="exProgramWrap"></div></div>
-<div class="my-panel" id="pnl-diet"><div class="dwl" style="font-size:12px;margin-bottom:14px;">📋 이번 주 7일 식단표</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.7;">목표 칼로리에 맞춰 구성된 개인별 식단입니다.<br>끼니별 메뉴와 칼로리를 확인하세요.</div><div id="waterInfo"></div><div id="dlist2"></div></div>
-<div class="my-panel" id="pnl-sched"><div class="cal-wrap"><div class="cal-hd"><h3 id="calTitle"></h3><div class="cal-nav"><button onclick="calNav(-1)">◀</button><button onclick="calNav(0)">오늘</button><button onclick="calNav(1)">▶</button></div></div><div class="cal-grid" id="calGrid"></div></div><div id="schedDetail"></div></div>
-<div class="my-panel" id="pnl-bodytype"><div id="myBodyType"></div></div>
+<div id="waterInfo"></div>
+<div class="dwl" style="font-size:12px;margin-bottom:8px;margin-top:14px;">📋 이번 주 7일 식단표</div><div id="dlist2"></div>
+</div>
+<div class="my-panel" id="pnl-aicoach"><div id="aiCoachWrap"></div></div>
 <button class="blo" onclick="doLogout()">로그아웃</button>`;
 rWSVG(wts);rCB(c,s.tar,diet);rMP(diet);rToday();}
 
@@ -1422,7 +1518,7 @@ function rE(){const v=parseInt(document.getElementById('exV')?.value);if(!v||v<0
 function eE(idx){const td=new Date().toISOString().split('T')[0];const d=lG('pa_student_exercise',{});const logs=(d[LC]||[]).filter(r=>r.date===td);if(!logs[idx])return;const nv=prompt(`운동 수정 (현재: ${logs[idx].kcal})`,logs[idx].kcal);if(nv===null)return;const n=parseInt(nv);if(!n||n<0){toast('올바른 값','err');return;}let ct=-1;for(let i=0;i<d[LC].length;i++){if(d[LC][i].date===td){ct++;if(ct===idx){d[LC][i].kcal=n;d[LC][i].timestamp=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+'(수정)';break;}}}lS('pa_student_exercise',d);toast('수정 완료');rDB();}
 function dE(idx){if(!confirm('삭제하시겠습니까?'))return;const td=new Date().toISOString().split('T')[0];const d=lG('pa_student_exercise',{});let ct=-1;for(let i=0;i<d[LC].length;i++){if(d[LC][i].date===td){ct++;if(ct===idx){d[LC].splice(i,1);break;}}}lS('pa_student_exercise',d);toast('삭제 완료');rDB();}
 
-function rWSVG(wts){const svg=document.getElementById('wsvg');if(!svg)return;const W=600,H=112,p=14;if(wts.length===0)return;if(wts.length===1){svg.innerHTML=`<circle cx="${W/2}" cy="${H/2}" r="5" fill="#64A0C8"/><text x="${W/2}" y="${H/2-14}" fill="rgba(255,255,255,.7)" font-size="13" font-weight="700" text-anchor="middle">${wts[0]}kg</text><text x="${W/2}" y="${H/2+20}" fill="rgba(255,255,255,.25)" font-size="10" text-anchor="middle">1주차 시작</text>`;return;}const mn=Math.min(...wts)-1,mx=Math.max(...wts)+1;const pts=wts.map((w,i)=>`${p+(i/(wts.length-1))*(W-p*2)},${H-p-((w-mn)/(mx-mn))*(H-p*2)}`);svg.innerHTML=`<defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#64A0C8" stop-opacity=".28"/><stop offset="100%" stop-color="#64A0C8" stop-opacity="0"/></linearGradient></defs><path d="M ${pts[0]} ${pts.slice(1).map(x=>'L '+x).join(' ')} L ${W-p},${H} L ${p},${H} Z" fill="url(#wg)"/><path d="M ${pts[0]} ${pts.slice(1).map(x=>'L '+x).join(' ')}" fill="none" stroke="#64A0C8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pts.map((pt,i)=>{const[x,y]=pt.split(',');return`<circle cx="${x}" cy="${y}" r="4" fill="#64A0C8"/><text x="${x}" y="${parseFloat(y)-9}" fill="rgba(255,255,255,.5)" font-size="9" text-anchor="middle">${wts[i]}kg</text>`;}).join('')}`;}
+function rWSVG(wts){const svg=document.getElementById('wsvg');if(!svg)return;const W=600,H=112,p=14;if(wts.length===0)return;if(wts.length===1){svg.innerHTML=`<circle cx="${W/2}" cy="${H/2-5}" r="6" fill="#64A0C8"/><text x="${W/2}" y="${H/2-20}" fill="rgba(255,255,255,.8)" font-size="14" font-weight="700" text-anchor="middle">${wts[0]}kg</text><text x="${W/2}" y="${H/2+16}" fill="rgba(255,255,255,.3)" font-size="10" text-anchor="middle">📊 시작 체중 기록됨</text><text x="${W/2}" y="${H/2+32}" fill="rgba(255,255,255,.18)" font-size="9" text-anchor="middle">체중이 추가되면 변화 그래프가 표시됩니다</text>`;return;}const mn=Math.min(...wts)-1,mx=Math.max(...wts)+1;const pts=wts.map((w,i)=>`${p+(i/(wts.length-1))*(W-p*2)},${H-p-((w-mn)/(mx-mn))*(H-p*2)}`);svg.innerHTML=`<defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#64A0C8" stop-opacity=".28"/><stop offset="100%" stop-color="#64A0C8" stop-opacity="0"/></linearGradient></defs><path d="M ${pts[0]} ${pts.slice(1).map(x=>'L '+x).join(' ')} L ${W-p},${H} L ${p},${H} Z" fill="url(#wg)"/><path d="M ${pts[0]} ${pts.slice(1).map(x=>'L '+x).join(' ')}" fill="none" stroke="#64A0C8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pts.map((pt,i)=>{const[x,y]=pt.split(',');return`<circle cx="${x}" cy="${y}" r="4" fill="#64A0C8"/><text x="${x}" y="${parseFloat(y)-9}" fill="rgba(255,255,255,.5)" font-size="9" text-anchor="middle">${wts[i]}kg</text>`;}).join('')}`;}
 
 function rCB(code,tar,diet){const cb=document.getElementById('cbars');if(!cb)return;cb.innerHTML='';const mx=Math.max(tar*1.3,2500);const now=new Date();const iAll=lG('pa_student_intake',{})[code]||[];const eAll=lG('pa_student_exercise',{})[code]||[];diet.forEach((d,i)=>{const dt=new Date(now);const dow=now.getDay();const mo=dow===0?-6:1-dow;dt.setDate(now.getDate()+mo+i);const ds=dt.toISOString().split('T')[0];const di=iAll.filter(r=>r.date===ds).reduce((a,r)=>a+r.kcal,0);const de=eAll.filter(r=>r.date===ds).reduce((a,r)=>a+r.kcal,0);const k=di||d.k;const pctI=Math.min(Math.round((k/mx)*100),100);const pctE=Math.min(Math.round((de/mx)*100),100);const ov=tar&&k>tar+50;const w=document.createElement('div');w.className='cbw';w.innerHTML=`<div class="cb${ov?' og':''}" style="height:${pctI}%" data-tip="섭취 ${k.toLocaleString()} kcal"></div><div class="cb" style="height:${de>0?Math.max(pctE,4):0}%;background:linear-gradient(180deg,#E85D75,rgba(232,93,117,.35));${de===0?'opacity:0.15;':''}" data-tip="운동 ${de.toLocaleString()} kcal"></div>`;cb.appendChild(w);});}
 
@@ -1439,16 +1535,16 @@ const dateStr=`${dt.getMonth()+1}/${dt.getDate()}`;
 const el=document.createElement('div');el.className='dd';el.innerHTML=`<div class="ddh" onclick="this.nextElementSibling.classList.toggle('on');this.querySelector('.chev').classList.toggle('on')"><div class="ddl"><div class="dpill">${d.d}<br><span style="font-size:8px;opacity:.6">${d.e}</span></div><div class="ddn">${dateStr}</div></div><div style="display:flex;align-items:center;gap:11px;"><div class="ddk">${d.k.toLocaleString()} kcal</div><div class="chev${i===0?' on':''}">▼</div></div></div><div class="ddb${i===0?' on':''}"><div class="mg2"><div><div class="mt">🌅 아침</div><div class="mk">${d.am.k} kcal</div><div class="mc">${d.am.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">☀️ 점심</div><div class="mk">${d.lu.k} kcal</div><div class="mc">${d.lu.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🍪 간식</div><div class="mk">${d.sn.k} kcal</div><div class="mc">${d.sn.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🌙 저녁</div><div class="mk">${d.di.k} kcal</div><div class="mc">${d.di.c.replace(/\n/g,'<br>')}</div></div></div><div style="margin-top:10px;padding:8px 10px;background:rgba(100,160,200,.05);border-radius:8px;font-size:10px;color:var(--accent);display:flex;align-items:center;gap:6px;">💧 수분 섭취 목표: ${(water/1000).toFixed(1)}L</div></div>`;dl.appendChild(el);});});}
 
 /* MY 탭 전환 */
-function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='today')rToday();if(id==='sched')rCal();if(id==='diet'){const diet=gDiet(LC);rMP(diet);}if(id==='bodytype')renderMyBodyType();if(id==='exercise')rExProgram();}
+function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='today')rToday();if(id==='diet'){const diet=gDiet(LC);rMP(diet);rCB(LC,S[LC]?.tar,diet);}if(id==='exercise')rExProgram();if(id==='aicoach')initAICoach();}
 
 /* ===== TODAY 페이지 ===== */
 const DAY_SCHED={
 0:{label:'🧘 가벼운 유산소 + 스트레칭',time:'40분',parts:['cardio'],rest_rec:true},
-1:{label:'💪 상체 + 유산소',time:'90분',parts:['cardio','upper','core']},
-2:{label:'🦵 하체 + 유산소',time:'60분',parts:['cardio','lower']},
-3:{label:'🎯 코어 + 전신 서킷',time:'60분',parts:['cardio','core','upper','lower']},
-4:{label:'🔥 유산소 집중',time:'60분',parts:['cardio']},
-5:{label:'🏋️ 하체 + 상체 + 코어',time:'90분',parts:['cardio','lower','upper','core']},
+1:{label:'💪 상체 + 유산소',time:'90~100분',parts:['cardio','upper','core']},
+2:{label:'🦵 하체 + 유산소',time:'80~90분',parts:['cardio','lower']},
+3:{label:'🎯 코어 + 전신 서킷',time:'80~90분',parts:['cardio','core','upper','lower']},
+4:{label:'🔥 유산소 집중',time:'70~80분',parts:['cardio']},
+5:{label:'🏋️ 하체 + 상체 + 코어',time:'90~100분',parts:['cardio','lower','upper','core']},
 6:{label:'🧘 가벼운 스트레칭 + 코어',time:'40분',parts:['cardio','core'],rest_rec:true}
 };
 const PART_NAMES={cardio:'🔥 유산소',upper:'💪 상체',lower:'🦵 하체',core:'🎯 코어'};
@@ -1460,18 +1556,68 @@ if(!LC||!S[LC])return null;
 const btRaw=lG('pa_body_types',{})[LC];
 const btType=btRaw?.type||'';
 const btName=BT_NAME_MAP[btType]||'';
-const data=EX_DATA[btName];
+let data=EX_DATA[btName];
+let isGeneric=false;
+if(!data){
+/* 체형 미분석 → 키/몸무게 기반 범용 프로그램 (직사각형 기반) */
+data=EX_DATA['직사각형'];
+isGeneric=true;
 if(!data)return null;
+}
 const dow=new Date().getDay();
 const sched=DAY_SCHED[dow];
 if(!sched)return{rest:true};
 const pool=mode==='gym'?data.gym:data.home;
 const wk=getWeekSeed();
-const result={label:sched.label,time:sched.time,btName:data.name,btColor:data.color,strategy:data.strategy,rest_rec:!!sched.rest_rec,sections:[]};
+const s=S[LC];
+const goal=s.goal||'체중감량';
+const age=s.age||20;
+/* 목표 BPM 계산: Fatmax Zone (60~70% MHR) */
+const mhr=220-age;
+const bpmLow=Math.round(mhr*0.6);
+const bpmHigh=Math.round(mhr*0.7);
+const bpmStr=`BPM ${bpmLow}~${bpmHigh}`;
+/* 목표별 유산소 세션 생성 */
+let cardioSection=null;
+const isCardioDay=sched.parts.includes('cardio');
+if(isCardioDay){
+const isWeightLoss=goal.includes('감량');
+if(mode==='gym'){
+if(isWeightLoss){
+const gymCardioPool=[
+[{n:'스텝밀',d:`60분, ${bpmStr}`,tip:'Fatmax Zone 유지, 경사 6~8'},{n:'인클라인 워킹 (쿨다운)',d:'10분, 경사 4%',tip:'심박수 서서히 낮추기'}],
+[{n:'런닝머신 (조깅)',d:`60분, ${bpmStr}`,tip:'페이스 일정하게, 대화 가능한 강도'},{n:'인클라인 워킹 (쿨다운)',d:'10분, 경사 6%',tip:'마무리 구간'}],
+[{n:'스텝밀',d:`40분, ${bpmStr}`,tip:'Fatmax Zone 유지'},{n:'런닝머신 (경사 워킹)',d:`25분, 경사 10~12%, ${bpmStr}`,tip:'둔근·햄스트링 활성화'}],
+[{n:'런닝머신 (인터벌)',d:`50분, ${bpmStr} 기준`,tip:'3분 조깅 + 1분 빠른 페이스 반복'},{n:'스텝밀 (쿨다운)',d:'15분, 레벨 4~5',tip:'심박수 안정화'}]
+];
+cardioSection={part:'cardio',name:'🔥 유산소 (60분+)',items:gymCardioPool[wk%gymCardioPool.length]};
+}else{
+cardioSection={part:'cardio',name:'🔥 유산소',items:[{n:'러닝머신',d:`30분, ${bpmStr}`},{n:'로잉머신',d:'15분, SPM 22~26'}]};
+}
+}else{
+if(isWeightLoss){
+const homeCardioPool=[
+[{n:'야외 조깅 (일정 페이스)',d:`60분, ${bpmStr}`,tip:'대화 가능한 속도로 꾸준히, 코로 들이쉬고 입으로 내쉬기'},{n:'워킹 쿨다운',d:'10분',tip:'빠른 걷기로 심박수 서서히 낮추기'}],
+[{n:'야외 런닝 (느린 페이스)',d:`60분, ${bpmStr}`,tip:'러닝 5분 + 빠른 걷기 1분 반복으로 시작 → 점차 러닝 비율 늘리기'},{n:'스트레칭 워킹',d:'10분',tip:'걸으면서 팔 돌리기'}],
+[{n:'파워 워킹 (빠른 걷기)',d:`70분, ${bpmStr}`,tip:'팔을 크게 흔들며 보폭 넓게, 시속 6~7km 유지'},{n:'가벼운 스트레칭',d:'5분'}],
+[{n:'인터벌 조깅',d:`60분, ${bpmStr} 기준`,tip:'조깅 4분 + 빠른 걷기 1분 반복 (12세트)'},{n:'쿨다운 걷기',d:'10분',tip:'천천히 속도 줄이기'}]
+];
+cardioSection={part:'cardio',name:'🔥 유산소 (60분+)',items:homeCardioPool[wk%homeCardioPool.length]};
+}else{
+const items=pool.cardio||[];
+const count=Math.min(3,items.length);
+const start=(wk*99)%Math.max(items.length,1);
+const picked=[];for(let i=0;i<count;i++){picked.push(items[(start+i)%items.length]);}
+cardioSection={part:'cardio',name:PART_NAMES.cardio,items:picked};
+}
+}
+}
+const result={label:sched.label,time:sched.time,btName:isGeneric?'기본 프로그램':data.name,btColor:isGeneric?'var(--accent)':data.color,strategy:isGeneric?'키·몸무게 기반 균형 운동':data.strategy,rest_rec:!!sched.rest_rec,bpmStr,isGeneric,sections:[]};
+if(cardioSection)result.sections.push(cardioSection);
 sched.parts.forEach(part=>{
+if(part==='cardio')return;/* 유산소는 위에서 처리 */
 const items=pool[part]||[];
 if(!items.length)return;
-/* weekNum 시드로 순환: 매주 3개씩 다른 세트 */
 const count=Math.min(3,items.length);
 const start=(wk*(part.charCodeAt(0)||1))%items.length;
 const picked=[];
@@ -1481,9 +1627,347 @@ result.sections.push({part,name:PART_NAMES[part]||part,items:picked});
 return result;
 }
 
+/* ===== AI 코치 채팅 시스템 ===== */
+const AIC_DEFAULT_PROMPT=`당신은 P.A 트레이닝 전문 AI 코치입니다.
+P.A 트레이닝은 체형 맞춤 퍼스널 트레이닝 센터이며, 당신은 이 센터의 공식 AI 어시스턴트입니다.
+스포츠과학, 운동생리학, 부상 관리, 영양학에 대한 전문 지식을 갖추고 있습니다.
+
+[정체성 규칙 — 매우 중요]
+- 당신은 "P.A 트레이닝 AI 코치"이다. 특정 개인의 이름을 언급하지 않는다.
+- "저는 P.A 트레이닝 AI 코치입니다" 또는 "P.A 코치가 알려줄게!" 로 자신을 소개
+- 코치 이름, 경력, 학교 등 개인정보를 절대 언급하지 않는다
+- 센터 운영 정보(레슨 시간, 가격)에 대한 질문은 "선생님께 직접 문의해줘!" 로 안내
+
+[개인정보 보호 — 절대 규칙]
+- 현재 대화하고 있는 학생의 정보만 참고한다
+- 다른 학생의 이름, 체중, 체형, 기록, 식단 등 어떤 정보도 절대 언급하지 않는다
+- "다른 학생은 어때요?", "XX는 몇 킬로야?" 같은 질문에는:
+  → "다른 사람의 정보는 알려줄 수 없어! 네 목표에 집중하자 💪"
+- 학생 목록, 학생 수, 다른 학생과의 비교를 절대 하지 않는다
+- 이 규칙은 어떤 경우에도 예외 없이 적용된다
+
+[말투 규칙]
+- 학생에게 친근하게 반말 사용 ("좋은 질문이야!", "이렇게 해봐", "걱정 마!")
+- 공감 먼저, 그 다음 해결책 ("아 그거 처음엔 다 그래~", "충분히 그럴 수 있어")
+- 이모지 적절히 사용 (과하지 않게, 1~2개)
+- 절대 딱딱한 교과서 말투 금지
+- 학생의 이름을 부를 때 성을 빼고 이름만 사용 (예: "김예슬" → "예슬아", "이태경" → "태경아")
+
+[맞춤 답변 규칙]
+- 반드시 아래 제공되는 [학생 정보]를 참고하여 맞춤 답변
+- 학생의 목표(체중감량/근력증가/등)에 따라 운동 강도, 식단 방향을 다르게
+- 인바디 데이터가 있으면 체지방률, 골격근량 기반으로 구체적 조언
+- 부상 이력이 있으면 해당 부위 관련 질문 시 반드시 이력 참고
+- 최근 운동/식단 기록이 있으면 "오늘 ~kcal 먹었네, ~정도 더 먹어도 돼" 식으로 활용
+
+[운동 자세 질문]
+- 핵심 체크포인트 3가지를 먼저 알려줘
+- "이런 실수 많이 해" 형태로 흔한 오류 짚어주기
+- 가능하면 MuscleWiki 참고를 안내 ("MuscleWiki에서 영상도 한번 봐봐")
+
+[부상/통증 질문 — 매우 중요]
+- 반드시 RICE 원칙 안내: Rest(안정), Ice(냉찜질 15~20분), Compression(압박), Elevation(거상)
+- 급성 통증: "일단 운동 중단하고 아이싱 해" → "2~3일 지켜보고 안 나으면 정형외과 가봐"
+- 만성 통증: "그 부위 운동은 당분간 쉬고" → "반드시 전문의 상담 받아봐"
+- 절대 "괜찮을 거야"라고 가볍게 넘기지 않기
+- 의학적 진단은 하지 않되, 응급 대처법은 구체적으로
+
+[테이핑 질문]
+- 키네시올로지 테이프(KT 테이프) 기준으로 안내
+- 기본 원칙: ①피부 깨끗하게 ②털 제거 ③10~15% 장력으로 부착 ④끝부분은 장력 없이
+- 테이핑 영상 안내 시 반드시 KT Tape 공식 사이트 링크를 제공:
+  · 무릎 전체: https://www.kttape.com/blogs/how-to-apply/full-knee-support
+  · 무릎 내측: https://www.kttape.com/blogs/how-to-apply/inner-knee
+  · 무릎 뒤쪽: https://www.kttape.com/blogs/how-to-apply/back-of-knee
+  · 발목 염좌: https://www.kttape.com/blogs/how-to-apply/ankle-stability
+  · 아킬레스: https://www.kttape.com/blogs/how-to-apply/achilles-tendonitis
+  · 종아리: https://www.kttape.com/blogs/how-to-apply/calf
+  · 정강이(신스플린트): https://www.kttape.com/blogs/how-to-apply/shin-splints
+  · 발바닥(족저근막): https://www.kttape.com/blogs/how-to-apply/plantar-fasciitis
+  · 허리: https://www.kttape.com/blogs/how-to-apply/lower-back
+  · 어깨: https://www.kttape.com/blogs/how-to-apply/shoulder
+  · 손목: https://www.kttape.com/blogs/how-to-apply/wrist
+  · 팔꿈치: https://www.kttape.com/blogs/how-to-apply/tennis-elbow
+  · 햄스트링: https://www.kttape.com/blogs/how-to-apply/hamstrings
+  · 대퇴사두: https://www.kttape.com/blogs/how-to-apply/quadriceps
+  · 목: https://www.kttape.com/blogs/how-to-apply/neck
+- 위에 없는 부위면: "KT Tape 공식 사이트(kttape.com/blogs/how-to-apply)에서 찾아봐!" 로 안내
+- 테이핑 답변 시 항상 해당 링크를 포함할 것
+
+[스트레칭/웜업 질문]
+- 운동 전: 동적 스트레칭 / 운동 후: 정적 스트레칭 (각 20~30초)
+
+[식단/영양 질문]
+- 학생의 목표 칼로리 기준으로 답변
+- 수분 섭취: 체중×33ml 기본, 운동 시 +500ml
+- 구체적인 음식 추천 가능 (닭가슴살, 고구마, 그릭요거트 등)
+
+[절대 하지 말 것]
+- 코치/강사의 개인정보(이름, 학력, 경력) 언급
+- 다른 학생의 어떤 정보든 언급
+- 의학적 확정 진단
+- 약물/보충제 처방
+- 무리한 운동 권유 (통증 있는데 "참고 해"는 절대 금지)
+- 다른 트레이너/센터 비하`;
+
+const AIC_CHIPS=['운동 후 무릎이 아파요 😣','스쿼트 자세 체크해주세요','허리 테이핑 방법 🩹','스트레칭 루틴 추천','근육통인데 운동해도 돼요?','오늘 컨디션이 안 좋은데...','발목을 삐었어요 🩼','운동 전 뭐 먹어야 해요?','플랭크 1분도 못 버텨요','체중이 안 빠져요 😭'];
+let aicHistory=[];
+let aicInited=false;
+
+function getAICPrompt(){
+const cfg=lG('pa_aicoach_config','pa_student_region',null);
+return cfg?.prompt||AIC_DEFAULT_PROMPT;
+}
+function getAICContext(){
+if(!LC||!S[LC])return'';
+const s=S[LC],c=LC;
+const btRaw=lG('pa_body_types',{})[c];
+const btType=btRaw?.type||'';
+const btName=BT_NAME_MAP[btType]||'미설정';
+const wts=lG('pa_weights',{})[c]||s.wts;
+const latestW=wts[wts.length-1];
+const age=s.age||20;
+const mhr=220-age;
+const bpmLow=Math.round(mhr*0.6);
+const bpmHigh=Math.round(mhr*0.7);
+
+let ctx=`\n\n[현재 대화 학생 정보 — 이 학생에 대해서만 답변할 것]
+이름: ${s.name}
+나이/성별: ${s.age}세 / ${s.g}
+신체: ${s.h}cm / ${latestW}kg
+목표: ${s.goal} (일일 목표 ${s.tar}kcal)
+체형: ${btName}
+BMR: ${s.bmr}kcal / TDEE: ${s.tdee}kcal
+권장 유산소 BPM: ${bpmLow}~${bpmHigh} (Fatmax Zone)
+권장 수분: ${Math.round(latestW*33)}ml/일`;
+
+/* 인바디 데이터 */
+const ibList=getInbody(c);
+if(ibList.length>0){
+const ib=ibList[0];
+ctx+=`\n\n[최근 인바디 (${ib.date||'최근'})]`;
+if(ib.weight)ctx+=`\n체중: ${ib.weight}kg`;
+if(ib.skeletalMuscle)ctx+=` / 골격근: ${ib.skeletalMuscle}kg`;
+if(ib.bodyFat)ctx+=` / 체지방: ${ib.bodyFat}kg`;
+if(ib.bodyFatPct)ctx+=` / 체지방률: ${ib.bodyFatPct}%`;
+if(ib.bmi)ctx+=` / BMI: ${ib.bmi}`;
+if(ib.bmr)ctx+=` / 기초대사: ${ib.bmr}kcal`;
+if(ib.segmental){const seg=ib.segmental;ctx+=`\n부위별 근육: 우팔(${seg.rightArm}) 좌팔(${seg.leftArm}) 몸통(${seg.trunk}) 우다리(${seg.rightLeg}) 좌다리(${seg.leftLeg})`;}
+if(ib.analysis)ctx+=`\n인바디 분석: ${ib.analysis}`;
+}
+
+/* 체형 분석 AI 기록 */
+const analyses=lG('pa_body_analyses',{})[c]||[];
+if(analyses.length>0){
+const latest=analyses[0];
+ctx+=`\n\n[AI 체형 분석 결과 (${latest.date||'최근'})]`;
+ctx+=`\n${latest.typeName} (${latest.parentType}) — 신뢰도 ${latest.confidence}%`;
+if(latest.analysis)ctx+=`\n${latest.analysis}`;
+if(latest.recommendation)ctx+=`\n운동 방향: ${latest.recommendation}`;
+}
+
+/* 몸무게 변화 추이 (최근 6회) */
+if(wts.length>1){
+const recent=wts.slice(-6);
+const diff=(recent[recent.length-1]-recent[0]).toFixed(1);
+ctx+=`\n\n[체중 변화 추이]\n최근 ${recent.length}회: ${recent.join('→')}kg (${diff>0?'+':''}${diff}kg)`;
+}
+
+/* 오늘 섭취/운동 기록 */
+const td=new Date().toISOString().split('T')[0];
+const iL=(lG('pa_student_intake',{})[c]||[]).filter(r=>r.date===td);
+const eL=(lG('pa_student_exercise',{})[c]||[]).filter(r=>r.date===td);
+const iT=iL.reduce((a,r)=>a+r.kcal,0);
+const eT=eL.reduce((a,r)=>a+r.kcal,0);
+if(iT>0||eT>0){
+ctx+=`\n\n[오늘 기록 (${td})]`;
+if(iT>0)ctx+=`\n섭취: ${iT}kcal (${iL.map(r=>`${r.label} ${r.kcal}`).join(', ')})`;
+if(eT>0)ctx+=`\n운동 소모: ${eT}kcal`;
+ctx+=`\n남은 칼로리: ${s.tar-iT+eT}kcal`;
+}
+
+ctx+=`\n\n[중요] 위 정보는 현재 대화 중인 "${s.name}" 학생의 정보입니다. 다른 학생의 정보는 절대 제공하지 마세요.`;
+return ctx;
+}
+
+function initAICoach(){
+const w=document.getElementById('aiCoachWrap');if(!w)return;
+if(aicInited){scrollAIC();return;}
+aicInited=true;
+w.innerHTML=`<div class="aic-wrap">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+<div style="width:40px;height:40px;border-radius:50%;background:rgba(232,98,42,.12);display:flex;align-items:center;justify-content:center;font-size:20px;">🤖</div>
+<div><div style="font-size:15px;font-weight:900;">P.A 코치</div><div style="font-size:10px;color:var(--muted);">운동 · 부상 · 테이핑 · 식단 무엇이든 질문하세요</div></div>
+</div>
+<div class="aic-msgs" id="aicMsgs">
+<div class="aic-msg bot"><div class="aic-name">🤖 P.A 코치</div>${(S[LC]?.name||'').slice(1)||(S[LC]?.name||'')}아 안녕! 👋 운동, 부상, 테이핑, 식단 뭐든 물어봐! 네 체형이랑 목표에 맞춰서 알려줄게 💪</div>
+<div class="aic-chips" id="aicChips">${AIC_CHIPS.map(c=>`<button class="aic-chip" onclick="aicSend('${c}')">${c}</button>`).join('')}</div>
+</div>
+<div class="aic-input-wrap">
+<textarea class="aic-input" id="aicInput" placeholder="질문을 입력하세요..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aicSend();}"></textarea>
+<button class="aic-send" id="aicSendBtn" onclick="aicSend()">➤</button>
+</div>
+</div>`;
+/* 텍스트에어리어 자동 높이 */
+const ta=document.getElementById('aicInput');
+ta.addEventListener('input',function(){this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';});
+}
+
+function scrollAIC(){const el=document.getElementById('aicMsgs');if(el)el.scrollTop=el.scrollHeight;}
+
+async function aicSend(text){
+const ta=document.getElementById('aicInput');
+const msg=text||ta.value.trim();
+if(!msg)return;
+ta.value='';ta.style.height='auto';
+/* 칩 버튼 숨기기 */
+const chips=document.getElementById('aicChips');if(chips)chips.remove();
+/* 유저 메시지 추가 */
+const msgs=document.getElementById('aicMsgs');
+msgs.insertAdjacentHTML('beforeend',`<div class="aic-msg user">${esc(msg)}</div>`);
+aicHistory.push({role:'user',content:msg});
+/* 타이핑 표시 */
+msgs.insertAdjacentHTML('beforeend',`<div class="aic-msg bot typing" id="aicTyping"><div class="aic-name">🤖 P.A 코치</div>생각하는 중...</div>`);
+scrollAIC();
+const btn=document.getElementById('aicSendBtn');btn.disabled=true;
+try{
+const sysPrompt=getAICPrompt()+getAICContext();
+const apiMsgs=aicHistory.slice(-10).map(m=>({role:m.role,content:m.content}));
+const resp=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
+method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:sysPrompt,messages:apiMsgs})
+},1);
+const data=await resp.json();
+const reply=data.content?.map(c=>c.text||'').join('')||'죄송해, 다시 한번 물어봐줄래?';
+aicHistory.push({role:'assistant',content:reply});
+document.getElementById('aicTyping')?.remove();
+const formatted=esc(reply).replace(/\n/g,'<br>');
+msgs.insertAdjacentHTML('beforeend',`<div class="aic-msg bot"><div class="aic-name">🤖 P.A 코치</div>${formatted}</div>`);
+}catch(e){
+console.warn('AI Coach error:',e);
+document.getElementById('aicTyping')?.remove();
+msgs.insertAdjacentHTML('beforeend',`<div class="aic-msg bot" style="border-color:rgba(232,98,42,.3);"><div class="aic-name" style="color:var(--orange);">⚠️ 오류</div>답변을 가져오지 못했어. 다시 한번 질문해줘!</div>`);
+}finally{btn.disabled=false;scrollAIC();}
+}
+
+/* ===== 관리자: AI 코치 설정 UI ===== */
+function aAICoach(){
+const cfg=lG('pa_aicoach_config','pa_student_region',null)||{};
+const prompt=cfg.prompt||AIC_DEFAULT_PROMPT;
+const chips=(cfg.chips||AIC_CHIPS).join('\n');
+return`<h3 style="font-size:14px;margin-bottom:14px;">🤖 AI 코치 설정</h3>
+<p style="font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.7;">학생들이 AI 코치에게 질문할 때 사용되는 설정입니다.<br>프롬프트를 수정하면 AI의 말투, 지식 범위, 답변 규칙을 조정할 수 있습니다.</p>
+
+<details style="margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;">
+<summary style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;">📖 프롬프트 작성 가이드 (클릭해서 열기)</summary>
+<div style="font-size:11px;color:var(--muted);line-height:1.8;margin-top:12px;">
+
+<strong style="color:var(--text);">1. 이전 Claude 대화에서 프롬프트 가져오기</strong><br>
+Claude와 대화하면서 만들어진 내용을 AI 코치에 적용하고 싶다면:<br>
+① 해당 대화에서 <span style="color:var(--accent);">"지금까지 대화한 내용을 AI 코치 프롬프트로 정리해줘"</span> 라고 요청<br>
+② Claude가 정리해준 텍스트를 복사<br>
+③ 아래 프롬프트 입력란에 붙여넣기<br>
+④ 저장 버튼 클릭<br><br>
+
+<strong style="color:var(--text);">2. 프롬프트 작성 팁</strong><br>
+• <span style="color:var(--orange);">[역할 정의]</span> — "당신은 ~입니다" 형태로 AI의 정체성 설정<br>
+• <span style="color:var(--orange);">[말투 규칙]</span> — 반말/존댓말, 이모지 사용 여부, 문장 길이<br>
+• <span style="color:var(--orange);">[분야별 지식]</span> — 부상 대처, 테이핑, 스트레칭 등 분야별로 구체적 규칙 작성<br>
+• <span style="color:var(--orange);">[금지 사항]</span> — AI가 하면 안 되는 것 (의학적 진단, 약물 처방 등)<br><br>
+
+<strong style="color:var(--text);">3. 예시: 특정 지식 추가하기</strong><br>
+프롬프트 하단에 이런 식으로 추가하면 됩니다:<br>
+<div style="background:rgba(255,255,255,.04);padding:10px;border-radius:8px;margin:6px 0;font-family:monospace;font-size:10px;">
+[추가 지식]<br>
+- 무릎 테이핑: Y자 테이핑으로 슬개골 양쪽을 감싸듯이 부착<br>
+- 발목 삐었을 때: 8자 테이핑, 발목 90도 유지한 상태로<br>
+- 어깨 통증: 회전근개 스트레칭 4종 먼저 안내<br>
+- 우리 센터 특이사항: 레슨 시간은 60분/90분, 항상 스트레칭 10분 포함
+</div><br>
+
+<strong style="color:var(--text);">4. Claude에게 직접 요청하는 방법</strong><br>
+Claude 대화에서 이렇게 요청하세요:<br>
+<div style="background:rgba(100,160,200,.08);padding:10px;border-radius:8px;margin:6px 0;font-size:10px;">
+"내가 운영하는 트레이닝 센터의 AI 코치 프롬프트를 만들어줘.<br>
+조건: [여기에 원하는 조건 나열]<br>
+예시 질문과 이상적인 답변도 3개 만들어줘."
+</div>
+→ Claude가 만들어준 프롬프트를 복사해서 여기에 붙여넣기!
+
+</div>
+</details>
+
+<div style="margin-bottom:16px;">
+<div style="font-size:12px;font-weight:700;margin-bottom:6px;">📝 AI 코치 프롬프트 (시스템 지시)</div>
+<p style="font-size:10px;color:var(--muted);margin-bottom:6px;">AI가 어떤 역할인지, 어떻게 답변해야 하는지 작성하세요. 학생 정보(체형/목표/몸무게)는 자동으로 추가됩니다.</p>
+<textarea id="aicPrompt" style="width:100%;min-height:300px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:14px;border-radius:10px;font-size:12px;font-family:inherit;outline:none;resize:vertical;line-height:1.7;">${esc(prompt)}</textarea>
+<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted);"><span>💡 [대괄호]로 카테고리를 나누면 관리하기 편합니다</span><span id="aicPromptLen">${prompt.length}자</span></div>
+</div>
+
+<div style="margin-bottom:16px;">
+<div style="font-size:12px;font-weight:700;margin-bottom:6px;">💬 빠른 질문 칩 (한 줄에 하나씩)</div>
+<p style="font-size:10px;color:var(--muted);margin-bottom:6px;">학생이 처음 들어왔을 때 보이는 추천 질문 버튼들입니다.</p>
+<textarea id="aicChips" style="width:100%;min-height:100px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:10px;font-size:12px;font-family:inherit;outline:none;resize:vertical;line-height:1.8;">${esc(chips)}</textarea>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:16px;">
+<button class="ab ab-b" onclick="saveAICConfig()">💾 설정 저장</button>
+<button class="ab" style="color:var(--muted);border:1px solid var(--border);" onclick="resetAICConfig()">🔄 기본값 복원</button>
+<button class="ab" style="color:var(--accent);border:1px solid rgba(100,160,200,.25);" onclick="testAIC()">🧪 테스트 질문</button>
+</div>
+
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:8px;">
+<div style="font-size:11px;font-weight:700;margin-bottom:8px;">🔍 미리보기 — AI에게 전달되는 전체 컨텍스트</div>
+<div style="font-size:10px;color:var(--muted);line-height:1.6;white-space:pre-wrap;max-height:200px;overflow-y:auto;background:rgba(255,255,255,.02);padding:10px;border-radius:8px;">${esc(prompt)}
+
+[학생 정보는 로그인한 학생에 따라 자동 생성됩니다]
+예시: 김예슬 / 23세 / 여 / 164cm / 59kg / 체중감량 / 하트형 / BMR 1402 / TDEE 1928</div>
+</div>
+
+<div id="aicTestResult" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;">
+<div style="font-size:11px;font-weight:700;margin-bottom:8px;">🧪 테스트 결과</div>
+<div id="aicTestBody" style="font-size:12px;color:var(--text);line-height:1.7;"></div>
+</div>`;}
+
+async function testAIC(){
+const q=prompt('테스트 질문을 입력하세요','무릎이 아픈데 운동해도 돼요?');
+if(!q)return;
+const prompt2=document.getElementById('aicPrompt').value.trim();
+const testEl=document.getElementById('aicTestResult');
+const body=document.getElementById('aicTestBody');
+testEl.style.display='block';
+body.innerHTML='<span style="color:var(--muted);font-style:italic;">AI 응답 생성 중...</span>';
+try{
+const resp=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
+method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:prompt2+'\n\n[테스트 학생]\n김예슬 / 23세 / 여 / 164cm / 59kg / 체중감량 / 하트형',messages:[{role:'user',content:q}]})
+},1);
+const data=await resp.json();
+const reply=data.content?.map(c=>c.text||'').join('')||'응답 없음';
+body.innerHTML=`<div style="font-size:10px;color:var(--accent);margin-bottom:6px;">질문: ${esc(q)}</div><div style="white-space:pre-wrap;">${esc(reply)}</div>`;
+}catch(e){body.innerHTML='<span style="color:var(--orange);">테스트 실패 — 다시 시도하세요</span>';}
+}
+function saveAICConfig(){
+const prompt=document.getElementById('aicPrompt').value.trim();
+const chipsText=document.getElementById('aicChips').value.trim();
+const chips=chipsText.split('\n').map(s=>s.trim()).filter(Boolean);
+if(!prompt){toast('프롬프트를 입력하세요','err');return;}
+lS('pa_aicoach_config','pa_student_region',{prompt,chips});
+toast('AI 코치 설정 저장 완료!');
+aicInited=false;/* 다음 열 때 새 설정 반영 */
+}
+function resetAICConfig(){
+if(!confirm('기본값으로 복원하시겠습니까?'))return;
+lS('pa_aicoach_config','pa_student_region',{prompt:AIC_DEFAULT_PROMPT,chips:AIC_CHIPS});
+toast('기본값 복원 완료');rAB();
+aicInited=false;
+}
+
 let tdMode='gym';
 function rToday(){
-const w=document.getElementById('todayWrap');if(!w||!LC||!S[LC])return;
+const w=document.getElementById('todayWrap');if(!w)return;
+if(!LC||!S[LC]){w.innerHTML='<div style="text-align:center;padding:40px 20px;"><div style="font-size:40px;margin-bottom:12px;">📌</div><h3 style="margin-bottom:8px;">로그인이 필요합니다</h3><p style="font-size:12px;color:var(--muted);">코드 또는 카카오로 로그인하면<br>오늘의 식단과 운동이 표시됩니다.</p></div>';return;}
+try{
 const s=S[LC],c=LC;
 const now=new Date();
 const dowNum=now.getDay();
@@ -1494,8 +1978,13 @@ const diet=gDiet(c);
 /* 오늘 요일에 맞는 식단 찾기 */
 const dowMap={'일':6,'월':0,'화':1,'수':2,'목':3,'금':4,'토':5};
 const todayIdx=dowMap[dowNames[dowNum]]??0;
-const todayDiet=diet[todayIdx]||diet[0];
-const water=todayDiet?.water||(s.w*33);
+const todayDiet=diet&&diet.length>todayIdx?diet[todayIdx]:(diet&&diet[0]?diet[0]:null);
+const hasDiet=todayDiet&&todayDiet.am&&todayDiet.lu&&todayDiet.sn&&todayDiet.di;
+const water=todayDiet?.water||(s.w?s.w*33:1800);
+/* safe getters */
+const dk=(d,part)=>{try{return d[part]?.k||0;}catch(e){return 0;}};
+const dc=(d,part)=>{try{return (d[part]?.c||'준비 중').replace(/\n/g,'<br>');}catch(e){return '준비 중';}};
+const totalK=hasDiet?(todayDiet.k||dk(todayDiet,'am')+dk(todayDiet,'lu')+dk(todayDiet,'sn')+dk(todayDiet,'di')):0;
 /* 오늘 운동 */
 const ex=getTodayExProgram(tdMode);
 /* 스케줄 확인 */
@@ -1507,25 +1996,36 @@ let exHTML='';
 if(!ex){
 exHTML=`<div style="text-align:center;padding:24px;background:var(--card);border-radius:12px;border:1px solid var(--border);">
 <div style="font-size:28px;margin-bottom:8px;">💪</div>
-<div style="font-size:13px;font-weight:700;margin-bottom:4px;">체형 분석이 필요합니다</div>
-<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">체형 분석 후 맞춤 운동이 표시됩니다</div>
-<button class="btnp" onclick="go('body')" style="display:inline-flex;font-size:12px;padding:10px 18px;">🦴 체형분석 하러가기</button></div>`;
+<div style="font-size:13px;font-weight:700;margin-bottom:4px;">운동 데이터를 준비할 수 없습니다</div>
+<div style="font-size:11px;color:var(--muted);">페이지를 새로고침 해주세요</div></div>`;
 }else if(ex.rest){
 exHTML=`<div class="td-rest"><div class="td-rest-ico">🧘</div><div class="td-rest-h">오늘은 휴식일</div><div class="td-rest-p">충분한 수분 섭취와 스트레칭으로<br>내일을 준비하세요!</div></div>`;
 }else{
+const genericBanner=ex.isGeneric?`<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(232,98,42,.06);border:1px solid rgba(232,98,42,.2);border-radius:10px;margin-bottom:10px;">
+<span style="font-size:16px;">📊</span>
+<div><div style="font-size:11px;font-weight:700;color:var(--orange);">키·몸무게 데이터 기반 기본 프로그램입니다</div>
+<div style="font-size:10px;color:var(--muted);margin-top:2px;">체형분석을 완료하면 더 정확한 맞춤 프로그램이 제공됩니다</div>
+<button onclick="go('body')" style="margin-top:6px;padding:5px 12px;border-radius:6px;background:rgba(232,98,42,.12);border:1px solid rgba(232,98,42,.25);color:var(--orange);font-size:10px;font-weight:700;cursor:pointer;">🦴 체형분석 하러가기</button>
+</div></div>`:'';
 const restRecBanner=ex.rest_rec?`<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(111,207,151,.08);border:1px solid rgba(111,207,151,.2);border-radius:10px;margin-bottom:10px;"><span style="font-size:16px;">🧘</span><div><div style="font-size:12px;font-weight:700;color:var(--green);">오늘은 휴식을 권장합니다</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">컨디션이 좋다면 아래 가벼운 운동을 해보세요</div></div></div>`:'';
 exHTML=`<div class="td-ex-mode">
 <button class="td-ex-btn${tdMode==='gym'?' on':''}" onclick="tdMode='gym';rToday()">🏋️ 짐 (기구)</button>
 <button class="td-ex-btn${tdMode==='home'?' on':''}" onclick="tdMode='home';rToday()">🏠 홈 (맨몸)</button>
 </div>
 ${restRecBanner}
+${genericBanner}
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
 <span class="td-sched-badge">${ex.label} · ${ex.time}</span>
+${ex.bpmStr?`<span style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px;background:rgba(255,107,107,.1);color:#FF6B6B;">❤️ ${ex.bpmStr}</span>`:''}
 </div>
 <div style="font-size:10px;color:var(--muted);margin-bottom:10px;padding:8px 12px;background:var(--card);border-radius:8px;border-left:3px solid ${ex.btColor};">
 <strong style="color:${ex.btColor};">${ex.btName}</strong> — ${ex.strategy}
 </div>
-${ex.sections.map(sec=>`<div class="td-ex-card"><div class="td-ex-card-h">${sec.name}</div>${sec.items.map(e=>`<div class="td-ex-item"><span class="td-en">${e.n}</span><span class="td-ed">${e.d}</span></div>`).join('')}</div>`).join('')}
+${ex.sections.map(sec=>`<div class="td-ex-card"><div class="td-ex-card-h">${sec.name}</div>${sec.items.map(e=>{const meta=EX_META[e.n]||{};const link=mwLink(e.n);return`<div style="padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--text);font-weight:500;">${e.n}</span><span style="color:var(--muted);font-size:11px;white-space:nowrap;margin-left:8px;">${e.d}</span></div>
+${meta.tip?`<div style="font-size:10px;color:var(--muted);margin-top:2px;">💡 ${meta.tip}</div>`:''}
+<div style="display:flex;gap:6px;align-items:center;">${meta.t?`<span style="font-size:8px;padding:1px 6px;border-radius:4px;background:rgba(100,160,200,.1);color:var(--accent);">${meta.t}</span>`:''}${link?`<a href="${link}" target="_blank" rel="noopener" style="font-size:9px;color:var(--accent);text-decoration:none;opacity:.7;">📹 동작 보기</a>`:''}</div>
+</div>`;}).join('')}</div>`).join('')}
 <div class="td-tip"><strong>💡 무용수 원칙</strong> · 하체 고반복(15+) 저중량 · 상체 중반복(10~12) · RPE 6~7 유지 · 유산소 BPM 125~140</div>`;
 }
 
@@ -1535,19 +2035,23 @@ w.innerHTML=`
 </div>
 ${mySchedToday.length?`<div style="margin-bottom:12px;">${mySchedToday.map(e=>`<div class="sched-item" style="margin-bottom:4px;"><div class="sched-dot ${e.type||'lesson'}"></div><div class="sched-time">${e.time||''}</div><div class="sched-info"><div class="sched-title">${esc(e.title)}</div>${e.desc?`<div class="sched-desc">${esc(e.desc)}</div>`:''}</div></div>`).join('')}</div>`:''}
 <div class="td-sec">
-<div class="td-sec-h"><span class="td-ico">🍽</span> 오늘의 식단 <span style="font-size:10px;font-weight:500;color:var(--orange);margin-left:4px;">${todayDiet.k.toLocaleString()} kcal</span></div>
-<div class="td-meal-grid">
-<div class="td-meal"><div class="td-meal-label">🌅 아침</div><div class="td-meal-kcal">${todayDiet.am.k} kcal</div><div class="td-meal-menu">${todayDiet.am.c.replace(/\n/g,'<br>')}</div></div>
-<div class="td-meal"><div class="td-meal-label">☀️ 점심</div><div class="td-meal-kcal">${todayDiet.lu.k} kcal</div><div class="td-meal-menu">${todayDiet.lu.c.replace(/\n/g,'<br>')}</div></div>
-<div class="td-meal"><div class="td-meal-label">🍪 간식</div><div class="td-meal-kcal">${todayDiet.sn.k} kcal</div><div class="td-meal-menu">${todayDiet.sn.c.replace(/\n/g,'<br>')}</div></div>
-<div class="td-meal"><div class="td-meal-label">🌙 저녁</div><div class="td-meal-kcal">${todayDiet.di.k} kcal</div><div class="td-meal-menu">${todayDiet.di.c.replace(/\n/g,'<br>')}</div></div>
-</div>
-<div class="td-water"><span class="td-water-ico">💧</span><div><div class="td-water-txt">수분 ${(water/1000).toFixed(1)}L (${water}ml)</div><div class="td-water-sub">체중 ${s.w}kg 기준 · 운동 시 +500ml</div></div></div>
+<div class="td-sec-h"><span class="td-ico">🍽</span> 오늘의 식단 <span style="font-size:10px;font-weight:500;color:var(--orange);margin-left:4px;">${hasDiet?totalK.toLocaleString()+' kcal':'관리자 식단 설정 필요'}</span></div>
+${hasDiet?`<div class="td-meal-grid">
+<div class="td-meal"><div class="td-meal-label">🌅 아침</div><div class="td-meal-kcal">${dk(todayDiet,'am')} kcal</div><div class="td-meal-menu">${dc(todayDiet,'am')}</div></div>
+<div class="td-meal"><div class="td-meal-label">☀️ 점심</div><div class="td-meal-kcal">${dk(todayDiet,'lu')} kcal</div><div class="td-meal-menu">${dc(todayDiet,'lu')}</div></div>
+<div class="td-meal"><div class="td-meal-label">🍪 간식</div><div class="td-meal-kcal">${dk(todayDiet,'sn')} kcal</div><div class="td-meal-menu">${dc(todayDiet,'sn')}</div></div>
+<div class="td-meal"><div class="td-meal-label">🌙 저녁</div><div class="td-meal-kcal">${dk(todayDiet,'di')} kcal</div><div class="td-meal-menu">${dc(todayDiet,'di')}</div></div>
+</div>`:`<div style="text-align:center;padding:20px;background:var(--card);border-radius:12px;border:1px solid var(--border);">
+<div style="font-size:28px;margin-bottom:8px;">🍽</div>
+<div style="font-size:13px;font-weight:700;margin-bottom:4px;">식단이 아직 설정되지 않았어요</div>
+<div style="font-size:11px;color:var(--muted);">관리자가 식단을 배정하면 여기에 표시됩니다</div></div>`}
+<div class="td-water"><span class="td-water-ico">💧</span><div><div class="td-water-txt">수분 ${(water/1000).toFixed(1)}L (${Math.round(water)}ml)</div><div class="td-water-sub">체중 ${s.w||60}kg 기준 · 운동 시 +500ml</div></div></div>
 </div>
 <div class="td-sec">
 <div class="td-sec-h"><span class="td-ico">💪</span> 오늘의 운동</div>
 ${exHTML}
 </div>`;
+}catch(e){console.warn('rToday error:',e);w.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:12px;">오늘의 정보를 불러오는 중 오류가 발생했습니다.<br>페이지를 새로고침 해주세요.</div>';}
 }
 const EX_DATA={
 '삼각형':{name:'삼각형 (하체 발달형)',color:'var(--orange)',desc:'골반 > 어깨, 하체에 지방 축적 경향',strategy:'상체 보강 + 하체 유산소 집중',
@@ -1575,6 +2079,54 @@ home:{cardio:[{n:'하이니',d:'3×1분'},{n:'스타점프',d:'3×15'}],upper:[{
 gym:{cardio:[{n:'러닝',d:'40분, BPM 130~140'},{n:'로잉머신',d:'20분'},{n:'스텝밀',d:'15분'}],upper:[{n:'숄더프레스',d:'3×12'},{n:'시티드 로우',d:'3×12'}],lower:[{n:'스쿼트',d:'3×15'},{n:'데드리프트',d:'3×10'}],core:[{n:'플랭크',d:'3×40초'},{n:'데드버그',d:'3×12'}]},
 home:{cardio:[{n:'점핑잭',d:'3×1분'},{n:'하이니',d:'3×1분'},{n:'제자리 달리기',d:'15분'}],upper:[{n:'푸시업',d:'3×10'},{n:'슈퍼맨',d:'3×15'}],lower:[{n:'스쿼트',d:'3×15'},{n:'런지',d:'3×12(양쪽)'}],core:[{n:'플랭크',d:'3×30초'},{n:'마운틴클라이머',d:'3×30초'},{n:'버피',d:'3×10'}]}}
 };
+/* MuscleWiki 링크 매핑 (운동명 → URL slug) */
+const MW={
+'푸시업':'bodyweight/male/chest/push-up',
+'와이드 푸시업':'bodyweight/male/chest/push-up',
+'무릎 푸시업':'bodyweight/male/triceps/bodyweight-knee-push-ups',
+'다이아몬드 푸시업':'bodyweight/male/triceps/diamond-push-ups',
+'파이크 푸시업':'bodyweight/male/shoulders/pike-push-up',
+'스쿼트':'bodyweight/male/glutes/bodyweight-squat',
+'와이드 스쿼트':'bodyweight/male/glutes/bodyweight-squat',
+'점프스쿼트':'bodyweight/male/glutes/jump-squats',
+'런지':'bodyweight/male/glutes/bodyweight-lunge',
+'런지 (제자리)':'bodyweight/male/glutes/bodyweight-lunge',
+'사이드 런지':'bodyweight/male/glutes/bodyweight-lateral-lunge',
+'글루트 브릿지':'bodyweight/male/glutes/glute-bridge',
+'싱글레그 브릿지':'bodyweight/male/glutes/bodyweight-single-leg-glute-bridge',
+'힙쓰러스트':'barbell/male/glutes/barbell-hip-thrust',
+'플랭크':'bodyweight/male/abs/front-plank',
+'사이드플랭크':'bodyweight/male/abs/side-plank',
+'바이시클크런치':'bodyweight/male/abs/bicycle-crunch',
+'레그레이즈':'bodyweight/male/abs/lying-leg-raise',
+'V업':'bodyweight/male/abs/v-up',
+'데드버그':'bodyweight/male/abs/dead-bug',
+'러시안 트위스트':'bodyweight/male/abs/russian-twist',
+'버피':'bodyweight/male/chest/burpee',
+'마운틴클라이머':'bodyweight/male/abs/mountain-climber',
+'점핑잭':'bodyweight/male/calves/jumping-jack',
+'하이니':'bodyweight/male/quads/high-knee-skips',
+'슈퍼맨':'bodyweight/male/lower-back/superman',
+'도키킥':'bodyweight/male/glutes/donkey-kicks',
+'카프레이즈':'bodyweight/male/calves/calf-raises',
+'덤벨 숄더프레스':'dumbbell/male/shoulders/dumbbell-shoulder-press',
+'시티드 로우':'cable/male/upper-back/cable-seated-row',
+'랫풀다운':'cable/male/lats/lat-pulldown',
+'덤벨 플라이':'dumbbell/male/chest/dumbbell-fly',
+'사이드 레터럴레이즈':'dumbbell/male/shoulders/dumbbell-lateral-raise',
+'숄더프레스':'dumbbell/male/shoulders/dumbbell-shoulder-press',
+'사이드 레이즈':'dumbbell/male/shoulders/dumbbell-lateral-raise',
+'레터럴 레이즈':'dumbbell/male/shoulders/dumbbell-lateral-raise',
+'바벨 스쿼트':'barbell/male/glutes/barbell-squat',
+'레그프레스':'machine/male/quads/leg-press',
+'레그컬':'machine/male/hamstrings/lying-leg-curl',
+'데드리프트':'barbell/male/lower-back/barbell-deadlift',
+'트라이셉 딥스':'bodyweight/male/triceps/bodyweight-tricep-dips',
+'행잉 레그레이즈':'bodyweight/male/abs/hanging-leg-raise'
+};
+function mwLink(name){const path=MW[name];if(!path)return'';const g=S[LC]?.g==='여'?path.replace('/male/','/female/'):path;return'https://musclewiki.com/'+g;}
+const HOME_WARMUP=[{n:'팔 돌리기 (앞/뒤)',d:'각 15초',tip:'어깨 워밍업'},{n:'고양이-소 스트레칭',d:'8회',tip:'척추 가동성'},{n:'레그 스윙',d:'각 10회',tip:'고관절 워밍업'},{n:'스쿼트 투 스탠드',d:'8회',tip:'전신 활성화'}];
+const HOME_COOLDOWN=[{n:'전신 스트레칭',d:'5분',tip:'각 동작 20~30초 유지'},{n:'고관절 스트레칭 (비둘기 자세)',d:'양쪽 30초'},{n:'가슴 열기 스트레칭',d:'30초',tip:'문틀에 팔 걸고 가슴 열기'},{n:'햄스트링 스트레칭',d:'양쪽 20초'}];
 const BT_NAME_MAP={'tri':'삼각형','dia':'다이아몬드','inv':'역삼각형','rec':'직사각형','heart':'하트형','oval':'타원형'};
 let exMode='gym';
 function rExProgram(){
@@ -1583,15 +2135,33 @@ const s=S[LC];
 const btRaw=lG('pa_body_types',{})[LC];
 const btType=btRaw?.type||'';
 const btName=BT_NAME_MAP[btType]||'';
-const data=EX_DATA[btName];
+let data=EX_DATA[btName];
+let exGeneric=false;
+if(!btName||!data){data=EX_DATA['직사각형'];exGeneric=true;}
+if(!data)return;
 const goal=s.goal||'체중감량';
-if(!btName||!data){
-w.innerHTML=`<div style="text-align:center;padding:40px 20px;"><div style="font-size:40px;margin-bottom:12px;">💪</div><h3 style="margin-bottom:8px;">체형 분석이 필요합니다</h3><p style="font-size:12px;color:var(--muted);line-height:1.7;">체형 분석을 먼저 완료하면<br>맞춤 운동 프로그램(짐+홈)이 자동으로 생성됩니다.</p><button class="btnp" onclick="go('body')" style="display:inline-flex;margin-top:14px;">🦴 체형분석 하러가기</button></div>`;
-return;}
 const p=exMode==='gym'?data.gym:data.home;
 const mIcon=exMode==='gym'?'🏋️':'🏠';
 const mName=exMode==='gym'?'짐 (기구 사용)':'홈 (맨몸)';
-const rl=(arr)=>arr.length?arr.map(e=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;"><span style="color:var(--text);">${e.n}</span><span style="color:var(--muted);white-space:nowrap;margin-left:8px;">${e.d}</span></div>`).join(''):'<div style="font-size:11px;color:var(--muted);padding:8px 0;">해당 없음</div>';
+const isHome=exMode==='home';
+const rl=(arr)=>arr.length?arr.map(e=>{
+const meta=EX_META[e.n]||{};
+const link=mwLink(e.n);
+const tipHtml=meta.tip?`<div style="font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4;">💡 ${meta.tip}</div>`:'';
+const tagHtml=meta.t?`<span style="font-size:8px;padding:1px 6px;border-radius:4px;background:rgba(100,160,200,.1);color:var(--accent);margin-top:3px;display:inline-block;">${meta.t}</span>`:'';
+const linkHtml=link?`<a href="${link}" target="_blank" rel="noopener" style="font-size:9px;color:var(--accent);text-decoration:none;opacity:.7;display:inline-flex;align-items:center;gap:2px;margin-top:2px;" onclick="event.stopPropagation();">📹 동작 보기</a>`:'';
+return`<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+<div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--text);font-weight:600;">${e.n}</span><span style="color:var(--muted);white-space:nowrap;margin-left:8px;">${e.d}</span></div>
+${isHome?tipHtml+`<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${tagHtml}${linkHtml}</div>`:''}
+</div>`;}).join(''):'<div style="font-size:11px;color:var(--muted);padding:8px 0;">해당 없음</div>';
+const warmupHtml=isHome?`<div style="background:rgba(111,207,151,.06);border:1px solid rgba(111,207,151,.15);border-radius:10px;padding:14px;margin-bottom:8px;">
+<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--green);">🟢 워밍업 (5분)</div>
+${HOME_WARMUP.map(e=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid rgba(255,255,255,.03);"><span>${e.n}</span><span style="color:var(--muted);">${e.d}</span></div>`).join('')}
+</div>`:'';
+const cooldownHtml=isHome?`<div style="background:rgba(139,123,247,.06);border:1px solid rgba(139,123,247,.15);border-radius:10px;padding:14px;margin-top:8px;">
+<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:#8B7BF7;">🟣 쿨다운 스트레칭 (5분)</div>
+${HOME_COOLDOWN.map(e=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid rgba(255,255,255,.03);"><span>${e.n}</span><span style="color:var(--muted);">${e.d}</span></div>`).join('')}
+</div>`:'';
 w.innerHTML=`
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
 <div><div style="font-size:10px;color:var(--muted);letter-spacing:.1em;">EXERCISE PROGRAM</div><div style="font-size:18px;font-weight:900;margin-top:2px;">${mIcon} 맞춤 운동 프로그램</div></div>
@@ -1600,14 +2170,17 @@ w.innerHTML=`
 <button onclick="exMode='home';rExProgram()" style="padding:8px 16px;border-radius:8px;border:1px solid ${exMode==='home'?'var(--accent)':'rgba(255,255,255,.1)'};background:${exMode==='home'?'rgba(100,160,200,.15)':'transparent'};color:${exMode==='home'?'var(--accent)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;">🏠 홈</button>
 </div>
 </div>
-<div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid ${data.color};">
-<div style="font-size:14px;font-weight:900;color:${data.color};margin-bottom:4px;">${data.name}</div>
-<div style="font-size:11px;color:var(--muted);line-height:1.6;">${data.desc}<br><strong style="color:var(--text);">전략:</strong> ${data.strategy}</div>
+<div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid ${exGeneric?'var(--orange)':data.color};">
+<div style="font-size:14px;font-weight:900;color:${exGeneric?'var(--orange)':data.color};margin-bottom:4px;">${exGeneric?'📊 기본 프로그램 (키·몸무게 기반)':data.name}</div>
+<div style="font-size:11px;color:var(--muted);line-height:1.6;">${exGeneric?`${s.name}님의 키(${s.h}cm)·몸무게(${(lG('pa_weights',{})[LC]||s.wts||[s.w])[((lG('pa_weights',{})[LC]||s.wts||[s.w]).length-1)]}kg) 데이터를 기반으로 제공됩니다.`:data.desc}<br><strong style="color:var(--text);">전략:</strong> ${exGeneric?'균형 잡힌 전신 운동':data.strategy}</div>
+${exGeneric?`<div style="margin-top:8px;padding:8px 12px;background:rgba(232,98,42,.06);border:1px solid rgba(232,98,42,.15);border-radius:8px;font-size:10px;color:var(--orange);line-height:1.6;">⚠️ 체형분석 완료 시 더 정확한 맞춤 프로그램이 제공됩니다 <button onclick="go('body')" style="margin-left:6px;padding:3px 10px;border-radius:4px;background:rgba(232,98,42,.15);border:1px solid rgba(232,98,42,.25);color:var(--orange);font-size:9px;font-weight:700;cursor:pointer;">체형분석 →</button></div>`:''}
 <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
 <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(255,107,107,.15);color:#FF6B6B;">${goal}</span>
 <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(100,160,200,.15);color:var(--accent);">${mName}</span>
+${isHome?'<span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:12px;background:rgba(111,207,151,.15);color:var(--green);">워밍업+쿨다운 포함</span>':''}
 </div>
 </div>
+${warmupHtml}
 <div style="background:var(--card);border-radius:10px;padding:14px;margin-bottom:8px;">
 <div style="font-size:12px;font-weight:700;margin-bottom:6px;">🔥 유산소 ${exMode==='gym'?'(BPM 125~140)':'(맨몸)'}</div>${rl(p.cardio)}
 </div>
@@ -1618,12 +2191,64 @@ w.innerHTML=`
 <div style="background:var(--card);border-radius:10px;padding:14px;margin-top:8px;">
 <div style="font-size:12px;font-weight:700;margin-bottom:6px;">🎯 코어</div>${rl(p.core)}
 </div>
+${cooldownHtml}
 <div style="background:var(--card);border-radius:10px;padding:12px;margin-top:8px;font-size:10px;color:var(--muted);line-height:1.7;">
-<strong style="color:var(--text);">💡 무용수 핵심 원칙</strong><br>
-하체 고반복(15+) 저중량 = 비대 방지 · 상체 중반복(10~12) = 균형 보강 · RPE 6~7 유지<br>
+<strong style="color:var(--text);">💡 핵심 원칙</strong><br>
+${isHome?'워밍업 5분 → 본운동 → 쿨다운 5분 · 세트 간 휴식 30~60초 · ':''}하체 고반복(15+) 저중량 = 비대 방지 · 상체 중반복(10~12) = 균형 보강 · RPE 6~7 유지<br>
 유산소 BPM 125~140 (Fatmax Zone) · 코어 매일 · 수분 체중×33ml
-</div>`;
+${isHome?'<br><span style="color:var(--accent);">📹 동작이 익숙하지 않다면 "동작 보기" 링크를 눌러 MuscleWiki 영상을 참고하세요</span>':''}
+</div>
+<div id="weekSchedWrap" style="margin-top:12px;"></div>`;
+renderWeekSched(data);
 }
+function renderWeekSched(data){
+const w=document.getElementById('weekSchedWrap');if(!w||!data)return;
+const dayNames=['월','화','수','목','금','토','일'];
+const todayDow=new Date().getDay();
+let html='<div style="background:var(--card);border-radius:10px;padding:14px;">';
+html+='<div style="font-size:12px;font-weight:700;margin-bottom:10px;">📅 이번 주 운동 편성표 <span style="font-size:9px;color:var(--muted);font-weight:400;">요일을 눌러 상세 보기</span></div>';
+dayNames.forEach(function(d,i){
+const dow=i===6?0:i+1;
+const sched=DAY_SCHED[dow];
+const isToday=todayDow===dow;
+const color=sched&&sched.rest_rec?'rgba(111,207,151,.6)':'var(--text)';
+const bg=isToday?'rgba(100,160,200,.12)':'rgba(255,255,255,.02)';
+const bl=isToday?'border-left:3px solid var(--accent);':'border-left:3px solid transparent;';
+var detail='';
+if(sched&&data){
+var pool=exMode==='gym'?data.gym:data.home;
+sched.parts.forEach(function(part){
+var items=pool[part]||[];if(!items.length)return;
+var cnt=Math.min(3,items.length);
+var st=(getWeekSeed()*(part.charCodeAt(0)||1))%items.length;
+var pn=PART_NAMES[part]||part;
+var ih='';
+for(var j=0;j<cnt;j++){var e=items[(st+j)%items.length];var lk=mwLink(e.n);
+ih+='<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid rgba(255,255,255,.03);">';
+ih+='<span style="color:var(--text);">'+e.n+'</span>';
+ih+='<span style="display:flex;align-items:center;gap:6px;"><span style="color:var(--muted);">'+e.d+'</span>';
+if(lk)ih+='<a href="'+lk+'" target="_blank" rel="noopener" style="font-size:8px;color:var(--accent);text-decoration:none;">📹</a>';
+ih+='</span></div>';}
+detail+='<div style="margin-bottom:6px;"><div style="font-size:10px;font-weight:700;color:var(--accent);margin-bottom:3px;">'+pn+'</div>'+ih+'</div>';
+});
+}
+var uid='wkd_'+i;
+html+='<div style="margin-bottom:2px;">';
+html+='<div onclick="var el=document.getElementById(\''+uid+'\');el.style.display=el.style.display===\'none\'?\'block\':\'none\';" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:'+bg+';'+bl+'font-size:11px;cursor:pointer;">';
+html+='<span style="font-weight:900;min-width:20px;color:'+(isToday?'var(--accent)':'var(--muted)')+';">'+d+'</span>';
+html+='<span style="color:'+color+';flex:1;">'+(sched?sched.label:'휴식')+'</span>';
+html+='<span style="font-size:10px;color:var(--muted);">'+(sched?sched.time:'')+'</span>';
+if(isToday)html+='<span style="font-size:8px;padding:2px 6px;border-radius:4px;background:rgba(100,160,200,.2);color:var(--accent);font-weight:700;">오늘</span>';
+html+='<span style="font-size:9px;color:var(--muted);">▼</span>';
+html+='</div>';
+html+='<div id="'+uid+'" style="display:'+(isToday?'block':'none')+';padding:8px 10px 8px 30px;background:rgba(255,255,255,.01);border-radius:0 0 6px 6px;">';
+html+=(detail||'<div style="font-size:10px;color:var(--muted);padding:4px 0;">🧘 휴식 — 스트레칭과 수분 섭취</div>');
+html+='</div></div>';
+});
+html+='</div>';
+w.innerHTML=html;
+}
+
 
 /* 스케줄/달력 */
 let calY,calM,calSel;
@@ -1666,8 +2291,8 @@ function aAuth(){
 /* 관리자 인증: 카카오 로그인만 허용 (비밀번호 입력 불가) */
 toast('관리자는 카카오 로그인으로만 진입할 수 있습니다','err');
 }
-function rAT(){const tabs=[{id:'a-wait',l:'⏳ 대기 관리'},{id:'a-rsv',l:'📅 예약 관리'},{id:'a-notices',l:'📢 공지사항'},{id:'a-sched',l:'📅 스케줄'},{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-diet',l:'🍽 식단 수정'},{id:'a-prods',l:'🛒 추천제품'},{id:'a-slots',l:'⏰ 시간표'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
-function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-wait':b.innerHTML=aWait();break;case'a-rsv':b.innerHTML=aRsv();break;case'a-notices':b.innerHTML=aNt();break;case'a-sched':b.innerHTML=aSch();break;case'a-stuMgr':b.innerHTML=aStuMgr();break;case'a-records':b.innerHTML=aRec();break;case'a-diet':b.innerHTML=aDiet();break;case'a-prods':b.innerHTML=aProds();break;case'a-slots':b.innerHTML=aSlots();break;}updateWaitCount();}
+function rAT(){const tabs=[{id:'a-wait',l:'⏳ 대기 관리'},{id:'a-rsv',l:'📅 예약 관리'},{id:'a-notices',l:'📢 공지사항'},{id:'a-sched',l:'📅 스케줄'},{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-diet',l:'🍽 식단 수정'},{id:'a-prods',l:'🛒 추천제품'},{id:'a-slots',l:'⏰ 시간표'},{id:'a-aicoach',l:'🤖 AI코치'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
+function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-wait':b.innerHTML=aWait();break;case'a-rsv':b.innerHTML=aRsv();break;case'a-notices':b.innerHTML=aNt();break;case'a-sched':b.innerHTML=aSch();break;case'a-stuMgr':b.innerHTML=aStuMgr();break;case'a-records':b.innerHTML=aRec();break;case'a-diet':b.innerHTML=aDiet();break;case'a-prods':b.innerHTML=aProds();break;case'a-slots':b.innerHTML=aSlots();break;case'a-aicoach':b.innerHTML=aAICoach();break;}updateWaitCount();}
 
 function aU(){const m=lG('pa_kakao_users',{});return`<h3 style="font-size:14px;margin-bottom:14px;">카카오 ID → 학생 코드 매핑</h3><div class="ar"><label>카카오ID</label><input id="akid" placeholder="카카오 사용자 ID"><label>학생</label><select id="asc">${Object.keys(S).map(c=>`<option value="${c}">${c} (${S[c].name})</option>`).join('')}</select><button class="ab ab-b" onclick="aMU()">등록</button></div>${Object.keys(m).length?`<table class="at"><tr><th>카카오ID</th><th>코드</th><th>이름</th><th></th></tr>${Object.entries(m).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td><td>${S[v]?.name||'?'}</td><td><button class="ab ab-r" onclick="aDU('${k}')">삭제</button></td></tr>`).join('')}</table>`:'<p style="font-size:12px;color:var(--muted);">등록된 매핑 없음</p>'}`;}
 function aMU(){const k=document.getElementById('akid').value.trim(),c=document.getElementById('asc').value;if(!k){toast('카카오ID 입력','err');return;}const m=lG('pa_kakao_users',{});m[k]=c;lS('pa_kakao_users',m);toast('매핑 등록');rAB();}
@@ -1774,6 +2399,14 @@ function adReset(){if(!confirm(`${S[adStu].name} 식단을 기본으로 복원?`
 
 /* ===== D-2. 학생 관리 (개별 관리 UI) ===== */
 let smStu=Object.keys(S)[0]||'';
+let stuFilter='all';
+
+const REGIONS=['서울','부산','울산','대구','서산','전주','대전','미배정'];
+function getStuRegion(c){const r=lG('pa_student_region',{});return r[c]||'미배정';}
+function setStuRegion(c,region){const r=lG('pa_student_region',{});r[c]=region;lS('pa_student_region',r);}
+let stuRegion='all';
+let stuSearch='';
+
 function aStuMgr(){
 const wData=lG('pa_weights',{});
 const sList=Object.entries(S);
@@ -1789,17 +2422,52 @@ const m=bt?.measurements||{};
 const ibList=getInbody(c);
 const ib=ibList[0]||null;
 
-return`<h3 style="font-size:14px;margin-bottom:14px;">👥 학생 관리</h3>
+const regionCounts={};REGIONS.forEach(r=>regionCounts[r]=0);
+sList.forEach(([cd])=>{const rg=getStuRegion(cd);regionCounts[rg]=(regionCounts[rg]||0)+1;});
+const filtered=sList.filter(([cd,st])=>{
+const si=getStuStatusInfo(cd).status;
+const rg=getStuRegion(cd);
+const matchStatus=stuFilter==='all'||si===stuFilter;
+const matchRegion=stuRegion==='all'||rg===stuRegion;
+const matchSearch=!stuSearch||st.name.includes(stuSearch)||cd.toLowerCase().includes(stuSearch.toLowerCase());
+return matchStatus&&matchRegion&&matchSearch;
+});
 
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-${sList.map(([cd,st])=>`<button onclick="smStu='${cd}';rAB();" style="padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid ${cd===c?'var(--accent)':'var(--border)'};background:${cd===c?'rgba(100,160,200,.15)':'transparent'};color:${cd===c?'var(--accent)':'var(--muted)'};">${st.name}</button>`).join('')}
-<button onclick="document.getElementById('addStuForm').style.display=document.getElementById('addStuForm').style.display==='none'?'block':'none'" style="padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:1px dashed var(--border);background:transparent;color:var(--muted);">+ 추가</button>
+return`<h3 style="font-size:14px;margin-bottom:8px;">👥 학생 관리 <span style="font-size:11px;color:var(--muted);font-weight:500;">(${sList.length}명)</span></h3>
+
+<div style="margin-bottom:10px;">
+<input type="text" placeholder="🔍 이름 또는 코드로 검색..." value="${stuSearch}" oninput="stuSearch=this.value;rAB();" style="width:100%;padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;">
+</div>
+
+<div style="display:flex;gap:4px;margin-bottom:8px;font-size:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;">
+<button onclick="stuRegion='all';rAB();" style="padding:4px 10px;border-radius:6px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border:1px solid ${stuRegion==='all'?'var(--accent)':'var(--border)'};background:${stuRegion==='all'?'rgba(100,160,200,.15)':'transparent'};color:${stuRegion==='all'?'var(--accent)':'var(--muted)'};">전체 ${sList.length}</button>
+${REGIONS.filter(r=>regionCounts[r]>0||r==='미배정').map(r=>`<button onclick="stuRegion='${r}';rAB();" style="padding:4px 10px;border-radius:6px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border:1px solid ${stuRegion===r?'var(--accent)':'var(--border)'};background:${stuRegion===r?'rgba(100,160,200,.15)':'transparent'};color:${stuRegion===r?'var(--accent)':'var(--muted)'};">📍${r} ${regionCounts[r]}</button>`).join('')}
+</div>
+
+<div style="display:flex;gap:4px;margin-bottom:10px;font-size:10px;">
+<button onclick="stuFilter='all';rAB();" style="padding:3px 8px;border-radius:5px;font-weight:700;cursor:pointer;border:1px solid ${stuFilter==='all'?'var(--accent)':'var(--border)'};background:${stuFilter==='all'?'rgba(100,160,200,.1)':'transparent'};color:${stuFilter==='all'?'var(--accent)':'var(--muted)'};">전체</button>
+<button onclick="stuFilter='active';rAB();" style="padding:3px 8px;border-radius:5px;font-weight:700;cursor:pointer;border:1px solid ${stuFilter==='active'?'var(--green)':'var(--border)'};background:${stuFilter==='active'?'rgba(111,207,151,.1)':'transparent'};color:${stuFilter==='active'?'var(--green)':'var(--muted)'};">활성</button>
+<button onclick="stuFilter='paused';rAB();" style="padding:3px 8px;border-radius:5px;font-weight:700;cursor:pointer;border:1px solid ${stuFilter==='paused'?'var(--orange)':'var(--border)'};background:${stuFilter==='paused'?'rgba(232,98,42,.1)':'transparent'};color:${stuFilter==='paused'?'var(--orange)':'var(--muted)'};">휴회</button>
+<button onclick="stuFilter='quit';rAB();" style="padding:3px 8px;border-radius:5px;font-weight:700;cursor:pointer;border:1px solid ${stuFilter==='quit'?'rgba(255,255,255,.2)':'var(--border)'};background:${stuFilter==='quit'?'rgba(255,255,255,.04)':'transparent'};color:${stuFilter==='quit'?'rgba(255,255,255,.4)':'var(--muted)'};">퇴회</button>
+</div>
+
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;max-height:200px;overflow-y:auto;padding:4px 0;">
+${filtered.map(([cd,st])=>{
+const si=getStuStatusInfo(cd);const rg=getStuRegion(cd);
+const stBg=si.status==='paused'?'rgba(232,98,42,.08)':si.status==='quit'?'rgba(255,255,255,.03)':'transparent';
+const stBorder=cd===c?'var(--accent)':si.status==='paused'?'rgba(232,98,42,.3)':si.status==='quit'?'rgba(255,255,255,.1)':'var(--border)';
+const stColor=cd===c?'var(--accent)':si.status==='quit'?'rgba(255,255,255,.3)':'var(--muted)';
+const stIcon=si.status==='paused'?'⏸ ':si.status==='quit'?'⛔ ':'';
+return`<button onclick="smStu='${cd}';rAB();" style="padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid ${stBorder};background:${cd===c?'rgba(100,160,200,.15)':stBg};color:${stColor};${si.status==='quit'?'text-decoration:line-through;':''}">${stIcon}${st.name}</button>`;}).join('')}
+${filtered.length===0?'<div style="font-size:12px;color:var(--muted);padding:12px;">검색 결과 없음</div>':''}
+<button onclick="document.getElementById('addStuForm').style.display=document.getElementById('addStuForm').style.display==='none'?'block':'none'" style="padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px dashed var(--border);background:transparent;color:var(--muted);">+ 추가</button>
 </div>
 
 <div id="addStuForm" style="display:none;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;background:rgba(100,160,200,.04);">
 <div style="font-size:12px;font-weight:700;margin-bottom:10px;">➕ 학생 직접 추가</div>
 <div class="ar"><label>코드</label><input id="nsCode" placeholder="예: ABC012" style="width:100px" maxlength="10"><label>이름</label><input id="nsName" placeholder="이름"></div>
 <div class="ar"><label>나이</label><input type="number" id="nsAge" value="17" style="width:55px"><label>성별</label><select id="nsG" style="width:55px"><option value="여">여</option><option value="남">남</option></select><label>키</label><input type="number" id="nsH" placeholder="160" style="width:65px"><label>몸무게</label><input type="number" step="0.1" id="nsW" placeholder="55" style="width:65px"></div>
+<div class="ar"><label>지역</label><select id="nsRegion">${REGIONS.map(r=>`<option value="${r}">${r}</option>`).join('')}</select></div>
 <div class="ar"><label>목표</label><select id="nsGoal"><option value="체중감량">체중감량</option><option value="근육증가">근육증가</option><option value="증량+근육">증량+근육</option><option value="감량+근육">감량+근육</option></select><label>kcal</label><input type="number" id="nsTar" placeholder="자동" style="width:80px"><button class="ab ab-b" onclick="addStu()">추가</button></div>
 </div>
 
@@ -1810,7 +2478,34 @@ ${sList.map(([cd,st])=>`<button onclick="smStu='${cd}';rAB();" style="padding:8p
 <div style="font-size:18px;font-weight:900;">${s.name}</div>
 <div style="font-size:11px;color:var(--muted);">${c} · ${s.age}세 · ${s.g} · ${s.goal}</div>
 </div>
-<button class="ab ab-r" style="font-size:9px;" onclick="delStu('${c}')">삭제</button>
+${(function(){const si=getStuStatusInfo(c);
+const stLabel=si.status==='paused'?'⏸ 휴회':si.status==='quit'?'⛔ 퇴회':'✅ 활성';
+const stColor=si.status==='paused'?'var(--orange)':si.status==='quit'?'rgba(255,255,255,.4)':'var(--green)';
+const stBg=si.status==='paused'?'rgba(232,98,42,.12)':si.status==='quit'?'rgba(255,255,255,.06)':'rgba(111,207,151,.12)';
+let btns='';
+if(si.status==='active'){
+btns=`<button class="ab" style="font-size:9px;color:var(--orange);border:1px solid rgba(232,98,42,.25);background:rgba(232,98,42,.08);" onclick="stuPause('${c}')">⏸ 휴회</button>
+<button class="ab" style="font-size:9px;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);" onclick="stuQuit('${c}')">⛔ 퇴회</button>`;
+}else{
+btns=`<button class="ab ab-b" style="font-size:9px;" onclick="stuReactivate('${c}')">🔄 복귀</button>`;
+}
+return`<div style="margin-bottom:10px;">
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+<span style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:6px;background:${stBg};color:${stColor};">${stLabel}</span>
+${si.date?`<span style="font-size:9px;color:var(--muted);">${si.date}</span>`:''}
+${si.reason?`<span style="font-size:9px;color:var(--muted);">· ${si.reason}</span>`:''}
+</div>
+<div style="display:flex;gap:4px;">${btns}
+<button class="ab ab-r" style="font-size:9px;" onclick="delStu('${c}')">🗑 삭제</button></div></div>`;})()}
+
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+<span style="font-size:10px;color:var(--muted);font-weight:700;">📍 지역:</span>
+<select onchange="setStuRegion('${c}',this.value);rAB();" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:11px;font-family:inherit;">
+${REGIONS.map(r=>`<option value="${r}"${getStuRegion(c)===r?' selected':''}>${r}</option>`).join('')}
+</select>
+<button class="ab" style="font-size:9px;color:var(--accent);border:1px solid rgba(100,160,200,.25);" onclick="adminUploadInbody('${c}')">📊 인바디 업로드</button>
+</div>
+<input type="file" id="ibUpload_${c}" accept="image/*" style="display:none;" onchange="adminProcessInbody('${c}',this)">
 </div>
 
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
@@ -2048,8 +2743,56 @@ S[code]={name,age,h,w,g,goal,gc,bmr,tdee,tar,wts:[w]};
 CODES[code]={n:name,e:mkE(365)};
 const cs=lG('pa_custom_students',null)||{};cs[code]=S[code];lS('pa_custom_students',cs);
 const allS=lG('pa_students',{});allS[code]=S[code];lS('pa_students',allS);
+/* 지역 저장 */
+const region=document.getElementById('nsRegion')?.value||'미배정';
+setStuRegion(code,region);
 toast(`${name} (${code}) 추가 완료`);rAB();}
-function delStu(c){if(!confirm(`${S[c]?.name} 삭제?`))return;delete S[c];delete CODES[c];const cs=lG('pa_custom_students',null)||{};delete cs[c];lS('pa_custom_students',cs);const allS=lG('pa_students',{});delete allS[c];lS('pa_students',allS);toast('삭제 완료');rAB();}
+
+/* ===== 관리자: 인바디 사진 업로드 → AI 분석 → 저장 ===== */
+function adminUploadInbody(code){
+const inp=document.getElementById('ibUpload_'+code);
+if(inp)inp.click();
+}
+async function adminProcessInbody(code,inp){
+const file=inp.files[0];if(!file)return;
+const reader=new FileReader();
+reader.onload=async function(e){
+const dataUrl=e.target.result;
+toast(`${S[code]?.name} 인바디 분석 중...`);
+try{
+const result=await analyzeInbody(dataUrl,code);
+if(result&&result.weight){
+saveInbody(code,result);
+/* 체중도 자동 업데이트 */
+if(result.weight){
+const wData=lG('pa_weights',{});
+if(!wData[code])wData[code]=S[code]?.wts||[];
+wData[code].push(result.weight);
+lS('pa_weights',wData);
+}
+toast(`${S[code]?.name} 인바디 저장 완료! (${result.weight}kg, 체지방 ${result.bodyFatPct||'?'}%)`);
+}else{
+toast('인바디 분석 실패 — 사진을 다시 확인해주세요','err');
+}
+}catch(err){
+console.warn('Inbody upload error:',err);
+toast('인바디 분석 오류','err');
+}
+rAB();
+};
+reader.readAsDataURL(file);
+inp.value='';
+}
+/* ===== 학생 상태 관리 (active/paused/quit) ===== */
+function getStuStatus(c){const st=lG('pa_student_status',{});return st[c]||'active';}
+function setStuStatus(c,status,reason){const st=lG('pa_student_status',{});st[c]={status,reason:reason||'',date:new Date().toISOString().split('T')[0]};lS('pa_student_status',st);}
+function isStuActive(c){const r=getStuStatus(c);return typeof r==='string'?r==='active':r.status==='active';}
+function getStuStatusInfo(c){const r=lG('pa_student_status',{})[c];if(!r)return{status:'active',reason:'',date:''};if(typeof r==='string')return{status:r,reason:'',date:''};return r;}
+function stuPause(c){const reason=prompt(`${S[c]?.name} 휴회 사유 (선택)`,'개인 사정')||'';setStuStatus(c,'paused',reason);toast(`${S[c]?.name} 휴회 처리 완료`);rAB();}
+function stuQuit(c){if(!confirm(`${S[c]?.name}을(를) 퇴회 처리하시겠습니까?\n\n※ 데이터는 보존되지만 로그인이 차단됩니다.`))return;const reason=prompt('퇴회 사유 (선택)','')||'';setStuStatus(c,'quit',reason);toast(`${S[c]?.name} 퇴회 처리 완료`);rAB();}
+function stuReactivate(c){setStuStatus(c,'active','');toast(`${S[c]?.name} 복귀 완료!`);rAB();}
+
+function delStu(c){if(!confirm(`${S[c]?.name} 삭제?`))return;delete S[c];delete CODES[c];const cs=lG('pa_custom_students',null)||{};delete cs[c];lS('pa_custom_students',cs);const allS=lG('pa_students',{});delete allS[c];lS('pa_students',allS);const st=lG('pa_student_status',{});delete st[c];lS('pa_student_status',st);toast('삭제 완료');rAB();}
 
 /* ===== 관리자: 추천제품 관리 ===== */
 function getCustomProds(){return lG('pa_custom_prods',null);}
@@ -2573,8 +3316,16 @@ return result;
 /* 체형분석 페이지 초기화 */
 function initBodyPage(){
 const grid=document.getElementById('btGrid');if(!grid)return;
+/* 로그인 시 내 체형 결과 상단 표시 */
+const myBtWrap=document.getElementById('myBtSummary');
+if(myBtWrap&&LC&&S[LC]){
+const btRaw=lG('pa_body_types',{})[LC];
+const btType=btRaw?.type||'';
+const bt=BODY_TYPES.find(x=>x.id===btType);
+if(bt){myBtWrap.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px;border-left:3px solid ${bt.color};"><div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><div style="font-size:15px;font-weight:900;color:${bt.color};">내 체형: ${bt.name}</div><span style="font-size:9px;padding:3px 8px;border-radius:6px;background:${bt.color}15;color:${bt.color};">${bt.parent}</span></div><div style="font-size:11px;color:var(--muted);line-height:1.6;">${bt.desc}</div><button class="btnp" onclick="showBodyType('${bt.id}')" style="display:inline-flex;margin-top:8px;font-size:11px;padding:8px 14px;">📋 맞춤 운동 프로그램 보기</button></div>`;}
+else{myBtWrap.innerHTML=`<div style="font-size:12px;color:var(--muted);padding:14px;background:var(--card);border-radius:var(--r);margin-bottom:16px;text-align:center;">아직 체형 분석이 안 되어있어요. 아래에서 진단해보세요!</div>`;}
+}else if(myBtWrap){myBtWrap.innerHTML='';}
 grid.innerHTML=BODY_TYPES.map(t=>`<div class="bt-card" style="border-color:${t.color}33;" onclick="showBodyType('${t.id}')"><div class="bt-parent" style="background:${t.color}15;color:${t.color};">${t.parent}</div><div class="bt-name" style="color:${t.color};">${t.name}</div><div class="bt-desc">${t.desc.slice(0,30)}...</div></div>`).join('');
-/* 셀프 체크리스트 10문항 렌더 */
 renderSelfStep2();
 }
 
@@ -3187,6 +3938,9 @@ function rsvInit(){
 const n=new Date();rsvY=n.getFullYear();rsvM=n.getMonth();rsvSel=n.toISOString().split('T')[0];rsvPicked=[];
 if(!LC){document.getElementById('rsvLoginMsg').style.display='block';document.getElementById('rsvContent').style.display='none';return;}
 document.getElementById('rsvLoginMsg').style.display='none';document.getElementById('rsvContent').style.display='block';
+/* 로그인 시 내 일정 달력 표시 */
+const mySchedEl=document.getElementById('myScheduleInReserve');
+if(mySchedEl){mySchedEl.style.display='block';initCal();rCal();}
 rsvRenderCal();rsvRenderSlots();rsvRenderMyList();
 }
 function rsvNav(dir){if(dir===0){const n=new Date();rsvY=n.getFullYear();rsvM=n.getMonth();rsvSel=n.toISOString().split('T')[0];}else{rsvM+=dir;if(rsvM>11){rsvM=0;rsvY++;}if(rsvM<0){rsvM=11;rsvY--;}}rsvPicked=[];rsvRenderCal();rsvRenderSlots();}
