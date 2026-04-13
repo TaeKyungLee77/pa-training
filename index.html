@@ -1592,7 +1592,7 @@ const gymCardioPool=[
 ];
 cardioSection={part:'cardio',name:'🔥 유산소 (60분+)',items:gymCardioPool[wk%gymCardioPool.length]};
 }else{
-cardioSection={part:'cardio',name:'🔥 유산소',items:[{n:'러닝머신',d:`30분, ${bpmStr}`},{n:'로잉머신',d:'15분, SPM 22~26'}]};
+cardioSection={part:'cardio',name:'🔥 유산소 (60분)',items:[{n:'런닝머신 (조깅)',d:`40분, ${bpmStr}`,tip:'Fatmax Zone 유지'},{n:'인클라인 워킹',d:`20분, 경사 6~8%, ${bpmStr}`,tip:'둔근·햄스트링 활성화'}]};
 }
 }else{
 if(isWeightLoss){
@@ -1969,24 +1969,26 @@ const w=document.getElementById('todayWrap');if(!w)return;
 if(!LC||!S[LC]){w.innerHTML='<div style="text-align:center;padding:40px 20px;"><div style="font-size:40px;margin-bottom:12px;">📌</div><h3 style="margin-bottom:8px;">로그인이 필요합니다</h3><p style="font-size:12px;color:var(--muted);">코드 또는 카카오로 로그인하면<br>오늘의 식단과 운동이 표시됩니다.</p></div>';return;}
 try{
 const s=S[LC],c=LC;
+if(!s){w.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);">학생 데이터를 불러올 수 없습니다.</div>';return;}
 const now=new Date();
 const dowNum=now.getDay();
 const dowNames=['일','월','화','수','목','금','토'];
 const dowFull=['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
 const dateStr=`${now.getMonth()+1}월 ${now.getDate()}일`;
-const diet=gDiet(c);
+let diet=null;try{diet=gDiet(c);}catch(de){console.warn('gDiet error:',de);}
 /* 오늘 요일에 맞는 식단 찾기 */
 const dowMap={'일':6,'월':0,'화':1,'수':2,'목':3,'금':4,'토':5};
 const todayIdx=dowMap[dowNames[dowNum]]??0;
-const todayDiet=diet&&diet.length>todayIdx?diet[todayIdx]:(diet&&diet[0]?diet[0]:null);
+const todayDiet=(diet&&Array.isArray(diet)&&diet.length>todayIdx)?diet[todayIdx]:((diet&&Array.isArray(diet)&&diet.length>0)?diet[0]:null);
 const hasDiet=todayDiet&&todayDiet.am&&todayDiet.lu&&todayDiet.sn&&todayDiet.di;
-const water=todayDiet?.water||(s.w?s.w*33:1800);
+const sw=s.w||s.wts?.[s.wts?.length-1]||60;
+const water=todayDiet?.water||(sw*33)||1800;
 /* safe getters */
-const dk=(d,part)=>{try{return d[part]?.k||0;}catch(e){return 0;}};
-const dc=(d,part)=>{try{return (d[part]?.c||'준비 중').replace(/\n/g,'<br>');}catch(e){return '준비 중';}};
-const totalK=hasDiet?(todayDiet.k||dk(todayDiet,'am')+dk(todayDiet,'lu')+dk(todayDiet,'sn')+dk(todayDiet,'di')):0;
+const dk=(d,part)=>{try{return d?.[part]?.k||0;}catch(e){return 0;}};
+const dc=(d,part)=>{try{return (d?.[part]?.c||'준비 중').replace(/\n/g,'<br>');}catch(e){return '준비 중';}};
+const totalK=hasDiet?(todayDiet.k||(dk(todayDiet,'am')+dk(todayDiet,'lu')+dk(todayDiet,'sn')+dk(todayDiet,'di'))):0;
 /* 오늘 운동 */
-const ex=getTodayExProgram(tdMode);
+let ex=null;try{ex=getTodayExProgram(tdMode);}catch(ee){console.warn('getTodayExProgram error:',ee);}
 /* 스케줄 확인 */
 const td=now.toISOString().split('T')[0];
 const schedData=lG('pa_schedules',{});
@@ -2051,7 +2053,7 @@ ${hasDiet?`<div class="td-meal-grid">
 <div class="td-sec-h"><span class="td-ico">💪</span> 오늘의 운동</div>
 ${exHTML}
 </div>`;
-}catch(e){console.warn('rToday error:',e);w.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:12px;">오늘의 정보를 불러오는 중 오류가 발생했습니다.<br>페이지를 새로고침 해주세요.</div>';}
+}catch(e){console.warn('rToday error:',e);w.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted);font-size:12px;">오늘의 정보를 불러오는 중 오류가 발생했습니다.<br><span style="font-size:10px;color:rgba(255,255,255,.15);">${String(e?.message||e).substring(0,100)}</span><br><button onclick="rToday()" style="margin-top:10px;padding:8px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;">다시 시도</button></div>`;}
 }
 const EX_DATA={
 '삼각형':{name:'삼각형 (하체 발달형)',color:'var(--orange)',desc:'골반 > 어깨, 하체에 지방 축적 경향',strategy:'상체 보강 + 하체 유산소 집중',
@@ -2081,50 +2083,64 @@ home:{cardio:[{n:'점핑잭',d:'3×1분'},{n:'하이니',d:'3×1분'},{n:'제자
 };
 /* MuscleWiki 링크 매핑 (운동명 → URL slug) */
 const MW={
-'푸시업':'bodyweight/male/chest/push-up',
-'와이드 푸시업':'bodyweight/male/chest/push-up',
-'무릎 푸시업':'bodyweight/male/triceps/bodyweight-knee-push-ups',
-'다이아몬드 푸시업':'bodyweight/male/triceps/diamond-push-ups',
-'파이크 푸시업':'bodyweight/male/shoulders/pike-push-up',
-'스쿼트':'bodyweight/male/glutes/bodyweight-squat',
-'와이드 스쿼트':'bodyweight/male/glutes/bodyweight-squat',
-'점프스쿼트':'bodyweight/male/glutes/jump-squats',
-'런지':'bodyweight/male/glutes/bodyweight-lunge',
-'런지 (제자리)':'bodyweight/male/glutes/bodyweight-lunge',
-'사이드 런지':'bodyweight/male/glutes/bodyweight-lateral-lunge',
-'글루트 브릿지':'bodyweight/male/glutes/glute-bridge',
-'싱글레그 브릿지':'bodyweight/male/glutes/bodyweight-single-leg-glute-bridge',
-'힙쓰러스트':'barbell/male/glutes/barbell-hip-thrust',
-'플랭크':'bodyweight/male/abs/front-plank',
-'사이드플랭크':'bodyweight/male/abs/side-plank',
-'바이시클크런치':'bodyweight/male/abs/bicycle-crunch',
-'레그레이즈':'bodyweight/male/abs/lying-leg-raise',
-'V업':'bodyweight/male/abs/v-up',
-'데드버그':'bodyweight/male/abs/dead-bug',
-'러시안 트위스트':'bodyweight/male/abs/russian-twist',
-'버피':'bodyweight/male/chest/burpee',
-'마운틴클라이머':'bodyweight/male/abs/mountain-climber',
-'점핑잭':'bodyweight/male/calves/jumping-jack',
-'하이니':'bodyweight/male/quads/high-knee-skips',
-'슈퍼맨':'bodyweight/male/lower-back/superman',
-'도키킥':'bodyweight/male/glutes/donkey-kicks',
-'카프레이즈':'bodyweight/male/calves/calf-raises',
-'덤벨 숄더프레스':'dumbbell/male/shoulders/dumbbell-shoulder-press',
-'시티드 로우':'cable/male/upper-back/cable-seated-row',
-'랫풀다운':'cable/male/lats/lat-pulldown',
-'덤벨 플라이':'dumbbell/male/chest/dumbbell-fly',
-'사이드 레터럴레이즈':'dumbbell/male/shoulders/dumbbell-lateral-raise',
-'숄더프레스':'dumbbell/male/shoulders/dumbbell-shoulder-press',
-'사이드 레이즈':'dumbbell/male/shoulders/dumbbell-lateral-raise',
-'레터럴 레이즈':'dumbbell/male/shoulders/dumbbell-lateral-raise',
-'바벨 스쿼트':'barbell/male/glutes/barbell-squat',
-'레그프레스':'machine/male/quads/leg-press',
-'레그컬':'machine/male/hamstrings/lying-leg-curl',
-'데드리프트':'barbell/male/lower-back/barbell-deadlift',
-'트라이셉 딥스':'bodyweight/male/triceps/bodyweight-tricep-dips',
-'행잉 레그레이즈':'bodyweight/male/abs/hanging-leg-raise'
+'푸시업':'push-up','와이드 푸시업':'push-up','무릎 푸시업':'bodyweight-knee-push-ups','다이아몬드 푸시업':'diamond-push-ups','파이크 푸시업':'bodyweight-pike-press',
+'스쿼트':'bodyweight-squat','와이드 스쿼트':'bodyweight-squat','점프스쿼트':'jump-squats',
+'런지':'bodyweight-lunge','런지 (제자리)':'bodyweight-lunge',
+'글루트 브릿지':'glute-bridge','힙쓰러스트':'barbell-hip-thrust',
+'플랭크':'forearm-plank','사이드플랭크':'elbow-side-plank','바이시클크런치':'bicycle-crunch','데드버그':'dead-bug','러시안 트위스트':'bodyweight-russian-twist',
+'버피':'burpee','마운틴클라이머':'mountain-climber',
+'슈퍼맨':'supermans','카프레이즈':'calf-raises',
+'덤벨 숄더프레스':'dumbbell-shoulder-press','시티드 로우':'cable-seated-row','랫풀다운':'lat-pulldown','덤벨 플라이':'dumbbell-fly','사이드 레터럴레이즈':'dumbbell-lateral-raise',
+'숄더프레스':'dumbbell-shoulder-press','사이드 레이즈':'dumbbell-lateral-raise','레터럴 레이즈':'dumbbell-lateral-raise',
+'바벨 스쿼트':'barbell-squat','레그프레스':'machine-leg-press','데드리프트':'barbell-deadlift'
 };
-function mwLink(name){const path=MW[name];if(!path)return'';const g=S[LC]?.g==='여'?path.replace('/male/','/female/'):path;return'https://musclewiki.com/'+g;}
+function mwLink(name){const slug=MW[name];if(!slug)return'';return'https://musclewiki.com/exercise/'+slug;}
+/* 운동 메타: 팁, 타겟 부위 */
+const EX_META={
+'와이드 푸시업':{tip:'손 너비 어깨 1.5배, 가슴 닿을듯이',t:'가슴·삼두'},
+'파이크 푸시업':{tip:'엉덩이를 높이 들고 머리 방향으로',t:'어깨 전면'},
+'슈퍼맨':{tip:'팔다리 동시에 들고 2초 유지',t:'등·후면'},
+'YTW 레이즈':{tip:'엎드려서 Y→T→W 자세로 팔 올리기',t:'어깨·등'},
+'무릎 푸시업':{tip:'코어 긴장 유지, 팔꿈치 45도',t:'가슴·삼두'},
+'다이아몬드 푸시업':{tip:'양손 엄지+검지로 다이아몬드 만들기',t:'삼두·가슴안쪽'},
+'푸시업':{tip:'팔꿈치 45도, 코어 긴장',t:'가슴·삼두'},
+'와이드 스쿼트':{tip:'발끝보다 무릎이 안 나가게, 엉덩이 뒤로',t:'내전근·둔근'},
+'스쿼트':{tip:'깊게 앉되 무릎 중립 유지',t:'대퇴사두·둔근'},
+'런지':{tip:'보폭 넓게, 앞무릎 90도',t:'둔근·대퇴사두'},
+'런지 (제자리)':{tip:'앞무릎 90도, 뒷무릎은 바닥 직전까지',t:'대퇴사두·둔근'},
+'글루트 브릿지':{tip:'엉덩이 최고점에서 2초 쥐어짜기',t:'둔근·햄스트링'},
+'싱글레그 브릿지':{tip:'한쪽 다리 들고 브릿지, 골반 수평 유지',t:'둔근 편측'},
+'사이드 런지':{tip:'이동하는 쪽 무릎만 구부리기',t:'내전근·둔근'},
+'도키킥':{tip:'네발 자세에서 한쪽 발을 천장으로',t:'둔근'},
+'플랭크':{tip:'몸을 일직선, 엉덩이 처지지 않게',t:'코어 전체'},
+'사이드플랭크':{tip:'골반이 바닥으로 내려가지 않게',t:'복사근'},
+'바이시클크런치':{tip:'반대쪽 팔꿈치와 무릎을 가까이',t:'복직근·복사근'},
+'데드버그':{tip:'허리가 바닥에서 뜨지 않게 코어 긴장',t:'심부 코어'},
+'레그레이즈':{tip:'다리 내릴 때 허리 뜨지 않게 천천히',t:'하복부'},
+'V업':{tip:'손끝과 발끝이 동시에 만나게',t:'복직근 전체'},
+'버피':{tip:'푸시업 후 점프까지 1동작으로 연결',t:'전신'},
+'마운틴클라이머':{tip:'골반 높이 유지, 코어 긴장',t:'코어+유산소'},
+'점핑잭':{tip:'착지 시 무릎 살짝 구부리기',t:'전신'},
+'하이니':{tip:'무릎을 배꼽 높이까지 올리기',t:'전신 유산소'},
+'스타점프':{tip:'최대한 높이 점프 후 부드럽게 착지',t:'하체+유산소'},
+'점프스쿼트':{tip:'착지 시 무릎 충격 흡수',t:'하체 파워'},
+'점프런지':{tip:'공중에서 다리 교차 후 안정적 착지',t:'하체 파워'},
+'러시안 트위스트':{tip:'천천히 좌우 비틀기, 발 살짝 들기',t:'복사근'},
+'카프레이즈':{tip:'최고점에서 2초 유지',t:'종아리'},
+'제자리 달리기':{tip:'팔을 힘차게 흔들며 심박수 올리기',t:'전신'},
+'힙쓰러스트':{tip:'엉덩이 최고점에서 3초 쥐어짜기',t:'둔근'},
+'덤벨 숄더프레스':{tip:'팔꿈치 90도에서 수직으로 밀어올리기',t:'어깨 전면'},
+'시티드 로우':{tip:'견갑골 모아주며 당기기',t:'등 중부'},
+'랫풀다운':{tip:'가슴을 들고 팔꿈치를 옆구리로',t:'광배근'},
+'덤벨 플라이':{tip:'팔을 살짝 구부린 채 원호 그리며',t:'가슴'},
+'사이드 레터럴레이즈':{tip:'팔꿈치 살짝 구부리고 어깨 높이까지',t:'측면 삼각근'},
+'바벨 스쿼트':{tip:'바 위치 승모근 위, 깊게 앉기',t:'대퇴사두·둔근'},
+'레그프레스':{tip:'무릎 잠그지 않기, 허리 붙이기',t:'대퇴사두'},
+'레그컬':{tip:'천천히 내리기, 햄스트링 수축 느끼기',t:'햄스트링'},
+'데드리프트':{tip:'허리 중립 유지, 바 몸에 밀착',t:'후면 전체'},
+'행잉 레그레이즈':{tip:'반동 없이 천천히 올리기',t:'하복부'},
+'트라이셉 딥스':{tip:'팔꿈치 뒤로, 몸은 수직',t:'삼두'}
+};
 const HOME_WARMUP=[{n:'팔 돌리기 (앞/뒤)',d:'각 15초',tip:'어깨 워밍업'},{n:'고양이-소 스트레칭',d:'8회',tip:'척추 가동성'},{n:'레그 스윙',d:'각 10회',tip:'고관절 워밍업'},{n:'스쿼트 투 스탠드',d:'8회',tip:'전신 활성화'}];
 const HOME_COOLDOWN=[{n:'전신 스트레칭',d:'5분',tip:'각 동작 20~30초 유지'},{n:'고관절 스트레칭 (비둘기 자세)',d:'양쪽 30초'},{n:'가슴 열기 스트레칭',d:'30초',tip:'문틀에 팔 걸고 가슴 열기'},{n:'햄스트링 스트레칭',d:'양쪽 20초'}];
 const BT_NAME_MAP={'tri':'삼각형','dia':'다이아몬드','inv':'역삼각형','rec':'직사각형','heart':'하트형','oval':'타원형'};
