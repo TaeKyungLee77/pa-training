@@ -573,6 +573,41 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 .aic-chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;}
 .aic-chip{font-size:11px;padding:6px 12px;border-radius:20px;background:rgba(100,160,200,.1);border:1px solid rgba(100,160,200,.2);color:var(--accent);cursor:pointer;transition:all .15s;white-space:nowrap;}
 .aic-chip:hover{background:rgba(100,160,200,.2);}
+/* ===== 컨디션 체크 ===== */
+.cond-card{background:linear-gradient(135deg,rgba(232,98,42,.08),rgba(100,160,200,.05));border:1px solid rgba(232,98,42,.2);border-radius:14px;padding:14px;margin-bottom:12px;}
+.cond-card-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.cond-card-t{font-size:13px;font-weight:900;display:flex;align-items:center;gap:6px;}
+.cond-card-sub{font-size:10px;color:var(--muted);}
+.cond-emojis{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:10px;}
+.cond-emoji{aspect-ratio:1;background:var(--card);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;padding:6px 2px;}
+.cond-emoji:hover{border-color:var(--accent);transform:translateY(-2px);}
+.cond-emoji.on{background:rgba(232,98,42,.15);border-color:var(--orange);box-shadow:0 0 0 1px var(--orange);}
+.cond-emoji-face{font-size:24px;line-height:1;margin-bottom:3px;}
+.cond-emoji-lbl{font-size:9px;color:var(--muted);font-weight:600;}
+.cond-emoji.on .cond-emoji-lbl{color:var(--orange);}
+.cond-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.cond-tag{font-size:11px;padding:6px 11px;border-radius:14px;background:var(--card);border:1px solid var(--border);color:var(--muted);cursor:pointer;transition:all .15s;}
+.cond-tag:hover{border-color:var(--accent);}
+.cond-tag.on{background:rgba(100,160,200,.15);border-color:var(--accent);color:var(--accent);font-weight:700;}
+.cond-memo{width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);padding:9px 11px;border-radius:9px;font-family:inherit;font-size:12px;resize:vertical;min-height:48px;outline:none;margin-bottom:10px;box-sizing:border-box;}
+.cond-memo:focus{border-color:var(--accent);}
+.cond-save{width:100%;padding:10px;border-radius:9px;background:var(--orange);color:#fff;font-weight:700;font-size:13px;border:none;cursor:pointer;transition:all .15s;}
+.cond-save:hover{filter:brightness(1.1);}
+.cond-save:disabled{opacity:.5;cursor:default;}
+.cond-saved{display:flex;align-items:center;gap:8px;padding:10px;background:rgba(111,207,151,.08);border:1px solid rgba(111,207,151,.2);border-radius:9px;font-size:12px;color:var(--green);font-weight:600;}
+.cond-low-rec{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:10px;margin-bottom:10px;}
+.cond-low-rec-ico{font-size:20px;line-height:1;}
+.cond-low-rec-t{font-size:12px;font-weight:700;color:#FF6B6B;margin-bottom:3px;}
+.cond-low-rec-d{font-size:10px;color:var(--muted);line-height:1.5;}
+.cond-low-rec-btn{margin-top:7px;padding:5px 11px;border-radius:6px;background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.3);color:#FF6B6B;font-size:10px;font-weight:700;cursor:pointer;}
+/* 컨디션 그래프 */
+.cond-chart{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;}
+.cond-chart-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.cond-chart-t{font-size:12px;font-weight:700;}
+.cond-chart-avg{font-size:11px;color:var(--muted);}
+.cond-chart-avg b{color:var(--orange);}
+.cond-chart-svg{width:100%;height:90px;display:block;}
+.cond-chart-empty{text-align:center;padding:18px;font-size:11px;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -1126,7 +1161,7 @@ const firebaseConfig={apiKey:"AIzaSyCICKJ00FCnb780oQ9_mZTgszG0FL64eFU",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const _cache={};let _fsReady=false;
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile'];
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks'];
 async function fsInit(){
   try{const snap=await db.collection('pa_data').get();
   snap.forEach(doc=>{_cache[doc.id]=doc.data().value;});
@@ -2081,6 +2116,145 @@ aicInited=false;
 }
 
 let tdMode='gym';
+
+/* ===== 컨디션 체크 ===== */
+const COND_LABELS=['매우피곤','피곤','보통','좋음','최상'];
+const COND_EMOJIS=['😫','😟','😐','🙂','😄'];
+const COND_TAGS=['수면부족','근육통','생리중','컨디션좋음'];
+let condDraft={score:0,tags:[],memo:''};
+
+/* 오늘 코드별 컨디션 데이터 가져오기 */
+function gCond(code){const all=lG('pa_condition_checks',{});return all[code]||[];}
+/* 오늘자 컨디션 가져오기 (없으면 null) */
+function gCondToday(code){const td=new Date().toISOString().split('T')[0];return gCond(code).find(r=>r.date===td)||null;}
+/* 컨디션 저장 */
+function sCond(code,score,tags,memo){
+const td=new Date().toISOString().split('T')[0];
+const all=lG('pa_condition_checks',{});
+if(!all[code])all[code]=[];
+const idx=all[code].findIndex(r=>r.date===td);
+const rec={date:td,score,tags:tags||[],memo:memo||'',ts:Date.now()};
+if(idx>=0)all[code][idx]=rec;else all[code].push(rec);
+all[code].sort((a,b)=>a.date.localeCompare(b.date));
+lS('pa_condition_checks',all);
+return rec;
+}
+/* 평균 컨디션 (최근 N일) */
+function gCondAvg(code,days){
+const recs=gCond(code);if(!recs.length)return null;
+const cutoff=new Date();cutoff.setDate(cutoff.getDate()-(days||30));
+const cs=cutoff.toISOString().split('T')[0];
+const recent=recs.filter(r=>r.date>=cs);
+if(!recent.length)return null;
+const avg=recent.reduce((s,r)=>s+r.score,0)/recent.length;
+return {avg:Math.round(avg*10)/10,count:recent.length};
+}
+/* 컨디션 체크 카드 클릭 핸들러 */
+function condSetScore(s){condDraft.score=s;rCondCard();}
+function condToggleTag(t){const i=condDraft.tags.indexOf(t);if(i>=0)condDraft.tags.splice(i,1);else condDraft.tags.push(t);rCondCard();}
+function condUpdMemo(){const m=document.getElementById('condMemo');if(m)condDraft.memo=m.value;}
+function condSave(){
+if(!LC){toast('로그인 필요','err');return;}
+if(!condDraft.score){toast('컨디션 점수 선택','err');return;}
+condUpdMemo();
+sCond(LC,condDraft.score,condDraft.tags.slice(),condDraft.memo);
+toast('오늘의 컨디션이 저장되었습니다');
+condDraft={score:0,tags:[],memo:''};
+rToday();
+}
+function condEdit(){
+const t=gCondToday(LC);
+if(t){condDraft.score=t.score;condDraft.tags=t.tags.slice();condDraft.memo=t.memo||'';}
+else condDraft={score:0,tags:[],memo:''};
+const wrap=document.getElementById('condWrap');if(wrap){wrap._mode='edit';rCondCard();}
+}
+/* 컨디션 카드 렌더링 */
+function rCondCard(){
+const wrap=document.getElementById('condWrap');if(!wrap||!LC)return;
+const today=gCondToday(LC);
+const editMode=wrap._mode==='edit';
+if(today&&!editMode){
+/* 이미 저장된 상태 표시 */
+const tagStr=today.tags.length?today.tags.map(t=>`<span class="cond-tag on">${t}</span>`).join(''):'<span style="font-size:11px;color:var(--muted);">선택 태그 없음</span>';
+wrap.innerHTML=`<div class="cond-card">
+<div class="cond-card-h">
+<div class="cond-card-t">💚 오늘의 컨디션</div>
+<button onclick="condEdit()" style="font-size:10px;padding:4px 10px;border-radius:6px;background:rgba(100,160,200,.12);border:1px solid rgba(100,160,200,.3);color:var(--accent);cursor:pointer;">✏️ 수정</button>
+</div>
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+<div style="font-size:42px;line-height:1;">${COND_EMOJIS[today.score-1]}</div>
+<div>
+<div style="font-size:15px;font-weight:900;color:var(--orange);">${COND_LABELS[today.score-1]}</div>
+<div style="font-size:10px;color:var(--muted);margin-top:2px;">기록 완료 · ${today.tags.length}개 태그</div>
+</div>
+</div>
+<div class="cond-tags" style="margin-bottom:0;">${tagStr}</div>
+${today.memo?`<div style="margin-top:8px;font-size:11px;color:var(--muted);padding:8px 10px;background:rgba(0,0,0,.15);border-radius:7px;border-left:2px solid var(--orange);">📝 ${esc(today.memo)}</div>`:''}
+</div>`;
+return;
+}
+/* 입력 카드 */
+const emojisHTML=COND_EMOJIS.map((e,i)=>`<div class="cond-emoji${condDraft.score===i+1?' on':''}" onclick="condSetScore(${i+1})">
+<div class="cond-emoji-face">${e}</div>
+<div class="cond-emoji-lbl">${COND_LABELS[i]}</div>
+</div>`).join('');
+const tagsHTML=COND_TAGS.map(t=>`<div class="cond-tag${condDraft.tags.includes(t)?' on':''}" onclick="condToggleTag('${t}')">${t}</div>`).join('');
+wrap.innerHTML=`<div class="cond-card">
+<div class="cond-card-h">
+<div class="cond-card-t">💚 오늘의 컨디션 체크</div>
+<div class="cond-card-sub">매일 기록하면 그래프가 만들어져요</div>
+</div>
+<div class="cond-emojis">${emojisHTML}</div>
+<div class="cond-tags">${tagsHTML}</div>
+<textarea class="cond-memo" id="condMemo" placeholder="메모 (선택) — 오늘 몸 상태에 대해 한 줄 적어보세요" oninput="condUpdMemo()">${esc(condDraft.memo||'')}</textarea>
+<button class="cond-save" ${condDraft.score?'':'disabled'} onclick="condSave()">${condDraft.score?'💾 컨디션 저장':'점수를 선택하세요'}</button>
+</div>`;
+}
+/* 컨디션 시계열 그래프 (최근 14일) */
+function rCondChart(code,containerId){
+const cont=document.getElementById(containerId);if(!cont)return;
+const recs=gCond(code);
+if(!recs.length){cont.innerHTML=`<div class="cond-chart"><div class="cond-chart-h"><div class="cond-chart-t">💚 컨디션 추이</div></div><div class="cond-chart-empty">📊 아직 기록된 컨디션이 없어요<br><span style="font-size:10px;opacity:.6;">오늘부터 기록을 시작해보세요</span></div></div>`;return;}
+/* 최근 14일 */
+const N=14;const today=new Date();
+const days=[];
+for(let i=N-1;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);days.push(d.toISOString().split('T')[0]);}
+const map={};recs.forEach(r=>{map[r.date]=r;});
+const series=days.map(d=>map[d]?map[d].score:null);
+const valid=series.filter(v=>v!==null);
+if(!valid.length){cont.innerHTML=`<div class="cond-chart"><div class="cond-chart-h"><div class="cond-chart-t">💚 컨디션 추이 (최근 14일)</div></div><div class="cond-chart-empty">📊 최근 14일간 기록이 없어요</div></div>`;return;}
+const avg=Math.round((valid.reduce((s,v)=>s+v,0)/valid.length)*10)/10;
+/* SVG 그리기 */
+const W=600,H=90,p=12;
+const yScale=v=>H-p-((v-1)/4)*(H-p*2); /* 1~5 점수를 H-p ~ p 위치에 */
+const xScale=i=>p+(i/(N-1))*(W-p*2);
+let pathD='';let lastX=null,lastY=null;
+const dots=[];
+series.forEach((v,i)=>{
+if(v===null)return;
+const x=xScale(i),y=yScale(v);
+if(pathD===''){pathD=`M ${x} ${y}`;}else{pathD+=` L ${x} ${y}`;}
+dots.push({x,y,v,d:days[i]});
+lastX=x;lastY=y;
+});
+const dotsHTML=dots.map(d=>`<circle cx="${d.x}" cy="${d.y}" r="3.5" fill="${d.v<=2?'#FF6B6B':d.v===3?'#E8B82A':'#6FCF97'}"/>`).join('');
+const colorAvg=avg<=2?'#FF6B6B':avg<3.5?'#E8B82A':'#6FCF97';
+cont.innerHTML=`<div class="cond-chart">
+<div class="cond-chart-h">
+<div class="cond-chart-t">💚 컨디션 추이 (최근 14일)</div>
+<div class="cond-chart-avg">평균 <b style="color:${colorAvg};">${avg}/5</b> · ${valid.length}회</div>
+</div>
+<svg class="cond-chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+<line x1="${p}" y1="${yScale(3)}" x2="${W-p}" y2="${yScale(3)}" stroke="rgba(255,255,255,.06)" stroke-dasharray="3 3"/>
+<text x="${W-p+2}" y="${yScale(5)+3}" fill="rgba(255,255,255,.2)" font-size="8">5</text>
+<text x="${W-p+2}" y="${yScale(3)+3}" fill="rgba(255,255,255,.2)" font-size="8">3</text>
+<text x="${W-p+2}" y="${yScale(1)+3}" fill="rgba(255,255,255,.2)" font-size="8">1</text>
+<path d="${pathD}" fill="none" stroke="${colorAvg}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+${dotsHTML}
+</svg>
+</div>`;
+}
+
 function rToday(){
 const w=document.getElementById('todayWrap');if(!w)return;
 if(!LC||!S[LC]){w.innerHTML='<div style="text-align:center;padding:40px 20px;"><div style="font-size:40px;margin-bottom:12px;">📌</div><h3 style="margin-bottom:8px;">로그인이 필요합니다</h3><p style="font-size:12px;color:var(--muted);">코드 또는 카카오로 로그인하면<br>오늘의 식단과 운동이 표시됩니다.</p></div>';return;}
@@ -2127,10 +2301,21 @@ const genericBanner=ex.isGeneric?`<div style="display:flex;align-items:center;ga
 <button onclick="go('body')" style="margin-top:6px;padding:5px 12px;border-radius:6px;background:rgba(232,98,42,.12);border:1px solid rgba(232,98,42,.25);color:var(--orange);font-size:10px;font-weight:700;cursor:pointer;">🦴 체형분석 하러가기</button>
 </div></div>`:'';
 const restRecBanner=ex.rest_rec?`<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(111,207,151,.08);border:1px solid rgba(111,207,151,.2);border-radius:10px;margin-bottom:10px;"><span style="font-size:16px;">🧘</span><div><div style="font-size:12px;font-weight:700;color:var(--green);">오늘은 휴식을 권장합니다</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">컨디션이 좋다면 아래 가벼운 운동을 해보세요</div></div></div>`:'';
+/* 컨디션 점수 1~2일 때 저강도 추천 배너 */
+const _todayCond=gCondToday(LC);
+const lowCondBanner=(_todayCond&&_todayCond.score<=2)?`<div class="cond-low-rec">
+<div class="cond-low-rec-ico">🌙</div>
+<div style="flex:1;">
+<div class="cond-low-rec-t">컨디션이 ${COND_LABELS[_todayCond.score-1]}이시네요</div>
+<div class="cond-low-rec-d">오늘은 강도를 낮추고 가벼운 스트레칭·유산소 위주로 진행하시는 걸 추천드려요. 무리하면 회복이 더 늦어질 수 있어요.</div>
+<button class="cond-low-rec-btn" onclick="tdMode='home';rToday();setTimeout(()=>{const el=document.querySelector('.td-ex-mode');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},80)">🏠 홈 운동(맨몸) 보기</button>
+</div>
+</div>`:'';
 exHTML=`<div class="td-ex-mode">
 <button class="td-ex-btn${tdMode==='gym'?' on':''}" onclick="tdMode='gym';rToday()">🏋️ 짐 (기구)</button>
 <button class="td-ex-btn${tdMode==='home'?' on':''}" onclick="tdMode='home';rToday()">🏠 홈 (맨몸)</button>
 </div>
+${lowCondBanner}
 ${restRecBanner}
 ${genericBanner}
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -2152,6 +2337,8 @@ w.innerHTML=`
 <div class="td-header">
 <div class="td-date">📌 ${dateStr} <span class="td-dow">${dowFull[dowNum]}</span></div>
 </div>
+<div id="condWrap"></div>
+<div id="condChartWrap"></div>
 ${mySchedToday.length?`<div style="margin-bottom:12px;">${mySchedToday.map(e=>`<div class="sched-item" style="margin-bottom:4px;"><div class="sched-dot ${e.type||'lesson'}"></div><div class="sched-time">${e.time||''}</div><div class="sched-info"><div class="sched-title">${esc(e.title)}</div>${e.desc?`<div class="sched-desc">${esc(e.desc)}</div>`:''}</div></div>`).join('')}</div>`:''}
 <div class="td-sec">
 <div class="td-sec-h"><span class="td-ico">🍽</span> 오늘의 식단 <span style="font-size:10px;font-weight:500;color:var(--orange);margin-left:4px;">${hasDiet?totalK.toLocaleString()+' kcal':'관리자 식단 설정 필요'}</span></div>
@@ -2170,6 +2357,8 @@ ${hasDiet?`<div class="td-meal-grid">
 <div class="td-sec-h"><span class="td-ico">💪</span> 오늘의 운동</div>
 ${exHTML}
 </div>`;
+/* 컨디션 카드 + 그래프 렌더링 */
+try{rCondCard();rCondChart(LC,'condChartWrap');}catch(ce){console.warn('cond render error:',ce);}
 }catch(e){console.warn('rToday error:',e);w.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted);font-size:12px;">오늘의 정보를 불러오는 중 오류가 발생했습니다.<br><span style="font-size:10px;color:rgba(255,255,255,.15);">${String(e?.message||e).substring(0,100)}</span><br><button onclick="rToday()" style="margin-top:10px;padding:8px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;">다시 시도</button></div>`;}
 }
 const EX_DATA={
@@ -2663,6 +2852,49 @@ ${REGIONS.map(r=>`<option value="${r}"${getStuRegion(c)===r?' selected':''}>${r}
 <div style="display:flex;gap:4px;flex-wrap:wrap;">
 ${[70,75,80,85,90,95,100,105,110,115,120].map(v=>`<button onclick="adjRatio('${c}','${v}')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ${Math.abs(ratio-v)<=2?'var(--accent)':'var(--border)'};background:${Math.abs(ratio-v)<=2?'rgba(100,160,200,.15)':'transparent'};color:${Math.abs(ratio-v)<=2?'var(--accent)':'var(--muted)'};">${v}%</button>`).join('')}
 </div></div>
+
+${(function(){
+const cAvg30=gCondAvg(c,30);const cAvg7=gCondAvg(c,7);
+const recs=gCond(c);
+const last7=(()=>{const cutoff=new Date();cutoff.setDate(cutoff.getDate()-6);const cs=cutoff.toISOString().split('T')[0];return recs.filter(r=>r.date>=cs);})();
+/* 7일 추이 - 최근 7일 점수 표시 */
+const N=7;const today=new Date();const days=[];for(let i=N-1;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);days.push(d.toISOString().split('T')[0]);}
+const map={};recs.forEach(r=>{map[r.date]=r;});
+const dotHTML=days.map(d=>{const r=map[d];if(!r)return`<div style="width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.05);border:1px dashed rgba(255,255,255,.1);" title="${d.slice(5)} 미기록"></div>`;
+const color=r.score<=2?'#FF6B6B':r.score===3?'#E8B82A':'#6FCF97';
+return`<div style="width:18px;height:18px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#fff;" title="${d.slice(5)} · ${COND_LABELS[r.score-1]}">${r.score}</div>`;}).join('');
+const dayLbls=days.map(d=>`<div style="font-size:8px;color:var(--muted);text-align:center;width:18px;">${d.slice(8)}</div>`).join('');
+const avgColor30=cAvg30?(cAvg30.avg<=2?'#FF6B6B':cAvg30.avg<3.5?'#E8B82A':'#6FCF97'):'rgba(255,255,255,.3)';
+return`<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+<div style="font-size:11px;font-weight:700;">💚 컨디션</div>
+<div style="font-size:10px;color:var(--muted);">${recs.length}회 기록</div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+<div style="text-align:center;padding:10px;background:rgba(255,255,255,.03);border-radius:8px;">
+<div style="font-size:9px;color:var(--muted);">최근 30일 평균</div>
+<div style="font-size:18px;font-weight:900;color:${avgColor30};">${cAvg30?cAvg30.avg+'/5':'-'}</div>
+<div style="font-size:9px;color:var(--muted);">${cAvg30?cAvg30.count+'회':'기록 없음'}</div>
+</div>
+<div style="text-align:center;padding:10px;background:rgba(255,255,255,.03);border-radius:8px;">
+<div style="font-size:9px;color:var(--muted);">최근 7일 평균</div>
+<div style="font-size:18px;font-weight:900;color:${cAvg7?(cAvg7.avg<=2?'#FF6B6B':cAvg7.avg<3.5?'#E8B82A':'#6FCF97'):'rgba(255,255,255,.3)'};">${cAvg7?cAvg7.avg+'/5':'-'}</div>
+<div style="font-size:9px;color:var(--muted);">${cAvg7?cAvg7.count+'회':'기록 없음'}</div>
+</div>
+</div>
+<div style="font-size:10px;color:var(--muted);margin-bottom:6px;">최근 7일 추이</div>
+<div style="display:flex;gap:6px;justify-content:space-between;margin-bottom:4px;">${dotHTML}</div>
+<div style="display:flex;gap:6px;justify-content:space-between;">${dayLbls}</div>
+${last7.some(r=>r.tags&&r.tags.length)?`<div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);">
+<div style="font-size:9px;color:var(--muted);margin-bottom:5px;">최근 7일 태그</div>
+<div style="display:flex;gap:4px;flex-wrap:wrap;">${(()=>{const tagCount={};last7.forEach(r=>(r.tags||[]).forEach(t=>{tagCount[t]=(tagCount[t]||0)+1;}));return Object.entries(tagCount).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span style="font-size:9px;padding:2px 7px;border-radius:5px;background:rgba(100,160,200,.1);color:var(--accent);">${t} ${n}</span>`).join('');})()}</div>
+</div>`:''}
+${last7.filter(r=>r.memo).length?`<div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);">
+<div style="font-size:9px;color:var(--muted);margin-bottom:5px;">최근 메모</div>
+${last7.filter(r=>r.memo).slice(-3).reverse().map(r=>`<div style="font-size:10px;color:var(--muted);padding:5px 8px;background:rgba(0,0,0,.15);border-radius:6px;border-left:2px solid ${r.score<=2?'#FF6B6B':r.score===3?'#E8B82A':'#6FCF97'};margin-bottom:3px;"><span style="opacity:.6;">${r.date.slice(5)} ${COND_EMOJIS[r.score-1]}</span> ${esc(r.memo)}</div>`).join('')}
+</div>`:''}
+</div>`;
+})()}
 </div>
 
 <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;">
