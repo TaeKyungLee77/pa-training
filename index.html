@@ -986,22 +986,82 @@ const CODES={};
 const S={};
 
 /* 학생 데이터는 Firestore pa_students에서 로드됩니다 */
+/* ===========================================
+   📦 학생 데이터 시드 (운영 시작용 + 테스트용)
+   - Firestore의 pa_student_region 등에서 살아있는 12명 코드 복원
+   - 추가로 테스트용 학생 4명 (다양한 시나리오)
+   - 첫 로드 시 데이터가 비어있을 때만 시드됨 (기존 데이터 절대 덮어쓰기 X)
+   =========================================== */
+const _SEED_STUDENTS={
+  /* === 살아있는 학생 12명 (pa_student_region에서 복원) === */
+  'KNY010':{name:'학생10',h:170,w:65,age:20,g:'남',goal:'유지',wts:[65]},
+  'KJW009':{name:'학생09',h:165,w:55,age:18,g:'여',goal:'근육증가',wts:[55]},
+  'HYJ004':{name:'학생04',h:172,w:70,age:22,g:'남',goal:'체중감량',wts:[70]},
+  'HYR001':{name:'학생01',h:168,w:60,age:19,g:'여',goal:'체중감량',wts:[60]},
+  'KJH011':{name:'학생11',h:175,w:72,age:21,g:'남',goal:'근육증가',wts:[72]},
+  'KYS012':{name:'학생12',h:170,w:68,age:23,g:'남',goal:'유지',wts:[68]},
+  'PHS003':{name:'학생03',h:163,w:52,age:17,g:'여',goal:'근육증가',wts:[52]},
+  'PAT002':{name:'학생02',h:174,w:74,age:24,g:'남',goal:'유지',wts:[74]},
+  'JKM005':{name:'학생05',h:160,w:50,age:16,g:'여',goal:'유지',wts:[50]},
+  'LJK006':{name:'학생06',h:177,w:80,age:25,g:'남',goal:'체중감량',wts:[80]},
+  'CHJ007':{name:'학생07',h:166,w:58,age:19,g:'여',goal:'근육증가',wts:[58]},
+  'PJW008':{name:'학생08',h:173,w:69,age:22,g:'남',goal:'유지',wts:[69]},
+  /* === 테스트용 가상 학생 4명 (시나리오별) === */
+  'TEST001':{name:'테스트김',h:170,w:65,age:20,g:'남',goal:'체중감량',wts:[68,67,66,65]},
+  'TEST002':{name:'테스트이',h:165,w:55,age:18,g:'여',goal:'근육증가',wts:[53,54,55]},
+  'TEST003':{name:'테스트박',h:175,w:80,age:30,g:'남',goal:'유지',wts:[80,80.5,80]},
+  'TEST004':{name:'테스트최',h:160,w:48,age:25,g:'여',goal:'유지',wts:[48]}
+};
+
+/* 시드 데이터에 BMR/TDEE/tar 자동 계산 */
+Object.keys(_SEED_STUDENTS).forEach(c=>{
+  const s=_SEED_STUDENTS[c];
+  s.bmr=s.g==='남'?Math.round(88.362+13.397*s.w+4.799*s.h-5.677*s.age):Math.round(447.593+9.247*s.w+3.098*s.h-4.33*s.age);
+  s.tdee=Math.round(s.bmr*1.375);
+  if(s.goal==='체중감량')s.tar=Math.round(s.tdee*0.85);
+  else if(s.goal==='근육증가'||s.goal==='증량+근육')s.tar=Math.round(s.tdee*1.1);
+  else s.tar=s.tdee;
+});
+
 const _INIT_STUDENTS={};
 
-/* Firestore에서 학생 데이터 로드 + 최초 마이그레이션 */
+/* Firestore에서 학생 데이터 로드 - 안전 가드 + 자동 시드 */
 async function loadStudents(){
 const saved=lG('pa_students',null);
 if(saved&&Object.keys(saved).length>0){
 Object.assign(S,saved);
 }else{
-/* 최초 실행: 하드코딩 데이터를 Firestore로 마이그레이션 */
+/* pa_students가 비어있으면 pa_custom_students 확인 */
 const custom=lG('pa_custom_students',null);
-if(custom&&Object.keys(custom).length>0){Object.assign(S,custom);}
-else{Object.assign(S,_INIT_STUDENTS);lS('pa_students',_INIT_STUDENTS);}
+if(custom&&Object.keys(custom).length>0){
+Object.assign(S,custom);
+/* custom에 데이터가 있으면 pa_students도 동기화 */
+lS('pa_students',custom);
+}else{
+/* 🌱 양쪽 다 비어있으면 시드 데이터 투입 (운영 초기 1회만) */
+const seed=JSON.parse(JSON.stringify(_SEED_STUDENTS));
+Object.assign(S,seed);
+lS('pa_students',seed);
+console.log('[PA] 🌱 시드 데이터 투입:',Object.keys(seed).length,'명');
+}
 }
 /* CODES 동기화 */
 Object.keys(S).forEach(c=>{if(!CODES[c])CODES[c]={n:S[c].name,e:mkE(365)};});
 }
+
+/* 🛡️ 추가 안전장치: 빈 객체 저장 시도 차단 (lS 래퍼) */
+const _origLS=lS;
+window.lS=function(k,v){
+  /* 학생 데이터 키에 빈 객체 저장 시도 시 차단 */
+  if((k==='pa_students'||k==='pa_custom_students')&&v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===0){
+    /* 기존 캐시에 데이터가 있으면 무시 (빈 객체 덮어쓰기 방지) */
+    if(_cache[k]&&Object.keys(_cache[k]).length>0){
+      console.warn('[PA] 🛡️ 빈 객체로 '+k+' 덮어쓰기 차단됨. 기존 데이터 보존.');
+      return;
+    }
+  }
+  return _origLS(k,v);
+};
 
 function gDiet(c){const custom=lG('pa_custom_diets',{});if(custom[c])return custom[c];return generateDiet(c);}
 
@@ -1161,7 +1221,7 @@ const firebaseConfig={apiKey:"AIzaSyCICKJ00FCnb780oQ9_mZTgszG0FL64eFU",authDomai
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 const _cache={};let _fsReady=false;
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks'];
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members'];
 async function fsInit(){
   try{const snap=await db.collection('pa_data').get();
   snap.forEach(doc=>{_cache[doc.id]=doc.data().value;});
@@ -1228,8 +1288,36 @@ if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠
 try{Kakao.Auth.authorize({redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}
 /* 카카오 유저 처리 (공용) */
 function handleKakaoUser(r){const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
-if(kid===getAdminKakaoId()){setN('관리자 ('+nn+')',img);toast(nn+' 관리자님 환영합니다!');go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');aOK=true;rAT();return;}
+if(kid===getAdminKakaoId()){setN('관리자 ('+nn+')',img);toast(nn+' 관리자님 환영합니다!');go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');aOK=true;window._acaMode=false;rAT();return;}
 const map=lG('pa_kakao_users',{});const mapped=map[kid];
+/* 학원 원장/선생 자동 로그인 */
+if(mapped&&(mapped.role==='academy_owner'||mapped.role==='academy_teacher')&&mapped.academyId){
+  const acas=gAcademies();const a=acas[mapped.academyId];
+  if(a){
+    /* 토큰 유효성 재검증: 토큰이 재발급됐으면 매핑 무효 */
+    const stillValid=mapped.role==='academy_owner'?a.owner?.kid===kid:(a.teachers||[]).some(t=>t.kid===kid);
+    if(stillValid){
+      const isOwner=mapped.role==='academy_owner';
+      const displayName=mapped.name+(isOwner?' 원장':' 선생');
+      sessionStorage.setItem('pa_login',JSON.stringify({code:'',name:displayName,img,acaRole:mapped.role,academyId:mapped.academyId}));
+      setN(displayName,img);
+      toast(`${a.name} ${isOwner?'원장':'선생'}님 환영합니다!`);
+      /* 마지막 사용일 업데이트 */
+      if(isOwner)a.ownerLastUsed=new Date().toISOString();else a.teacherLastUsed=new Date().toISOString();
+      sAcademies(acas);
+      go('admin');
+      document.getElementById('aLock').style.display='none';
+      document.getElementById('aPanel').classList.add('on');
+      aOK=false;window._acaMode=true;
+      rAT();
+      return;
+    }else{
+      /* 토큰이 재발급되어 권한 잃음 */
+      delete map[kid];lS('pa_kakao_users',map);
+      toast('학원 권한이 만료되었습니다. 새 암호구문으로 재인증하세요.','err');
+    }
+  }
+}
 const c=typeof mapped==='string'?mapped:mapped?.code;
 const role=typeof mapped==='string'?'student':mapped?.role||'student';
 if(c&&S[c]){const isParent=role==='father'||role==='mother'||role==='parent';const honorific=role==='father'?'아버님':role==='mother'?'어머님':role==='parent'?'학부모':'';const displayName=isParent?S[c].name+' '+honorific:nn;logIn(c,displayName,img);go('my');return;}
@@ -1252,7 +1340,9 @@ document.getElementById('myDB').style.display='none';
 lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class="kcard-h">${esc(nn)}님 환영합니다!</div><p class="kcard-p">카카오 로그인 성공!<br>어떤 분이신가요?</p>
 <div id="linkStep1">
 <button class="dbe" onclick="linkChoose('student')" style="width:100%;margin-bottom:10px;background:var(--accent);color:#fff;border:none;padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">🏋️ 본인 (학생)</button>
-<button class="dbe" onclick="linkChoose('parent')" style="width:100%;background:rgba(111,207,151,.15);color:var(--green);border:1px solid rgba(111,207,151,.25);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">👨‍👩‍👧 학부모</button>
+<button class="dbe" onclick="linkChoose('parent')" style="width:100%;margin-bottom:10px;background:rgba(111,207,151,.15);color:var(--green);border:1px solid rgba(111,207,151,.25);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">👨‍👩‍👧 학부모</button>
+<button class="dbe" onclick="linkChoose('owner')" style="width:100%;margin-bottom:10px;background:rgba(232,98,42,.12);color:var(--orange);border:1px solid rgba(232,98,42,.3);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">👑 학원 원장</button>
+<button class="dbe" onclick="linkChoose('teacher')" style="width:100%;background:rgba(100,160,200,.12);color:var(--accent);border:1px solid rgba(100,160,200,.3);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">🎓 학원 선생/코치</button>
 </div>
 <div id="linkStep2S" style="display:none;">
 <div style="font-size:12px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">📋 본인 확인을 위해 정보를 입력하세요</div>
@@ -1273,20 +1363,41 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <button class="dbe" onclick="doKakaoLinkParent()" style="width:100%;background:var(--green);color:#fff;border:none;margin-top:8px;">학부모 계정 연결하기</button>
 <button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
 </div>
+<div id="linkStep2O" style="display:none;">
+<div style="font-size:12px;color:var(--orange);margin-bottom:14px;text-align:center;font-weight:700;">👑 학원 원장 인증</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6;">P.A 트레이닝 본사로부터 받은<br><strong style="color:var(--orange);">원장용 암호구문</strong>을 입력하세요</div>
+<label class="di" style="font-size:11px;">이름 (학원 내 표시용)</label><input class="dc" id="linkAcaNmO" placeholder="예: 김원장" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
+<label class="di" style="font-size:11px;">암호구문 (16자, 4-4-4-4)</label><input class="dc" id="linkTokO" placeholder="예: K3xP-9mQR-vN7L-2sBy" maxlength="19" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:1px;">
+<div class="em" id="linkEmO"></div>
+<button class="dbe" onclick="doKakaoLinkAcademy('owner')" style="width:100%;background:var(--orange);color:#fff;border:none;margin-top:8px;">원장 인증하기</button>
+<button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
+</div>
+<div id="linkStep2T" style="display:none;">
+<div style="font-size:12px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">🎓 학원 선생/코치 인증</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6;">학원 원장님으로부터 받은<br><strong style="color:var(--accent);">선생용 암호구문</strong>을 입력하세요</div>
+<label class="di" style="font-size:11px;">이름 (학원 내 표시용)</label><input class="dc" id="linkAcaNmT" placeholder="예: 이코치" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
+<label class="di" style="font-size:11px;">암호구문 (16자, 4-4-4-4)</label><input class="dc" id="linkTokT" placeholder="예: K3xP-9mQR-vN7L-2sBy" maxlength="19" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:1px;">
+<div class="em" id="linkEmT"></div>
+<button class="dbe" onclick="doKakaoLinkAcademy('teacher')" style="width:100%;background:var(--accent);color:#fff;border:none;margin-top:8px;">선생 인증하기</button>
+<button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
+</div>
 <div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:18px;">코드를 모르시면 선생님께 문의하세요<br>ltk6154@gmail.com</div></div>`;
 /* 입력 이벤트 바인딩 */
 ['linkCodeS','linkCodeP'].forEach(id=>{const inp=document.getElementById(id);if(inp){inp.addEventListener('input',function(){this.value=this.value.toUpperCase();});inp.addEventListener('keydown',e=>{if(e.key==='Enter'){id==='linkCodeS'?doKakaoLinkStudent():doKakaoLinkParent();}});}});
+['linkTokO','linkTokT'].forEach(id=>{const inp=document.getElementById(id);if(inp){inp.addEventListener('keydown',e=>{if(e.key==='Enter')doKakaoLinkAcademy(id==='linkTokO'?'owner':'teacher');});}});
 }
 let linkPType='father';
 function linkChoose(type){
 document.getElementById('linkStep1').style.display='none';
+['linkStep2S','linkStep2P','linkStep2O','linkStep2T'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
 if(type==='student'){document.getElementById('linkStep2S').style.display='block';document.getElementById('linkCodeS').focus();}
-else{document.getElementById('linkStep2P').style.display='block';document.getElementById('linkCodeP').focus();}
+else if(type==='parent'){document.getElementById('linkStep2P').style.display='block';document.getElementById('linkCodeP').focus();}
+else if(type==='owner'){document.getElementById('linkStep2O').style.display='block';document.getElementById('linkAcaNmO').focus();}
+else if(type==='teacher'){document.getElementById('linkStep2T').style.display='block';document.getElementById('linkAcaNmT').focus();}
 }
 function linkBack(){
 document.getElementById('linkStep1').style.display='block';
-document.getElementById('linkStep2S').style.display='none';
-document.getElementById('linkStep2P').style.display='none';
+['linkStep2S','linkStep2P','linkStep2O','linkStep2T'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
 }
 function linkParentType(t){linkPType=t;document.getElementById('linkFather').className='my-tab'+(t==='father'?' on':'');document.getElementById('linkMother').className='my-tab'+(t==='mother'?' on':'');}
 
@@ -1312,6 +1423,97 @@ sessionStorage.removeItem('pa_kakao_pending');
 const honorific=linkPType==='father'?'아버님':'어머님';
 toast(`${S[v].name} ${honorific} 계정 연결 완료!`);
 logIn(v,S[v].name+' '+honorific,pending.img);go('my');
+}
+
+/* 학원 원장/선생 인증 */
+function doKakaoLinkAcademy(kind){
+const isOwner=kind==='owner';
+const nmInp=document.getElementById(isOwner?'linkAcaNmO':'linkAcaNmT');
+const tokInp=document.getElementById(isOwner?'linkTokO':'linkTokT');
+const em=document.getElementById(isOwner?'linkEmO':'linkEmT');
+const nm=nmInp.value.trim();
+const tok=tokInp.value.trim();
+if(!nm){em.textContent='이름을 입력하세요';em.classList.add('on');return;}
+if(!tok){em.textContent='암호구문을 입력하세요';em.classList.add('on');return;}
+
+/* 시도 횟수 체크 */
+const att=checkAcaAttempt();
+if(!att.ok){em.textContent=att.msg;em.classList.add('on');return;}
+
+const pending=JSON.parse(sessionStorage.getItem('pa_kakao_pending')||'null');
+if(!pending){em.textContent='카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';em.classList.add('on');return;}
+
+/* 모든 학원에서 일치하는 토큰 검색 */
+const acas=gAcademies();
+let matchedId=null,matchedAca=null;
+Object.entries(acas).forEach(([id,a])=>{
+  const target=isOwner?a.ownerToken:a.teacherToken;
+  if(target&&target===tok){matchedId=id;matchedAca=a;}
+});
+
+if(!matchedId){
+  failAcaAttempt();
+  em.textContent='❌ 일치하는 암호구문이 없습니다. 다시 확인하세요.';
+  em.classList.add('on');tokInp.classList.add('err');
+  return;
+}
+
+/* 인증 성공 — 카카오 매핑 + 학원 정보에 등록 */
+clearAcaAttempt();
+const acasUpdated=gAcademies();
+const a=acasUpdated[matchedId];
+if(isOwner){
+  /* 기존 원장이 있으면 교체 */
+  if(a.owner&&a.owner.kid!==pending.kid){
+    if(!confirm(`이미 다른 원장(${a.owner.name})이 등록되어 있습니다.\n교체하시겠습니까?`)){
+      return;
+    }
+    /* 기존 원장 카카오 매핑 제거 */
+    const ku0=lG('pa_kakao_users',{});delete ku0[a.owner.kid];lS('pa_kakao_users',ku0);
+  }
+  a.owner={kid:pending.kid,name:nm,since:new Date().toISOString()};
+  a.ownerLastUsed=new Date().toISOString();
+}else{
+  /* 선생 추가 (중복 체크) */
+  a.teachers=a.teachers||[];
+  const exists=a.teachers.find(t=>t.kid===pending.kid);
+  if(!exists){
+    a.teachers.push({kid:pending.kid,name:nm,since:new Date().toISOString()});
+  }else{
+    exists.name=nm;
+  }
+  a.teacherLastUsed=new Date().toISOString();
+}
+sAcademies(acasUpdated);
+
+/* pa_kakao_users 매핑 등록 */
+const ku=lG('pa_kakao_users',{});
+ku[pending.kid]={
+  role:isOwner?'academy_owner':'academy_teacher',
+  academyId:matchedId,
+  name:nm
+};
+lS('pa_kakao_users',ku);
+sessionStorage.removeItem('pa_kakao_pending');
+
+/* 학원 권한자용 세션 저장 */
+const displayName=nm+(isOwner?' 원장':' 선생');
+sessionStorage.setItem('pa_login',JSON.stringify({
+  code:'',
+  name:displayName,
+  img:pending.img,
+  acaRole:isOwner?'academy_owner':'academy_teacher',
+  academyId:matchedId
+}));
+setN(displayName,pending.img);
+toast(`${a.name} ${isOwner?'원장':'선생'} 인증 완료!`);
+go('admin');
+/* 학원 권한자용 관리자 패널 활성화 */
+document.getElementById('aLock').style.display='none';
+document.getElementById('aPanel').classList.add('on');
+aOK=false;/* super_admin 아님 */
+window._acaMode=true;
+rAT();
 }
 function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');
 /* 코드 확인 성공 → 역할 선택 UI 표시 */
@@ -2613,8 +2815,566 @@ function aAuth(){
 /* 관리자 인증: 카카오 로그인만 허용 (비밀번호 입력 불가) */
 toast('관리자는 카카오 로그인으로만 진입할 수 있습니다','err');
 }
-function rAT(){const tabs=[{id:'a-wait',l:'⏳ 대기 관리'},{id:'a-rsv',l:'📅 예약 관리'},{id:'a-notices',l:'📢 공지사항'},{id:'a-sched',l:'📅 스케줄'},{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-diet',l:'🍽 식단 수정'},{id:'a-prods',l:'🛒 추천제품'},{id:'a-slots',l:'⏰ 시간표'},{id:'a-inquiry',l:'💬 문의관리'},{id:'a-aicoach',l:'🤖 AI코치'}];document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');rAB();}
-function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-wait':b.innerHTML=aWait();break;case'a-rsv':b.innerHTML=aRsv();break;case'a-notices':b.innerHTML=aNt();break;case'a-sched':b.innerHTML=aSch();break;case'a-stuMgr':b.innerHTML=aStuMgr();break;case'a-records':b.innerHTML=aRec();break;case'a-diet':b.innerHTML=aDiet();break;case'a-prods':b.innerHTML=aProds();break;case'a-slots':b.innerHTML=aSlots();break;case'a-inquiry':b.innerHTML=aInquiry();break;case'a-aicoach':b.innerHTML=aAICoach();break;}updateWaitCount();}
+function rAT(){
+const ar=getUserAcademyRole();
+let tabs;
+if(ar.role==='academy_owner'){
+  /* 원장: 자기 학원 학생 관리, 기록, 리포트, 컨디션, 식단 보기 */
+  tabs=[{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-report',l:'📄 리포트'},{id:'a-diet',l:'🍽 식단 수정'}];
+  if(aTab==='a-wait'||aTab==='a-rsv'||aTab==='a-notices'||aTab==='a-sched'||aTab==='a-academy'||aTab==='a-prods'||aTab==='a-slots'||aTab==='a-inquiry'||aTab==='a-aicoach'){aTab='a-stuMgr';}
+}else if(ar.role==='academy_teacher'){
+  /* 선생: 학생 보기/기록 수정만 */
+  tabs=[{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-report',l:'📄 리포트'}];
+  if(aTab==='a-wait'||aTab==='a-rsv'||aTab==='a-notices'||aTab==='a-sched'||aTab==='a-academy'||aTab==='a-diet'||aTab==='a-prods'||aTab==='a-slots'||aTab==='a-inquiry'||aTab==='a-aicoach'){aTab='a-stuMgr';}
+}else{
+  /* super_admin: 전체 */
+  tabs=[{id:'a-wait',l:'⏳ 대기 관리'},{id:'a-rsv',l:'📅 예약 관리'},{id:'a-notices',l:'📢 공지사항'},{id:'a-sched',l:'📅 스케줄'},{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-academy',l:'🏢 학원 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-report',l:'📄 리포트'},{id:'a-diet',l:'🍽 식단 수정'},{id:'a-prods',l:'🛒 추천제품'},{id:'a-slots',l:'⏰ 시간표'},{id:'a-inquiry',l:'💬 문의관리'},{id:'a-aicoach',l:'🤖 AI코치'}];
+}
+document.getElementById('aTabs').innerHTML=tabs.map(t=>`<button class="atb${t.id===aTab?' on':''}" onclick="aTab='${t.id}';rAT();">${t.l}</button>`).join('');
+rAB();
+}
+function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-wait':b.innerHTML=aWait();break;case'a-rsv':b.innerHTML=aRsv();break;case'a-notices':b.innerHTML=aNt();break;case'a-sched':b.innerHTML=aSch();break;case'a-stuMgr':b.innerHTML=aStuMgr();break;case'a-academy':b.innerHTML=aAcademy();break;case'a-records':b.innerHTML=aRec();break;case'a-report':b.innerHTML=aReport();break;case'a-diet':b.innerHTML=aDiet();break;case'a-prods':b.innerHTML=aProds();break;case'a-slots':b.innerHTML=aSlots();break;case'a-inquiry':b.innerHTML=aInquiry();break;case'a-aicoach':b.innerHTML=aAICoach();break;}updateWaitCount();}
+
+/* ===========================================
+   🏢 학원 회원 시스템 (작업 ②) v2
+   - super_admin: P.A 트레이닝 본사 (대표)
+   - academy_owner: 원장 (자기 학원 학생 전체 관리, 선생 추가/제거 가능)
+   - academy_teacher: 선생/코치 (자기 학원 학생만 보기/기록 수정, 학생 추가 불가)
+   - student: 일반 학생
+   - parent: 학부모
+   
+   인증 방식: 학원 등록 시 자동 생성 암호구문 (영숫자 16자, 4-4-4-4)
+   원장용/선생용 구문 별도 관리, 재발급 가능
+   =========================================== */
+function gAcademies(){return lG('pa_academies',{});}
+function sAcademies(v){lS('pa_academies',v);}
+function gAcademyMembers(){return lG('pa_academy_members',{});}
+function sAcademyMembers(v){lS('pa_academy_members',v);}
+function getStuAcademy(code){const m=gAcademyMembers();return m[code]||null;}
+function getAcademyStudents(acaId){const m=gAcademyMembers();return Object.keys(m).filter(c=>m[c]===acaId);}
+
+/* 암호구문 생성: 영숫자 16자, 4-4-4-4 형식 (혼동 글자 제외) */
+function genAcaToken(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghjkmnpqrstuvwxyz';
+  let t='';
+  for(let i=0;i<16;i++){
+    t+=chars.charAt(Math.floor(Math.random()*chars.length));
+    if(i===3||i===7||i===11)t+='-';
+  }
+  return t;
+}
+
+/* 현재 로그인 사용자의 학원 권한 정보 가져오기 */
+function getUserAcademyRole(){
+  if(aOK)return{role:'super_admin'};
+  const sv=sessionStorage.getItem('pa_login');
+  if(!sv)return{role:'student'};
+  try{
+    const d=JSON.parse(sv);
+    if(d.acaRole){return{role:d.acaRole,academyId:d.academyId,name:d.name};}
+  }catch(e){}
+  return{role:'student'};
+}
+
+/* 학원 권한자가 접근 가능한 학생 코드 목록 */
+function getAccessibleStudents(){
+  const ar=getUserAcademyRole();
+  if(ar.role==='super_admin')return Object.keys(S);
+  if((ar.role==='academy_owner'||ar.role==='academy_teacher')&&ar.academyId){
+    return getAcademyStudents(ar.academyId);
+  }
+  return[];
+}
+
+/* 잘못된 시도 추적 (5회 차단) */
+function checkAcaAttempt(){
+  const k='pa_aca_attempts';
+  const data=JSON.parse(sessionStorage.getItem(k)||'{"count":0,"blockedUntil":0}');
+  if(data.blockedUntil>Date.now()){
+    const min=Math.ceil((data.blockedUntil-Date.now())/60000);
+    return{ok:false,msg:`너무 많은 시도. ${min}분 후 다시 시도하세요.`};
+  }
+  return{ok:true};
+}
+function failAcaAttempt(){
+  const k='pa_aca_attempts';
+  const data=JSON.parse(sessionStorage.getItem(k)||'{"count":0,"blockedUntil":0}');
+  data.count=(data.count||0)+1;
+  if(data.count>=5){data.blockedUntil=Date.now()+10*60000;data.count=0;}
+  sessionStorage.setItem(k,JSON.stringify(data));
+}
+function clearAcaAttempt(){sessionStorage.removeItem('pa_aca_attempts');}
+
+let acaSelected=null,acaSearch='';
+
+function aAcademy(){
+const acas=gAcademies();
+const acaList=Object.entries(acas);
+const allStu=Object.entries(S);
+
+return `<h3 style="font-size:14px;margin-bottom:14px;">🏢 학원 관리 <span style="font-size:11px;color:var(--muted);font-weight:500;">(${acaList.length}개 등록)</span></h3>
+
+<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px;">
+<div style="font-size:12px;font-weight:600;margin-bottom:10px;">➕ 신규 학원 등록</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;">
+<input id="acaNm" type="text" placeholder="학원명" style="padding:8px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:inherit;">
+<input id="acaRg" type="text" placeholder="지역 (예: 서울)" style="padding:8px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:inherit;">
+<input id="acaPh" type="text" placeholder="연락처" style="padding:8px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:inherit;">
+<button onclick="acaAdd()" style="padding:8px 16px;background:var(--accent);color:#000;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">등록</button>
+</div>
+<div style="margin-top:8px;padding:10px;background:rgba(232,98,42,.08);border:1px solid rgba(232,98,42,.3);border-radius:6px;font-size:11px;color:var(--muted);line-height:1.6;">
+🔐 등록 시 <strong style="color:var(--orange);">원장용/선생용 암호구문</strong>이 자동 생성됩니다. 등록 후 카톡으로 전송하세요.
+</div>
+</div>
+
+<div style="margin-bottom:14px;">
+<input type="text" placeholder="🔍 학원명 검색..." value="${acaSearch}" oninput="acaSearch=this.value;rAB();" style="width:100%;padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;">
+</div>
+
+${acaList.length===0?'<p style="color:var(--muted);text-align:center;padding:30px;">등록된 학원이 없습니다. 위에서 신규 등록하세요.</p>':`
+<div style="display:grid;gap:10px;">
+${acaList.filter(([id,a])=>!acaSearch||a.name.includes(acaSearch)||a.region?.includes(acaSearch)).map(([id,a])=>{
+const stuCount=getAcademyStudents(id).length;
+const teachers=a.teachers||[];
+const sel=acaSelected===id;
+return `<div style="background:var(--card);border:1px solid ${sel?'var(--accent)':'var(--border)'};border-radius:var(--r);padding:14px;">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;" onclick="acaSelected='${acaSelected===id?'':id}';rAB();">
+<div>
+<div style="font-size:14px;font-weight:600;">${esc(a.name)}</div>
+<div style="font-size:11px;color:var(--muted);margin-top:4px;">📍 ${esc(a.region||'미지정')} · 📞 ${esc(a.phone||'-')} · 학생 ${stuCount}명 · 선생 ${teachers.length}명</div>
+</div>
+<div style="display:flex;gap:6px;" onclick="event.stopPropagation();">
+<button onclick="acaEdit('${id}')" style="padding:6px 10px;background:rgba(100,160,200,.15);border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-size:11px;cursor:pointer;">수정</button>
+<button onclick="acaDel('${id}')" style="padding:6px 10px;background:rgba(232,98,42,.15);border:1px solid var(--orange);border-radius:6px;color:var(--orange);font-size:11px;cursor:pointer;">삭제</button>
+</div>
+</div>
+
+${sel?`
+<!-- 암호구문 섹션 -->
+<div style="margin-top:14px;padding:12px;background:rgba(255,255,255,.03);border-radius:8px;">
+<div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:10px;">🔐 인증 암호구문</div>
+
+<div style="margin-bottom:10px;">
+<div style="font-size:10px;color:var(--muted);margin-bottom:4px;">👑 원장용 (학생·선생 추가 가능)</div>
+<div style="display:flex;gap:6px;align-items:center;">
+<code style="flex:1;padding:8px 10px;background:#000;border:1px solid var(--border);border-radius:6px;font-family:'Courier New',monospace;font-size:12px;color:var(--accent);user-select:all;">${esc(a.ownerToken||'(없음)')}</code>
+<button onclick="acaCopyToken('${id}','owner')" style="padding:8px 10px;background:var(--accent);color:#000;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📋 복사</button>
+<button onclick="acaRegenToken('${id}','owner')" style="padding:8px 10px;background:rgba(232,98,42,.15);border:1px solid var(--orange);color:var(--orange);border-radius:6px;font-size:11px;cursor:pointer;">🔄 재발급</button>
+</div>
+${a.ownerLastUsed?`<div style="font-size:10px;color:var(--muted);margin-top:4px;">최근 사용: ${new Date(a.ownerLastUsed).toLocaleString('ko-KR')}</div>`:''}
+</div>
+
+<div>
+<div style="font-size:10px;color:var(--muted);margin-bottom:4px;">🎓 선생용 (학생만 관리, 추가 불가)</div>
+<div style="display:flex;gap:6px;align-items:center;">
+<code style="flex:1;padding:8px 10px;background:#000;border:1px solid var(--border);border-radius:6px;font-family:'Courier New',monospace;font-size:12px;color:var(--green);user-select:all;">${esc(a.teacherToken||'(없음)')}</code>
+<button onclick="acaCopyToken('${id}','teacher')" style="padding:8px 10px;background:var(--green);color:#000;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">📋 복사</button>
+<button onclick="acaRegenToken('${id}','teacher')" style="padding:8px 10px;background:rgba(232,98,42,.15);border:1px solid var(--orange);color:var(--orange);border-radius:6px;font-size:11px;cursor:pointer;">🔄 재발급</button>
+</div>
+${a.teacherLastUsed?`<div style="font-size:10px;color:var(--muted);margin-top:4px;">최근 사용: ${new Date(a.teacherLastUsed).toLocaleString('ko-KR')}</div>`:''}
+</div>
+</div>
+
+<!-- 등록된 원장/선생 목록 -->
+<div style="margin-top:12px;padding:12px;background:rgba(255,255,255,.03);border-radius:8px;">
+<div style="font-size:11px;font-weight:700;margin-bottom:8px;">👥 등록된 인원</div>
+${a.owner?`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(100,160,200,.08);border-radius:6px;font-size:12px;margin-bottom:4px;">
+<span>👑 <strong>${esc(a.owner.name||'원장')}</strong> <span style="color:var(--muted);font-size:10px;">(카카오 ${esc(a.owner.kid)})</span></span>
+<button onclick="acaRemoveOwner('${id}')" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:10px;cursor:pointer;">제거</button>
+</div>`:'<div style="font-size:11px;color:var(--muted);padding:4px 10px;">원장 미등록 (위 구문으로 첫 로그인 시 자동 등록)</div>'}
+${teachers.length?teachers.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(111,207,151,.08);border-radius:6px;font-size:12px;margin-bottom:4px;">
+<span>🎓 <strong>${esc(t.name||'선생')}</strong> <span style="color:var(--muted);font-size:10px;">(카카오 ${esc(t.kid)})</span></span>
+<button onclick="acaRemoveTeacher('${id}','${t.kid}')" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:10px;cursor:pointer;">제거</button>
+</div>`).join(''):'<div style="font-size:11px;color:var(--muted);padding:4px 10px;">등록된 선생 없음</div>'}
+</div>
+
+<!-- 소속 학생 관리 -->
+<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+<div style="font-size:12px;font-weight:600;margin-bottom:8px;">📚 소속 학생 관리</div>
+<div style="display:flex;gap:6px;margin-bottom:10px;">
+<select id="acaAddStu_${id}" style="flex:1;padding:8px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:inherit;">
+<option value="">+ 학생 추가...</option>
+${allStu.filter(([c])=>!getStuAcademy(c)).map(([c,s])=>`<option value="${c}">${esc(s.name)} (${c})</option>`).join('')}
+</select>
+<button onclick="acaAddStudent('${id}')" style="padding:8px 14px;background:var(--accent);color:#000;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">추가</button>
+</div>
+<div style="display:grid;gap:4px;max-height:200px;overflow-y:auto;">
+${getAcademyStudents(id).map(c=>{const s=S[c];if(!s)return'';return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;font-size:12px;">
+<span>${esc(s.name)} <span style="color:var(--muted);">(${c})</span></span>
+<button onclick="acaRemoveStudent('${c}')" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:10px;cursor:pointer;">제거</button>
+</div>`;}).join('')||'<p style="color:var(--muted);font-size:11px;padding:8px;">아직 소속 학생이 없습니다.</p>'}
+</div>
+</div>
+`:''}
+</div>`;}).join('')}
+</div>`}
+`;
+}
+
+function acaAdd(){
+const nm=document.getElementById('acaNm').value.trim();
+if(!nm){toast('학원명을 입력하세요','err');return;}
+const rg=document.getElementById('acaRg').value.trim();
+const ph=document.getElementById('acaPh').value.trim();
+const acas=gAcademies();
+const id='aca_'+Date.now();
+acas[id]={
+  name:nm,region:rg,phone:ph,
+  ownerToken:genAcaToken(),
+  teacherToken:genAcaToken(),
+  owner:null,
+  teachers:[],
+  createdAt:new Date().toISOString()
+};
+sAcademies(acas);
+toast('학원 등록 완료. 암호구문이 생성되었습니다.');
+acaSelected=id;
+rAB();
+}
+
+function acaEdit(id){
+const acas=gAcademies();const a=acas[id];if(!a)return;
+const nm=prompt('학원명',a.name);if(nm===null)return;
+const rg=prompt('지역',a.region||'');if(rg===null)return;
+const ph=prompt('연락처',a.phone||'');if(ph===null)return;
+acas[id]={...a,name:nm,region:rg,phone:ph};
+sAcademies(acas);
+toast('수정 완료');rAB();
+}
+
+function acaDel(id){
+const acas=gAcademies();const a=acas[id];if(!a)return;
+if(!confirm(`"${a.name}" 학원을 삭제하시겠습니까?\n\n- 소속 학생 매핑 해제\n- 원장/선생 권한 해제\n- 암호구문 무효화\n\n학생 데이터 자체는 보존됩니다.`))return;
+/* 학원 매핑된 학생들 해제 */
+const m=gAcademyMembers();Object.keys(m).forEach(c=>{if(m[c]===id)delete m[c];});sAcademyMembers(m);
+/* 카카오 매핑에서 원장/선생 권한 해제 */
+const ku=lG('pa_kakao_users',{});
+if(a.owner&&ku[a.owner.kid]?.academyId===id)delete ku[a.owner.kid];
+(a.teachers||[]).forEach(t=>{if(ku[t.kid]?.academyId===id)delete ku[t.kid];});
+lS('pa_kakao_users',ku);
+delete acas[id];sAcademies(acas);
+acaSelected=null;
+toast('삭제 완료');rAB();
+}
+
+function acaCopyToken(id,kind){
+const a=gAcademies()[id];if(!a)return;
+const tok=kind==='owner'?a.ownerToken:a.teacherToken;
+if(!tok){toast('구문이 없습니다','err');return;}
+const label=kind==='owner'?'원장':'선생';
+const msg=`[P.A 트레이닝] ${a.name} ${label} 인증 구문\n\n${tok}\n\n위 구문을 카카오 로그인 후 "🏢 학원 ${label}" 버튼 클릭하여 입력하세요.\n사이트: patraining.co.kr`;
+navigator.clipboard.writeText(msg).then(()=>{
+  toast(`${label} 안내문이 복사되었습니다. 카톡에 붙여넣기 하세요.`);
+}).catch(()=>{
+  /* 폴백 */
+  const ta=document.createElement('textarea');ta.value=msg;document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('복사됨');}catch(e){prompt('복사하세요:',msg);}
+  document.body.removeChild(ta);
+});
+}
+
+function acaRegenToken(id,kind){
+const a=gAcademies()[id];if(!a)return;
+const label=kind==='owner'?'원장':'선생';
+if(!confirm(`${label} 암호구문을 재발급하시겠습니까?\n\n기존 구문은 즉시 무효화됩니다.\n${kind==='owner'&&a.owner?'⚠️ 현재 등록된 원장은 다음 로그인 시 재인증이 필요합니다.':''}\n${kind==='teacher'&&a.teachers?.length?'⚠️ 현재 등록된 선생들은 다음 로그인 시 재인증이 필요합니다.':''}`))return;
+const acas=gAcademies();
+if(kind==='owner'){
+  acas[id].ownerToken=genAcaToken();
+  acas[id].ownerLastUsed=null;
+  /* 원장 권한 해제 */
+  if(acas[id].owner){
+    const ku=lG('pa_kakao_users',{});
+    delete ku[acas[id].owner.kid];
+    lS('pa_kakao_users',ku);
+    acas[id].owner=null;
+  }
+}else{
+  acas[id].teacherToken=genAcaToken();
+  acas[id].teacherLastUsed=null;
+  /* 선생들 권한 해제 */
+  const ku=lG('pa_kakao_users',{});
+  (acas[id].teachers||[]).forEach(t=>{delete ku[t.kid];});
+  lS('pa_kakao_users',ku);
+  acas[id].teachers=[];
+}
+sAcademies(acas);
+toast(`${label} 구문이 재발급되었습니다.`);
+rAB();
+}
+
+function acaRemoveOwner(id){
+const acas=gAcademies();const a=acas[id];if(!a||!a.owner)return;
+if(!confirm(`원장 "${a.owner.name}"을(를) 제거하시겠습니까?`))return;
+const ku=lG('pa_kakao_users',{});
+delete ku[a.owner.kid];
+lS('pa_kakao_users',ku);
+acas[id].owner=null;
+sAcademies(acas);
+toast('원장 제거됨');rAB();
+}
+
+function acaRemoveTeacher(id,kid){
+const acas=gAcademies();const a=acas[id];if(!a)return;
+const t=(a.teachers||[]).find(x=>x.kid===kid);
+if(!t)return;
+if(!confirm(`선생 "${t.name}"을(를) 제거하시겠습니까?`))return;
+const ku=lG('pa_kakao_users',{});
+delete ku[kid];
+lS('pa_kakao_users',ku);
+acas[id].teachers=a.teachers.filter(x=>x.kid!==kid);
+sAcademies(acas);
+toast('선생 제거됨');rAB();
+}
+
+function acaAddStudent(acaId){
+const sel=document.getElementById('acaAddStu_'+acaId);if(!sel)return;
+const code=sel.value;if(!code){toast('학생을 선택하세요','err');return;}
+const m=gAcademyMembers();m[code]=acaId;sAcademyMembers(m);
+toast('학생 추가됨');rAB();
+}
+
+function acaRemoveStudent(code){
+if(!confirm('이 학생을 학원에서 제외하시겠습니까?'))return;
+const m=gAcademyMembers();delete m[code];sAcademyMembers(m);
+toast('제외 완료');rAB();
+}
+
+/* ===========================================
+   📄 PDF 리포트 (작업 ③)
+   브라우저 인쇄(Cmd/Ctrl+P) → PDF 저장 방식
+   외부 라이브러리 없음, Capacitor 호환
+   =========================================== */
+let reportType='student',reportTarget='',reportPeriod=30;
+
+function aReport(){
+/* 학원 권한자는 자기 학원 학생/학원만 표시 */
+const _ar=getUserAcademyRole();
+const _isAca=_ar.role==='academy_owner'||_ar.role==='academy_teacher';
+const _allowedCodes=_isAca?new Set(getAccessibleStudents()):null;
+const acas=gAcademies();
+const acaList=_isAca?Object.entries(acas).filter(([id])=>id===_ar.academyId):Object.entries(acas);
+const allStu=Object.entries(S).filter(([c])=>!_allowedCodes||_allowedCodes.has(c));
+return `<h3 style="font-size:14px;margin-bottom:14px;">📄 리포트 생성</h3>
+
+<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:14px;">
+<div style="font-size:12px;font-weight:600;margin-bottom:12px;">리포트 종류</div>
+<div style="display:flex;gap:8px;margin-bottom:14px;">
+<button onclick="reportType='student';reportTarget='';rAB();" style="flex:1;padding:10px;background:${reportType==='student'?'var(--accent)':'rgba(255,255,255,.05)'};color:${reportType==='student'?'#000':'var(--text)'};border:1px solid ${reportType==='student'?'var(--accent)':'var(--border)'};border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">📊 학생 개인 리포트</button>
+<button onclick="reportType='academy';reportTarget='';rAB();" style="flex:1;padding:10px;background:${reportType==='academy'?'var(--accent)':'rgba(255,255,255,.05)'};color:${reportType==='academy'?'#000':'var(--text)'};border:1px solid ${reportType==='academy'?'var(--accent)':'var(--border)'};border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">🏢 학원 종합 리포트</button>
+</div>
+
+<div style="font-size:12px;font-weight:600;margin-bottom:8px;">대상 선택</div>
+${reportType==='student'?`
+<select id="rptTarget" onchange="reportTarget=this.value;" style="width:100%;padding:10px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:inherit;margin-bottom:12px;">
+<option value="">학생을 선택하세요</option>
+${allStu.map(([c,s])=>`<option value="${c}"${reportTarget===c?' selected':''}>${esc(s.name)} (${c})</option>`).join('')}
+</select>
+`:`
+<select id="rptTarget" onchange="reportTarget=this.value;" style="width:100%;padding:10px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;font-family:inherit;margin-bottom:12px;">
+<option value="">학원을 선택하세요</option>
+${acaList.map(([id,a])=>`<option value="${id}"${reportTarget===id?' selected':''}>${esc(a.name)} (학생 ${getAcademyStudents(id).length}명)</option>`).join('')}
+</select>
+`}
+
+<div style="font-size:12px;font-weight:600;margin-bottom:8px;">기간 (일)</div>
+<div style="display:flex;gap:6px;">
+${[7,30,90,180].map(d=>`<button onclick="reportPeriod=${d};rAB();" style="flex:1;padding:8px;background:${reportPeriod===d?'var(--accent)':'rgba(255,255,255,.05)'};color:${reportPeriod===d?'#000':'var(--text)'};border:1px solid ${reportPeriod===d?'var(--accent)':'var(--border)'};border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">${d}일</button>`).join('')}
+</div>
+</div>
+
+<button onclick="generateReport()" ${!reportTarget?'disabled':''} style="width:100%;padding:14px;background:${reportTarget?'var(--orange)':'rgba(255,255,255,.1)'};color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:${reportTarget?'pointer':'not-allowed'};">📄 리포트 생성하기 (PDF로 저장)</button>
+
+<div style="margin-top:14px;padding:12px;background:rgba(100,160,200,.08);border:1px solid rgba(100,160,200,.3);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6;">
+💡 <strong style="color:var(--accent);">사용 방법</strong>: 리포트 생성 버튼을 누르면 새 창이 열립니다. 그 창에서 <strong style="color:var(--text);">Cmd+P (Mac) / Ctrl+P (Windows)</strong>를 눌러 "PDF로 저장"을 선택하세요.
+</div>
+`;
+}
+
+function generateReport(){
+if(!reportTarget){toast('대상을 선택하세요','err');return;}
+const html=reportType==='student'?buildStudentReport(reportTarget,reportPeriod):buildAcademyReport(reportTarget,reportPeriod);
+const w=window.open('','_blank','width=900,height=1200');
+if(!w){toast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요','err');return;}
+w.document.write(html);w.document.close();
+}
+
+function buildReportStyles(){
+return `<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'Pretendard',sans-serif;background:#fff;color:#1a1a1a;padding:40px;line-height:1.6;}
+.rpt-header{border-bottom:3px solid #09111C;padding-bottom:20px;margin-bottom:30px;display:flex;justify-content:space-between;align-items:center;}
+.rpt-logo{font-size:14px;font-weight:700;color:#09111C;letter-spacing:2px;}
+.rpt-title{font-size:24px;font-weight:800;color:#09111C;margin:8px 0;}
+.rpt-meta{font-size:11px;color:#666;}
+.rpt-section{margin-bottom:24px;page-break-inside:avoid;}
+.rpt-section h2{font-size:16px;font-weight:700;color:#09111C;border-left:4px solid #E8622A;padding-left:10px;margin-bottom:12px;}
+.rpt-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;}
+.rpt-card{background:#f7f9fc;border:1px solid #e0e6ed;border-radius:8px;padding:12px;}
+.rpt-card .lbl{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px;}
+.rpt-card .val{font-size:18px;font-weight:700;color:#09111C;margin-top:4px;}
+.rpt-card .sub{font-size:11px;color:#666;margin-top:2px;}
+table{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0;}
+table th{background:#09111C;color:#fff;padding:8px;text-align:left;font-weight:600;}
+table td{padding:8px;border-bottom:1px solid #e0e6ed;}
+table tr:nth-child(even) td{background:#f7f9fc;}
+.rpt-footer{margin-top:40px;padding-top:20px;border-top:1px solid #e0e6ed;text-align:center;font-size:10px;color:#999;}
+.btn-print{position:fixed;top:20px;right:20px;padding:12px 20px;background:#E8622A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+@media print{.btn-print{display:none;}body{padding:20px;}}
+.tag{display:inline-block;padding:3px 8px;background:#e8f1f8;color:#09111C;border-radius:4px;font-size:10px;margin:2px;}
+.bar{height:24px;background:linear-gradient(90deg,#64A0C8,#E8622A);border-radius:4px;}
+.bar-bg{background:#e0e6ed;border-radius:4px;height:24px;overflow:hidden;}
+</style>`;
+}
+
+function buildStudentReport(code,period){
+const s=S[code];
+if(!s)return '<p>학생 정보 없음</p>';
+const now=Date.now(),cutoff=now-period*86400000;
+const wts=lG('pa_weights',{})[code]||s.wts||[];
+const conds=gCond(code).filter(x=>new Date(x.date).getTime()>=cutoff);
+const condAvg=conds.length?(conds.reduce((a,b)=>a+(b.score||0),0)/conds.length).toFixed(1):'-';
+const condTags={};conds.forEach(c=>(c.tags||[]).forEach(t=>condTags[t]=(condTags[t]||0)+1));
+const topTags=Object.entries(condTags).sort((a,b)=>b[1]-a[1]).slice(0,5);
+const intake=lG('pa_student_intake',{})[code]||[];
+const exer=lG('pa_student_exercise',{})[code]||[];
+const recentIntake=intake.filter(x=>new Date(x.date||x.ts).getTime()>=cutoff);
+const recentExer=exer.filter(x=>new Date(x.date||x.ts).getTime()>=cutoff);
+const ibList=getInbody(code);
+const ib=ibList[0];
+const bt=getStudentBodyType(code);
+const btype=bt?BODY_TYPES.find(x=>x.id===bt.type):null;
+const stat=getStuStatusInfo(code);
+const region=getStuRegion(code);
+const aca=getStuAcademy(code);
+const acaName=aca?gAcademies()[aca]?.name:'-';
+
+const wDelta=wts.length>=2?(wts[wts.length-1]-wts[0]).toFixed(1):'0';
+const today=new Date().toLocaleDateString('ko-KR');
+
+return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>학생 리포트 - ${esc(s.name)}</title>${buildReportStyles()}</head><body>
+<button class="btn-print" onclick="window.print()">📄 PDF로 저장 (Cmd/Ctrl+P)</button>
+
+<div class="rpt-header">
+<div>
+<div class="rpt-logo">P · A TRAINING</div>
+<div class="rpt-title">학생 개인 리포트</div>
+<div class="rpt-meta">발행일: ${today} · 분석 기간: 최근 ${period}일</div>
+</div>
+<div style="text-align:right;font-size:11px;color:#666;">
+<div><strong>${esc(s.name)}</strong> (${code})</div>
+<div>${esc(region)} · ${stat.status}</div>
+${aca?`<div>소속: ${esc(acaName)}</div>`:''}
+</div>
+</div>
+
+<div class="rpt-section">
+<h2>1. 기본 정보</h2>
+<div class="rpt-row">
+<div class="rpt-card"><div class="lbl">키 / 몸무게</div><div class="val">${s.h||'-'}cm / ${s.w||'-'}kg</div></div>
+<div class="rpt-card"><div class="lbl">목표 / 현재 칼로리</div><div class="val">${s.tar||'-'} / ${s.tdee||'-'} kcal</div></div>
+<div class="rpt-card"><div class="lbl">체형 분석</div><div class="val">${btype?esc(btype.name):'미진단'}</div>${btype?`<div class="sub">${esc(btype.parent)}</div>`:''}</div>
+<div class="rpt-card"><div class="lbl">기간 체중 변화</div><div class="val" style="color:${parseFloat(wDelta)<=0?'#22c55e':'#E8622A'};">${wDelta>0?'+':''}${wDelta} kg</div></div>
+</div>
+</div>
+
+<div class="rpt-section">
+<h2>2. 컨디션 분석</h2>
+<div class="rpt-row">
+<div class="rpt-card"><div class="lbl">평균 컨디션 (5점 만점)</div><div class="val">${condAvg} / 5.0</div><div class="sub">${conds.length}회 기록</div></div>
+<div class="rpt-card"><div class="lbl">자주 표시한 상태</div><div class="val" style="font-size:13px;">${topTags.length?topTags.map(([t,n])=>`<span class="tag">${esc(t)} ${n}</span>`).join(''):'-'}</div></div>
+</div>
+${conds.length?`<table><thead><tr><th style="width:120px;">날짜</th><th style="width:80px;">점수</th><th>태그</th><th>메모</th></tr></thead><tbody>
+${conds.slice(-15).reverse().map(c=>`<tr><td>${c.date}</td><td>${'★'.repeat(c.score||0)}${'☆'.repeat(5-(c.score||0))}</td><td>${(c.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</td><td>${esc(c.memo||'')}</td></tr>`).join('')}
+</tbody></table>`:'<p style="color:#666;font-size:11px;">기간 내 컨디션 기록 없음</p>'}
+</div>
+
+<div class="rpt-section">
+<h2>3. 식단 / 운동 활동</h2>
+<div class="rpt-row">
+<div class="rpt-card"><div class="lbl">식단 기록</div><div class="val">${recentIntake.length}건</div></div>
+<div class="rpt-card"><div class="lbl">운동 기록</div><div class="val">${recentExer.length}건</div></div>
+</div>
+</div>
+
+${ib?`<div class="rpt-section">
+<h2>4. 최근 인바디</h2>
+<div class="rpt-row">
+<div class="rpt-card"><div class="lbl">측정일</div><div class="val" style="font-size:14px;">${ib.date||'-'}</div></div>
+<div class="rpt-card"><div class="lbl">체중</div><div class="val">${ib.weight||'-'} kg</div></div>
+<div class="rpt-card"><div class="lbl">근육량</div><div class="val">${ib.muscle||'-'} kg</div></div>
+<div class="rpt-card"><div class="lbl">체지방</div><div class="val">${ib.fat||'-'} kg (${ib.fatPct||'-'}%)</div></div>
+</div>
+</div>`:''}
+
+<div class="rpt-footer">
+P.A TRAINING · Performance · Achievement · Training<br>
+이 리포트는 자동 생성되었습니다 · ${today}
+</div>
+</body></html>`;
+}
+
+function buildAcademyReport(acaId,period){
+const aca=gAcademies()[acaId];
+if(!aca)return '<p>학원 정보 없음</p>';
+const codes=getAcademyStudents(acaId);
+const today=new Date().toLocaleDateString('ko-KR');
+const now=Date.now(),cutoff=now-period*86400000;
+
+let totalConds=0,totalCondScore=0,totalIntake=0,totalExer=0;
+const rows=codes.map(code=>{
+const s=S[code];if(!s)return null;
+const wts=lG('pa_weights',{})[code]||s.wts||[];
+const conds=gCond(code).filter(x=>new Date(x.date).getTime()>=cutoff);
+const cAvg=conds.length?(conds.reduce((a,b)=>a+(b.score||0),0)/conds.length):0;
+const intake=(lG('pa_student_intake',{})[code]||[]).filter(x=>new Date(x.date||x.ts).getTime()>=cutoff);
+const exer=(lG('pa_student_exercise',{})[code]||[]).filter(x=>new Date(x.date||x.ts).getTime()>=cutoff);
+totalConds+=conds.length;totalCondScore+=cAvg*conds.length;
+totalIntake+=intake.length;totalExer+=exer.length;
+const wDelta=wts.length>=2?(wts[wts.length-1]-wts[0]).toFixed(1):'0';
+return {code,name:s.name,h:s.h,w:wts[wts.length-1]||s.w,wDelta,condAvg:cAvg.toFixed(1),condCount:conds.length,intake:intake.length,exer:exer.length,status:getStuStatusInfo(code).status};
+}).filter(Boolean);
+
+const overallCondAvg=totalConds?(totalCondScore/totalConds).toFixed(2):'-';
+
+return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>학원 리포트 - ${esc(aca.name)}</title>${buildReportStyles()}</head><body>
+<button class="btn-print" onclick="window.print()">📄 PDF로 저장 (Cmd/Ctrl+P)</button>
+
+<div class="rpt-header">
+<div>
+<div class="rpt-logo">P · A TRAINING</div>
+<div class="rpt-title">학원 종합 리포트</div>
+<div class="rpt-meta">발행일: ${today} · 분석 기간: 최근 ${period}일</div>
+</div>
+<div style="text-align:right;font-size:11px;color:#666;">
+<div><strong>${esc(aca.name)}</strong></div>
+<div>${esc(aca.region||'-')} · ${esc(aca.phone||'-')}</div>
+${aca.adminName?`<div>원장: ${esc(aca.adminName)}</div>`:''}
+</div>
+</div>
+
+<div class="rpt-section">
+<h2>1. 학원 현황 요약</h2>
+<div class="rpt-row">
+<div class="rpt-card"><div class="lbl">소속 학생</div><div class="val">${codes.length}명</div></div>
+<div class="rpt-card"><div class="lbl">기간 평균 컨디션</div><div class="val">${overallCondAvg} / 5.0</div></div>
+<div class="rpt-card"><div class="lbl">기간 식단 기록</div><div class="val">${totalIntake}건</div></div>
+<div class="rpt-card"><div class="lbl">기간 운동 기록</div><div class="val">${totalExer}건</div></div>
+</div>
+</div>
+
+<div class="rpt-section">
+<h2>2. 학생별 상세</h2>
+<table><thead><tr><th>이름</th><th>코드</th><th>키/체중</th><th>변화</th><th>컨디션</th><th>식단</th><th>운동</th><th>상태</th></tr></thead><tbody>
+${rows.map(r=>`<tr><td><strong>${esc(r.name)}</strong></td><td>${r.code}</td><td>${r.h||'-'}cm / ${r.w||'-'}kg</td><td style="color:${parseFloat(r.wDelta)<=0?'#22c55e':'#E8622A'};">${r.wDelta>0?'+':''}${r.wDelta}kg</td><td>${r.condAvg} (${r.condCount}회)</td><td>${r.intake}</td><td>${r.exer}</td><td>${esc(r.status)}</td></tr>`).join('')}
+</tbody></table>
+</div>
+
+<div class="rpt-footer">
+P.A TRAINING · Performance · Achievement · Training<br>
+이 리포트는 자동 생성되었습니다 · ${today}
+</div>
+</body></html>`;
+}
 
 function aU(){const m=lG('pa_kakao_users',{});return`<h3 style="font-size:14px;margin-bottom:14px;">카카오 ID → 학생 코드 매핑</h3><div class="ar"><label>카카오ID</label><input id="akid" placeholder="카카오 사용자 ID"><label>학생</label><select id="asc">${Object.keys(S).map(c=>`<option value="${c}">${c} (${S[c].name})</option>`).join('')}</select><button class="ab ab-b" onclick="aMU()">등록</button></div>${Object.keys(m).length?`<table class="at"><tr><th>카카오ID</th><th>코드</th><th>이름</th><th></th></tr>${Object.entries(m).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td><td>${S[v]?.name||'?'}</td><td><button class="ab ab-r" onclick="aDU('${k}')">삭제</button></td></tr>`).join('')}</table>`:'<p style="font-size:12px;color:var(--muted);">등록된 매핑 없음</p>'}`;}
 function aMU(){const k=document.getElementById('akid').value.trim(),c=document.getElementById('asc').value;if(!k){toast('카카오ID 입력','err');return;}const m=lG('pa_kakao_users',{});m[k]=c;lS('pa_kakao_users',m);toast('매핑 등록');rAB();}
@@ -2731,9 +3491,12 @@ let stuSearch='';
 
 function aStuMgr(){
 const wData=lG('pa_weights',{});
-const sList=Object.entries(S);
-if(!sList.length)return`<h3 style="font-size:14px;margin-bottom:14px;">👥 학생 관리</h3><p style="color:var(--muted);">등록된 학생이 없습니다.</p>`;
-if(!S[smStu])smStu=sList[0][0];
+/* 학원 권한자는 자기 학원 학생만 보임 */
+const _ar=getUserAcademyRole();
+const _allowedCodes=(_ar.role==='academy_owner'||_ar.role==='academy_teacher')?new Set(getAccessibleStudents()):null;
+const sList=Object.entries(S).filter(([c])=>!_allowedCodes||_allowedCodes.has(c));
+if(!sList.length)return`<h3 style="font-size:14px;margin-bottom:14px;">👥 학생 관리</h3><p style="color:var(--muted);">${_allowedCodes?'우리 학원 소속 학생이 아직 없습니다.':'등록된 학생이 없습니다.'}</p>`;
+if(!S[smStu]||(_allowedCodes&&!_allowedCodes.has(smStu)))smStu=sList[0][0];
 const s=S[smStu],c=smStu;
 const ws=(wData[c])||s.wts;
 const latestW=ws[ws.length-1];
