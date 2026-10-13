@@ -1180,33 +1180,53 @@ const CN={chicken:'닭가슴살',salad:'샐러드·도시락',snack:'간식',car
 const firebaseConfig={apiKey:"AIzaSyCiCKJ00FCnb78OoQ9_mZTgszG0FL64eFU",authDomain:"patraining-c1cd3.firebaseapp.com",projectId:"patraining-c1cd3",storageBucket:"patraining-c1cd3.firebasestorage.app",messagingSenderId:"414257826796",appId:"1:414257826796:web:537d28d40af145499fcec9"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
-/* [0-1] 카카오 로그인 → Firebase 로그인 연결. 실패해도 사이트는 기존대로 동작 */
+/* [0-1 · 0-2] 카카오/입장코드 로그인 → Firebase 로그인 연결 + 데이터 잠금 대응 */
 const PA_AUTH_URL='https://kakaoauth-414257826796.asia-northeast3.run.app';
+/* 로그인은 이 브라우저 탭에서만 유지 (탭을 닫으면 로그아웃 — PC방·공용 기기 대비) */
+try{firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});}catch(e){}
+function paSignedIn(){try{return !!firebase.auth().currentUser;}catch(e){return false;}}
+function paAuthReady(){return new Promise(res=>{let done=false;const fin=()=>{if(!done){done=true;res();}};try{const u=firebase.auth().onAuthStateChanged(()=>{try{u();}catch(e){}fin();});}catch(e){fin();}setTimeout(fin,4000);});}
+async function paTokenSignIn(body){
+  const r=await fetch(PA_AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  let d={};try{d=await r.json();}catch(e){}
+  if(!r.ok||!d.token){const err=new Error(d.error||('auth '+r.status));err.status=r.status;err.reason=d.reason;throw err;}
+  await firebase.auth().signInWithCustomToken(d.token);
+  console.log('[PA] Firebase 로그인 완료:',firebase.auth().currentUser.uid,'역할:',d.role);
+  return d;
+}
 async function paFirebaseSignIn(){
   try{
     const kt=(window.Kakao&&Kakao.Auth&&Kakao.Auth.getAccessToken)?Kakao.Auth.getAccessToken():null;
-    if(!kt){console.warn('[PA] 카카오 토큰 없음 — Firebase 로그인 건너뜀');return;}
-    const r=await fetch(PA_AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kakaoAccessToken:kt})});
-    if(!r.ok)throw new Error('kakaoAuth '+r.status);
-    const d=await r.json();
-    await firebase.auth().signInWithCustomToken(d.token);
-    console.log('[PA] Firebase 로그인 완료:',firebase.auth().currentUser.uid,'역할:',d.role);
-  }catch(e){console.warn('[PA] Firebase 로그인 실패 (사이트는 계속 동작):',e);}
+    if(!kt){console.warn('[PA] 카카오 토큰 없음 — Firebase 로그인 불가');return false;}
+    await paTokenSignIn({kakaoAccessToken:kt});return true;
+  }catch(e){console.warn('[PA] Firebase 로그인 실패:',e);return false;}
 }
-function paFirebaseSignOut(){try{firebase.auth().signOut();}catch(e){}}
-const _cache={};let _fsReady=false;
+/* 입장 코드 로그인 (테스트용 — 애플 로그인 도입 시 삭제 예정). 결과: ok | invalid | expired | limit | error */
+async function paCodeSignIn(code){
+  try{await paTokenSignIn({entryCode:code});return'ok';}
+  catch(e){console.warn('[PA] 입장 코드 로그인 실패:',e);if(e.reason==='expired')return'expired';if(e.status===429)return'limit';if(e.status===400||e.status===401||e.status===404)return'invalid';return'error';}
+}
+function paFirebaseSignOut(){try{return firebase.auth().signOut().then(()=>{fsListen();}).catch(()=>{});}catch(e){}}
+/* 로그인 직후 데이터 다시 불러오기 */
+async function paReloadData(){await fsInit();await loadStudents();fsListen();}
+const _cache={};let _fsReady=false;const _fsLoaded=new Set();
 const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions'];
+/* [0-2] 로그인하지 않은 방문자도 볼 수 있는 공개 데이터 */
+const PA_PUBLIC_KEYS=['pa_notices_c','pa_custom_prods'];
+/* [0-2] 문서 단위로 읽기 — 하나가 막혀도 나머지는 정상 */
 async function fsInit(){
-  try{const snap=await db.collection('pa_data').get();
-  snap.forEach(doc=>{_cache[doc.id]=doc.data().value;});
-  const migrated=_cache['_migrated'];
-  if(!migrated){let has=false;for(const k of FS_KEYS){try{const raw=localStorage.getItem(k);if(raw&&!_cache[k]){_cache[k]=JSON.parse(raw);await db.collection('pa_data').doc(k).set({value:_cache[k]});has=true;}}catch(e){}}
-  if(has){await db.collection('pa_data').doc('_migrated').set({value:true});console.log('[PA] 마이그레이션 완료');}}
-  _fsReady=true;console.log('[PA] Firestore 연결 완료, 데이터 로드됨');
-  }catch(e){console.warn('[PA] Firestore 폴백:',e);_fsReady=false;}}
-function lG(k,d){if(_cache[k]!==undefined)return JSON.parse(JSON.stringify(_cache[k]));try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
-function lS(k,v){const c=JSON.parse(JSON.stringify(v));_cache[k]=c;localStorage.setItem(k,JSON.stringify(v));if(_fsReady)db.collection('pa_data').doc(k).set({value:c}).catch(e=>console.warn('[PA] 저장오류:',e));}
-function fsListen(){db.collection('pa_data').onSnapshot(snap=>{snap.docChanges().forEach(ch=>{if(ch.type==='modified'||ch.type==='added'){const k=ch.doc.id;if(k==='_migrated')return;_cache[k]=ch.doc.data().value;}});},e=>console.warn('[PA] 리스너:',e));}
+  const keys=paSignedIn()?FS_KEYS:PA_PUBLIC_KEYS;let ok=0;
+  await Promise.all(keys.map(async k=>{try{const d=await db.collection('pa_data').doc(k).get();if(d.exists)_cache[k]=d.data().value;else delete _cache[k];_fsLoaded.add(k);ok++;}catch(e){console.warn('[PA] 읽기 실패:',k,e&&e.code||e);}}));
+  _fsReady=ok>0;
+  console.log('[PA] Firestore 연결 ('+(paSignedIn()?'로그인':'비로그인')+') '+ok+'/'+keys.length+'개 문서 로드');
+}
+function lG(k,d){if(_cache[k]!==undefined)return JSON.parse(JSON.stringify(_cache[k]));if(_fsLoaded.has(k))return d;try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
+/* [0-2] 서버에서 제대로 읽어온 문서만 서버에 저장 (못 읽은 문서를 빈 값으로 덮어쓰는 사고 방지) */
+function lS(k,v){const c=JSON.parse(JSON.stringify(v));_cache[k]=c;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}if(_fsReady&&_fsLoaded.has(k)&&paSignedIn())db.collection('pa_data').doc(k).set({value:c}).catch(e=>console.warn('[PA] 저장오류:',k,e));else console.warn('[PA] 서버 저장 건너뜀 (로그인 전이거나 아직 못 읽은 문서):',k);}
+let _fsUnsubs=[];
+function fsListen(){_fsUnsubs.forEach(u=>{try{u();}catch(e){}});_fsUnsubs=[];const keys=paSignedIn()?FS_KEYS:PA_PUBLIC_KEYS;keys.forEach(k=>{_fsUnsubs.push(db.collection('pa_data').doc(k).onSnapshot(d=>{if(d.exists)_cache[k]=d.data().value;_fsLoaded.add(k);},e=>console.warn('[PA] 리스너:',k,e&&e.code||e)));});}
+/* [0-2] 로그아웃 시 이 기기에 남은 회원 데이터 지우기 */
+function paClearLocal(){_fsUnsubs.forEach(u=>{try{u();}catch(e){}});_fsUnsubs=[];FS_KEYS.forEach(k=>{if(PA_PUBLIC_KEYS.includes(k))return;delete _cache[k];_fsLoaded.delete(k);try{localStorage.removeItem(k);}catch(e){}});try{Object.keys(S).forEach(c=>{delete S[c];});}catch(e){}}
 /* 현재 로그인 역할 감지 */
 function getCurRole(){if(aOK)return'admin';const sv=sessionStorage.getItem('pa_login');if(sv){try{const d=JSON.parse(sv);if(d.name&&(d.name.includes('학부모')||d.name.includes('아버님')||d.name.includes('어머님')))return'parent';}catch(e){}}return'student';}
 function byBadge(by){if(!by)return'';const cls=by==='admin'?'by-admin':by==='parent'?'by-parent':'by-student';const lbl=by==='admin'?'관리자':by==='parent'?'학부모':'학생';return`<span class="by-badge ${cls}">${lbl}</span>`;}
@@ -1261,7 +1281,7 @@ return;
 if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
 try{Kakao.Auth.authorize({redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}
 /* 카카오 유저 처리 (공용) */
-function handleKakaoUser(r){paFirebaseSignIn();const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
+async function handleKakaoUser(r){if(!(await paFirebaseSignIn())){toast('로그인 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.','err');return;}await paReloadData();const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
 if(kid===getAdminKakaoId()){setN('관리자 ('+nn+')',img);toast(nn+' 관리자님 환영합니다!');go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');aOK=true;window._acaMode=false;rAT();return;}
 const map=lG('pa_kakao_users',{});const mapped=map[kid];
 /* 학원 원장/선생 자동 로그인 */
@@ -1610,7 +1630,7 @@ aOK=false;/* super_admin 아님 */
 window._acaMode=true;
 rAT();
 }
-function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');
+async function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;{const cr=await paCodeSignIn(v);if(cr!=='ok'){em.textContent=cr==='expired'?'⏰ 유효기간 만료. 선생님께 재발급 요청':cr==='limit'?'⏳ 시도가 너무 많습니다. 10분 뒤 다시 시도하세요.':cr==='error'?'⚠️ 서버 연결 오류. 잠시 후 다시 시도하세요.':'❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}await paReloadData();}if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');
 /* 코드 확인 성공 → 역할 선택 UI 표시 */
 const lb=document.getElementById('loginBox');
 lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">✅</div><div class="kcard-h">${esc(S[v].name)}님 확인!</div><p class="kcard-p">어떤 분이신가요?</p>
@@ -1626,10 +1646,10 @@ if(role==='student'){logIn(code,S[code].name,null);}
 else{const h=role==='father'?'아버님':'어머님';logIn(code,S[code].name+' '+h,null);}
 go('my');
 }
-document.addEventListener('DOMContentLoaded',async()=>{await fsInit();await loadStudents();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
+document.addEventListener('DOMContentLoaded',async()=>{await paAuthReady();await fsInit();await loadStudents();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
 function setN(n,img){const prof=document.getElementById('navProf');if(prof)prof.classList.add('show');const nm=document.getElementById('navNm');if(nm)nm.textContent=n;const av=document.getElementById('navAv');if(av){if(img)av.innerHTML=`<img src="${img}" alt="">`;else av.innerHTML=`<span id="navAvT">${n?n[0]:'😊'}</span>`;}}
-function doLogout(){paFirebaseSignOut();LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
+function doLogout(){paClearLocal();paFirebaseSignOut();LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
 document.getElementById('loginBox').innerHTML=`<div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><div class="dtog" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 입장 코드로 시작하기</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">선생님께 받은 코드를 입력하세요</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">※ 입장 코드는 발급 후 3일간 유효<br>ltk6154@gmail.com</div></div>`;
 document.getElementById('loginBox').style.display='block';document.getElementById('myDB').style.display='none';document.getElementById('navProf').classList.remove('show');
 const inp=document.getElementById('dcI');if(inp){inp.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});inp.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}
@@ -3050,6 +3070,7 @@ function aAuth(){
 toast('관리자는 카카오 로그인으로만 진입할 수 있습니다','err');
 }
 function rAT(){
+if(typeof paMergeApplications==='function')paMergeApplications();
 const ar=getUserAcademyRole();
 let tabs;
 if(ar.role==='academy_owner'){
@@ -4446,10 +4467,27 @@ toast('기본 제품 목록 복원');rAB();rP('all');
 
 /* 대기 인원 수 업데이트 (홈 히어로) */
 function updateWaitCount(){
+const el=document.getElementById('heroWaitCount');
+/* [0-2] 로그인 전에는 공개 숫자(pa_public/stats)만 표시 */
+if(!(paSignedIn()&&_fsLoaded.has('pa_waitlist'))){db.collection('pa_public').doc('stats').get().then(d=>{if(el&&d.exists)el.textContent=d.data().waitCount||0;}).catch(()=>{});return;}
 const wl=lG('pa_waitlist',[]);
 const pending=wl.filter(w=>w.status==='pending').length;
-const el=document.getElementById('heroWaitCount');
 if(el)el.textContent=pending;
+if(typeof aOK!=='undefined'&&aOK&&window._paLastWait!==pending){window._paLastWait=pending;db.collection('pa_public').doc('stats').set({waitCount:pending},{merge:true}).catch(e=>console.warn('[PA] 대기 수 공개 실패',e));}
+}
+/* [0-2] 관리자: 공개 접수함의 새 신청서를 대기 명단으로 옮김 */
+let _paMergeAt=0;
+async function paMergeApplications(){
+if(!(typeof aOK!=='undefined'&&aOK)||!_fsLoaded.has('pa_waitlist'))return;
+if(Date.now()-_paMergeAt<15000)return;_paMergeAt=Date.now();
+try{const snap=await db.collection('pa_applications').get();if(snap.empty)return;
+const wl=lG('pa_waitlist',[]);const ids=new Set(wl.map(x=>x.id));let added=0;
+snap.forEach(d=>{const v=d.data();if(v&&v.id&&!ids.has(v.id)){wl.push(v);ids.add(v.id);added++;}});
+lS('pa_waitlist',wl);
+const b=db.batch();snap.forEach(d=>b.delete(d.ref));await b.commit();
+if(added){toast('새 이용 신청 '+added+'건이 대기 명단에 추가되었습니다');}
+if(typeof aTab!=='undefined'&&aTab==='a-wait')rAB();else updateWaitCount();
+}catch(e){console.warn('[PA] 신청서 옮기기 실패',e);}
 }
 /* 페이지 로드 시 대기 인원 수 표시 */
 setTimeout(updateWaitCount,800);
@@ -4485,18 +4523,14 @@ if(!h||h<100||h>250){toast('키를 입력하세요','err');return;}
 if(!w||w<20||w>200){toast('몸무게를 입력하세요','err');return;}
 if(!phone){toast('연락처를 입력하세요','err');return;}
 if(!goal){toast('운동 목표를 선택하세요','err');return;}
-const wl=lG('pa_waitlist',[]);
-/* 중복 체크 */
-if(wl.some(x=>x.name===name&&x.phone===phone&&x.status==='pending')){toast('이미 신청된 정보입니다','err');return;}
-wl.push({
-id:'WL'+Date.now(),name,age,g,h,w,phone,goal,memo,
-status:'pending',
-createdAt:new Date().toISOString(),
-code:null
-});
-lS('pa_waitlist',wl);
-updateWaitCount();
+/* [0-2] 신청서는 공개 접수함(pa_applications)에 따로 저장 → 관리자가 대기 관리를 열 때 대기 명단으로 옮겨짐 */
+const _apId='WL'+Date.now()+Math.random().toString(36).slice(2,6);
+const _ap={id:_apId,name,age,g,h,w,phone,goal,memo,status:'pending',createdAt:new Date().toISOString(),code:null};
+const _apBtn=document.querySelector('#applyForm button[onclick*="submitApply"]');if(_apBtn)_apBtn.disabled=true;
+db.collection('pa_applications').doc(_apId).set(_ap).then(()=>{
+const _wc=document.getElementById('heroWaitCount');if(_wc)_wc.textContent=(parseInt(_wc.textContent)||0)+1;
 document.getElementById('applyForm').innerHTML=`<div class="ap-success"><div class="ap-ico">✅</div><h3>신청 완료!</h3><p>${name}님의 이용 신청이 접수되었습니다.<br>선생님이 확인 후 승인하면<br><strong style="color:var(--accent);">입장 코드</strong>가 발급됩니다.<br><br>승인까지 1~2일 소요될 수 있습니다.</p><button class="btng" onclick="go('home')" style="margin-top:20px;display:inline-flex;">홈으로 돌아가기</button></div>`;
+}).catch(e=>{console.error('apply error:',e);if(_apBtn)_apBtn.disabled=false;toast('신청 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.','err');});
 }
 
 /* 관리자: 대기 관리 탭 */
@@ -5549,7 +5583,7 @@ return name.charAt(0)+'**';
 let _pubInqCache=[];let _pubInqLoaded=false;
 async function loadPublicInquiries(){
 try{
-const snap=await db.collection('pa_inquiries').orderBy('ts','desc').limit(30).get();
+const snap=await db.collection('pa_inquiries_public').orderBy('ts','desc').limit(30).get();
 _pubInqCache=[];
 snap.forEach(doc=>{const d=doc.data();if(d.reply)_pubInqCache.push({id:doc.id,...d});});
 _pubInqLoaded=true;
@@ -5647,12 +5681,16 @@ toast('문의가 접수되었습니다');
 
 /* 관리자: 문의관리 탭 */
 let _inqCache=[];let _inqLoaded=false;
+/* [0-2] 공개 Q&A용 사본: 이름은 첫 글자만, 연락처·학생코드는 넣지 않음 */
+function paPublishInquiry(id,q){if(!q||!q.reply)return Promise.resolve();return db.collection('pa_inquiries_public').doc(id).set({name:anonName(q.name||''),type:q.type||'',msg:q.msg||'',reply:q.reply,replyDate:q.replyDate||'',ts:q.ts||''}).catch(e=>console.warn('[PA] 문의 공개본 저장 실패',e));}
 async function loadInquiries(){
 try{
 const snap=await db.collection('pa_inquiries').orderBy('ts','desc').limit(50).get();
 _inqCache=[];
 snap.forEach(doc=>{_inqCache.push({id:doc.id,...doc.data()});});
 _inqLoaded=true;
+/* [0-2] 답변된 문의의 공개본(이름 가림, 연락처 없음) 맞추기 */
+_inqCache.forEach(q=>{if(q.reply)paPublishInquiry(q.id,q);});
 }catch(e){console.warn('inquiry load error:',e);}
 }
 function aInquiry(){
@@ -5716,6 +5754,7 @@ const reply=ta?.value.trim();
 if(!reply){toast('답변 내용을 입력하세요','err');return;}
 try{
 await db.collection('pa_inquiries').doc(id).update({reply,replyDate:new Date().toLocaleDateString('ko-KR'),read:true});
+{const _d=await db.collection('pa_inquiries').doc(id).get();if(_d.exists)await paPublishInquiry(id,_d.data());}
 toast('답변 완료');
 _inqLoaded=false;rAB();
 }catch(e){console.error(e);toast('답변 저장 실패','err');}
@@ -5732,6 +5771,7 @@ async function inqDelete(id){
 if(!confirm('이 문의를 삭제하시겠습니까?'))return;
 try{
 await db.collection('pa_inquiries').doc(id).delete();
+await db.collection('pa_inquiries_public').doc(id).delete().catch(()=>{});
 toast('삭제 완료');
 _inqLoaded=false;rAB();
 }catch(e){console.error(e);toast('삭제 실패','err');}
