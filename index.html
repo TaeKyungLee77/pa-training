@@ -21,8 +21,9 @@ html{scroll-behavior:smooth;}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);}
 a{text-decoration:none;color:inherit;}
 button{font-family:inherit;cursor:pointer;border:none;background:none;}
-/* 선택 목록(드롭다운) 펼쳤을 때 글자 검정색 */
-select option,select optgroup{color:#09111C;background:#fff;}
+/* 선택 목록(드롭다운) 펼쳤을 때 글자 검정색 · 날짜/시간 입력칸 아이콘도 보이게 */
+:root{color-scheme:dark;}
+select option,select optgroup{color:#09111C !important;background:#fff !important;}
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 90% 55% at 65% 38%,rgba(100,160,200,.07) 0%,transparent 65%),radial-gradient(ellipse 50% 40% at 15% 85%,rgba(232,98,42,.05) 0%,transparent 60%);}
 body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(100,160,200,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(100,160,200,.03) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse 100% 100% at 50% 0%,black 20%,transparent 80%);}
 .nav{position:fixed;top:0;left:0;right:0;z-index:200;height:calc(var(--nav) + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top) 40px 0;background:rgba(9,17,28,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
