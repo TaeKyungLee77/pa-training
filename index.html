@@ -13,6 +13,7 @@
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <style>
 :root{--bg:#09111C;--bg2:#0F1923;--card:#152234;--card2:#1A2E4A;--accent:#64A0C8;--a2:#4A88B8;--orange:#E8622A;--o2:#C84E1A;--green:#6FCF97;--yellow:#FEE500;--text:#FFF;--muted:rgba(255,255,255,.45);--border:rgba(100,160,200,.14);--r:16px;--nav:64px;}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
@@ -1179,6 +1180,20 @@ const CN={chicken:'닭가슴살',salad:'샐러드·도시락',snack:'간식',car
 const firebaseConfig={apiKey:"AIzaSyCICKJ00FCnb780oQ9_mZTgszG0FL64eFU",authDomain:"patraining-c1cd3.firebaseapp.com",projectId:"patraining-c1cd3",storageBucket:"patraining-c1cd3.firebasestorage.app",messagingSenderId:"414257826796",appId:"1:414257826796:web:537d28d40af145499fcec9"};
 firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
+/* [0-1] 카카오 로그인 → Firebase 로그인 연결. 실패해도 사이트는 기존대로 동작 */
+const PA_AUTH_URL='https://kakaoauth-414257826796.asia-northeast3.run.app';
+async function paFirebaseSignIn(){
+  try{
+    const kt=(window.Kakao&&Kakao.Auth&&Kakao.Auth.getAccessToken)?Kakao.Auth.getAccessToken():null;
+    if(!kt){console.warn('[PA] 카카오 토큰 없음 — Firebase 로그인 건너뜀');return;}
+    const r=await fetch(PA_AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kakaoAccessToken:kt})});
+    if(!r.ok)throw new Error('kakaoAuth '+r.status);
+    const d=await r.json();
+    await firebase.auth().signInWithCustomToken(d.token);
+    console.log('[PA] Firebase 로그인 완료:',firebase.auth().currentUser.uid,'역할:',d.role);
+  }catch(e){console.warn('[PA] Firebase 로그인 실패 (사이트는 계속 동작):',e);}
+}
+function paFirebaseSignOut(){try{firebase.auth().signOut();}catch(e){}}
 const _cache={};let _fsReady=false;
 const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions'];
 async function fsInit(){
@@ -1246,7 +1261,7 @@ return;
 if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
 try{Kakao.Auth.authorize({redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}
 /* 카카오 유저 처리 (공용) */
-function handleKakaoUser(r){const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
+function handleKakaoUser(r){paFirebaseSignIn();const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
 if(kid===getAdminKakaoId()){setN('관리자 ('+nn+')',img);toast(nn+' 관리자님 환영합니다!');go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');aOK=true;window._acaMode=false;rAT();return;}
 const map=lG('pa_kakao_users',{});const mapped=map[kid];
 /* 학원 원장/선생 자동 로그인 */
@@ -1614,7 +1629,7 @@ go('my');
 document.addEventListener('DOMContentLoaded',async()=>{await fsInit();await loadStudents();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
 function setN(n,img){const prof=document.getElementById('navProf');if(prof)prof.classList.add('show');const nm=document.getElementById('navNm');if(nm)nm.textContent=n;const av=document.getElementById('navAv');if(av){if(img)av.innerHTML=`<img src="${img}" alt="">`;else av.innerHTML=`<span id="navAvT">${n?n[0]:'😊'}</span>`;}}
-function doLogout(){LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
+function doLogout(){paFirebaseSignOut();LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
 document.getElementById('loginBox').innerHTML=`<div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><div class="dtog" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 입장 코드로 시작하기</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">선생님께 받은 코드를 입력하세요</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">※ 입장 코드는 발급 후 3일간 유효<br>ltk6154@gmail.com</div></div>`;
 document.getElementById('loginBox').style.display='block';document.getElementById('myDB').style.display='none';document.getElementById('navProf').classList.remove('show');
 const inp=document.getElementById('dcI');if(inp){inp.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});inp.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}
