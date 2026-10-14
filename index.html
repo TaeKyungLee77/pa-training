@@ -6464,6 +6464,15 @@ function program(c){
 }
 
 /* ---------- 출석 처리 (키오스크 · 코치 공통) ---------- */
+/* 출석 취소 (코치 모드) — 오늘 출석·운동 기록 삭제, 출석부 'O' 제거, 사용한 QR은 다시 못 쓰게 */
+async function cancelAttend(c){
+ const d=today(),key=d+'_'+c,b=db.batch();
+ b.delete(COL('att').doc(key));b.delete(COL('logs').doc(key));b.set(COL('qr').doc(c),{used:true,cancelledAt:Date.now()},{merge:true});
+ await b.commit();
+ try{if(typeof _v2!=='undefined'&&_v2){await db.collection('pa_stu').doc(c).set({pa_attendance:{[d]:firebase.firestore.FieldValue.delete()}},{merge:true});}
+  else{const ref=db.collection('pa_data').doc('pa_attendance');await db.runTransaction(async t=>{const doc=await t.get(ref);const v=(doc.exists&&doc.data().value)||{};if(v[c]&&v[c][d]){delete v[c][d];t.set(ref,{value:v});}});}
+ }catch(e){console.warn('[PA 운영] 출석부 취소 반영 실패',e);}
+}
 async function markAttend(c,via){
  const s=stu(c);if(!s)throw new Error('학생 없음');
  const d=today(),key=d+'_'+c,attRef=COL('att').doc(key);
@@ -6610,9 +6619,23 @@ function viewKiosk(){
 /* ================= 코치 모드 ================= */
 function viewCoach(selArg){
  cleanup();if(!aOK)return needAdmin('코치 모드');
- let sel=selArg&&stu(selArg)?selArg:null,att={},logs={};
+ let sel=selArg&&stu(selArg)?selArg:null,att={},logs={},claims={};
+ /* 코치 구분 (0-4 코치 계정 전까지: 이 기기·탭 단위) */
+ const COACH_ID=(()=>{try{let v=sessionStorage.getItem('po_coach_id');if(!v){v='c'+Math.random().toString(36).slice(2,10);sessionStorage.setItem('po_coach_id',v);}return v;}catch(e){return 'c'+Date.now();}})();
+ let coachName=(()=>{try{return localStorage.getItem('po_coach_name')||'';}catch(e){return '';}})();
+ const askName=()=>{const v=prompt('코치 이름을 입력하세요 (POD 사용 표시에 쓰입니다)',coachName||'');if(v&&v.trim()){coachName=v.trim().slice(0,12);try{localStorage.setItem('po_coach_name',coachName);}catch(e){}const bt=document.getElementById('poCoachNm');if(bt)bt.textContent='코치: '+coachName;}};
+ /* POD 중복 사용 방지: 학생이 남아 있는 POD는 처음 배정한 코치만 사용 */
+ const POD_MAX=p=>/POD(3|6)$/.test(p)?12:3;
+ const activeOn=(p,except)=>Object.values(logs).filter(x=>x&&x.date===d&&x.pod===p&&!x.ended&&x.code!==except);
+ const podOwner=p=>{const cl=claims[p];return cl&&activeOn(p).length?cl:null;};
+ const lockedFor=p=>{const o=podOwner(p);return o&&o.coachId!==COACH_ID?o:null;};
+ async function claimPod(p,c){const ref=COL('pods').doc(d+'_'+p);await db.runTransaction(async t=>{const doc=await t.get(ref);const cl=doc.exists?doc.data():null;const others=activeOn(p,c);
+   if(cl&&cl.coachId!==COACH_ID&&others.length)throw new Error('LOCK:'+(cl.coachName||'다른'));
+   if(others.length>=POD_MAX(p))throw new Error('FULL');
+   t.set(ref,{date:d,pod:p,coachId:COACH_ID,coachName:coachName||'코치',at:Date.now()});});}
+ function releaseIfEmpty(p,c){if(!p||!PODS[p]||activeOn(p,c).length)return;const cl=claims[p];if(cl&&cl.coachId===COACH_ID)COL('pods').doc(d+'_'+p).delete().catch(()=>{});}
  const d=today();
- open(top('코치 모드',`오늘 ${d}`)+`<div class="po-coach"><div><div class="po-rost" id="poRost"></div>
+ open(top('코치 모드',`오늘 ${d}`,`<button class="po-x" id="poCoachNm">코치: ${E(coachName||'이름 입력')}</button>`)+`<div class="po-coach"><div><div class="po-rost" id="poRost"></div>
   <div class="po-card" style="margin-top:12px"><div class="po-lbl">수동 출석 (QR 없이)</div><select id="poManSel" style="width:100%;padding:10px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"></select><button class="po-btn sm" id="poManBtn" style="margin-top:8px;width:100%">출석 처리</button></div>
   <p class="po-note" style="margin-top:12px">TV에는 이름 일부와 오늘 운동만 나갑니다. 체중·체지방·컨디션은 코치 화면에서만 보입니다.</p></div><div id="poDet"></div></div>`);
  function roster(){
@@ -6639,13 +6662,15 @@ function viewCoach(selArg){
   const live=!!a&&!(l&&l.ended);
   det.innerHTML=`<div class="po-grid">
   <div class="po-card"><div class="po-row" style="justify-content:space-between;flex-wrap:wrap"><div class="po-row">${avatar(c)}<div><div style="font-size:22px;font-weight:900">${E(s.name)} <span class="po-sub">${s.age?E(s.age)+'세 · ':''}${E(aca.name||'학원 미지정')}</span></div><div style="margin-top:4px">${btChip(c)} ${rsvToday(c)?`<span class="po-chip" style="background:rgba(255,255,255,.08)">${rsvToday(c)}</span>`:''}</div></div></div>
-   <div>${a?`<span class="po-chip" style="background:rgba(111,207,151,.18);color:var(--green)">${hm(a.at)} 출석 · ${a.via==='kiosk'?'QR':'수동'}</span>`:`<button class="po-btn sm" id="poAttBtn">출석 처리</button>`}</div></div>
+   <div class="po-row" style="flex-wrap:wrap;justify-content:flex-end">${a?`<span class="po-chip" style="background:rgba(111,207,151,.18);color:var(--green)">${hm(a.at)} 출석 · ${a.via==='kiosk'?'QR':'수동'}</span><button class="po-btn sm g" id="poCancelAtt">출석 취소</button>`:`<button class="po-btn sm" id="poAttBtn">출석 처리</button>`}</div></div>
    ${s.goal?`<div class="po-note" style="margin-top:10px">목표: ${E(s.goal)}</div>`:''}</div>
   <div class="po-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
    <div class="po-card ${cd&&cd.score<=2?'po-warn':''}"><div class="po-lbl">오늘 컨디션</div>${cd?`<div style="font-size:16px;font-weight:900">${(typeof COND_EMOJIS!=='undefined'&&COND_EMOJIS[cd.score-1])||''} ${(typeof COND_LABELS!=='undefined'&&COND_LABELS[cd.score-1])||E(cd.score)}</div>${(cd.tags||[]).length?`<div style="margin-top:6px">${cd.tags.map(t=>`<span class="po-chip" style="background:rgba(232,98,42,.15);color:var(--orange);margin:0 4px 4px 0">${E(t)}</span>`).join('')}</div>`:''}${cd.memo?`<div class="po-note" style="margin-top:6px">메모: ${E(cd.memo)}</div>`:''}`:'<div class="po-note">오늘 컨디션 체크 기록 없음</div>'}</div>
    <div class="po-card"><div class="po-lbl">인바디 최근 ${ib.length||''}회</div>${ib.length?`<table class="po-ib"><tr><th>측정일</th><th>체중</th><th>골격근</th><th>체지방률</th></tr>${ib.map(r=>`<tr><td>${E(r.date||'')}</td><td>${r.weight!=null?E(r.weight)+'kg':'-'}</td><td>${r.skeletalMuscle!=null?E(r.skeletalMuscle)+'kg':'-'}</td><td>${r.bodyFatPct!=null?E(r.bodyFatPct)+'%':'-'}</td></tr>`).join('')}</table>${ibDelta}`:'<div class="po-note">인바디 기록 없음</div>'}</div>
   </div>
-  <div class="po-card"><div class="po-lbl">POD 배정 ${a?'':'(출석 후 가능)'}</div><div class="po-pods">${Object.keys(PODS).map(p=>`<button data-p="${p}" class="${l&&l.pod===p?'on':''}" ${a?'':'disabled'}>${podLabel(p)}<br><span style="font-weight:500;font-size:11px;opacity:.8">${PODS[p].name}</span></button>`).join('')}</div></div>
+  <div class="po-card"><div class="po-lbl">POD 배정 ${a?'':'(출석 후 가능)'}</div><div class="po-pods">${Object.keys(PODS).map(p=>{const mine=!!(l&&l.pod===p),lk=lockedFor(p),n=activeOn(p,c).length,full=!mine&&n>=POD_MAX(p);
+   return `<button data-p="${p}" class="${mine?'on':''}" ${!a||(!mine&&(lk||full))?'disabled':''}>${podLabel(p)}<br><span style="font-weight:500;font-size:11px;opacity:.85">${lk?E(lk.coachName||'다른')+' 코치 사용 중':full?'정원 마감':PODS[p].name}</span>${n?`<br><span style="font-weight:500;font-size:10.5px;opacity:.7">현재 ${n}명</span>`:''}</button>`;}).join('')}</div>
+   ${Object.keys(PODS).some(p=>lockedFor(p))?`<div class="po-note" style="margin-top:8px">다른 코치가 쓰는 POD는 선택할 수 없습니다. 그 코치의 학생이 모두 수업 종료되면 자동으로 풀립니다. ${Object.keys(PODS).filter(p=>lockedFor(p)).map(p=>`<button class="po-btn sm g" style="margin:4px 4px 0 0" data-unlock="${p}">${podLabel(p)} 잠금 강제 해제</button>`).join('')}</div>`:''}</div>
   <div class="po-card"><div class="po-row" style="justify-content:space-between;margin-bottom:10px;flex-wrap:wrap"><div class="po-lbl" style="margin:0">오늘 운동 · ${E((l&&l.btName)||program(c).btName||'')} ${E((l&&l.label)||'')}</div><div class="po-sub">진행 ${doneSets(l)}/${totalSets(l)||items.reduce((x,y)=>x+y.sets,0)}세트 ${restLeft?`· <b style="color:var(--orange)">휴식 ${fmtSec(restLeft)}</b>`:''}</div></div>
    ${items.length?items.map((e,i)=>{const dn=l&&l.done?l.done[i]||0:0,cur=live&&l&&l.cur===i;return `<div class="po-exr ${cur?'cur':''} ${dn>=e.sets?'done':''}"><div><div style="font-weight:900">${i+1}. ${E(e.n)}</div><div class="po-sub">${E(e.part)} · ${E(e.d)}</div>${live&&!cur&&dn<e.sets?`<button class="po-btn sm g" style="margin-top:6px" data-cur="${i}">이 운동으로 이동</button>`:''}</div>
     <div class="po-dots">${Array.from({length:e.sets},(_,k)=>`<div class="po-dot ${k<dn?'f':''}">${k+1}</div>`).join('')}${live?`<button class="po-btn sm" data-set="${i}" ${dn>=e.sets?'disabled':''}>세트 완료</button><button class="po-btn sm g" data-undo="${i}" ${dn?'':'disabled'}>−</button>`:''}</div></div>`;}).join(''):'<div class="po-note">오늘은 프로그램이 없는 날이에요 (휴식일). 코치가 직접 지도합니다.</div>'}
@@ -6654,19 +6679,27 @@ function viewCoach(selArg){
   const ref=COL('logs').doc(d+'_'+c);
   const upd=o=>{const prev=logs[c]||{};const next=Object.assign({},prev,o);const nl=Object.assign({},logs,{[c]:next});return ref.set(o,{merge:true}).then(()=>pushDisplay([prev.pod,next.pod],nl)).catch(fsErr);};
   const ab=document.getElementById('poAttBtn');if(ab)ab.onclick=async()=>{ab.disabled=true;try{await markAttend(c,'coach');toastP(s.name+' 출석 처리 완료');}catch(e){fsErr(e);ab.disabled=false;}};
-  det.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{upd({pod:b.dataset.p});toastP(`${s.name} → ${podFull(b.dataset.p)}`);});
+  det.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{const p=b.dataset.p,prevPod=l&&l.pod;if(prevPod===p)return;
+   if(!coachName)askName();b.disabled=true;
+   try{await claimPod(p,c);await upd({pod:p});releaseIfEmpty(prevPod,c);toastP(`${s.name} → ${podFull(p)}`);}
+   catch(e){const m=String(e&&e.message||e);toastP(m.startsWith('LOCK:')?`${m.slice(5)} 코치가 사용 중인 POD입니다`:m==='FULL'?'이 POD는 정원이 찼습니다':'배정 실패: '+m,'err');drawDetail();}});
+  det.querySelectorAll('[data-unlock]').forEach(b=>b.onclick=()=>{const p=b.dataset.unlock,o=lockedFor(p);if(!confirm(`${podLabel(p)}의 잠금을 강제로 해제할까요?\n(${o?o.coachName:'다른'} 코치가 아직 쓰고 있다면 겹칠 수 있습니다)`))return;COL('pods').doc(d+'_'+p).delete().then(()=>toastP(podLabel(p)+' 잠금 해제')).catch(fsErr);});
+  const ca=document.getElementById('poCancelAtt');if(ca)ca.onclick=async()=>{if(!confirm(`${s.name} 학생의 오늘 출석을 취소할까요?\n\n오늘 운동 기록과 POD 배정도 함께 지워집니다.`))return;ca.disabled=true;
+   try{const pod=l&&l.pod;await cancelAttend(c);if(pod){const nl=Object.assign({},logs);delete nl[c];pushDisplay([pod],nl);releaseIfEmpty(pod,c);}toastP(s.name+' 출석을 취소했습니다');}catch(e){fsErr(e);ca.disabled=false;}};
   det.querySelectorAll('[data-cur]').forEach(b=>b.onclick=()=>upd({cur:+b.dataset.cur,restUntil:0}));
   det.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{if(!l)return;const i=+b.dataset.set,e=items[i];const done=(Array.isArray(l.done)?l.done:items.map(()=>0)).slice();done[i]=Math.min(e.sets,(done[i]||0)+1);
    let cur=i;if(done[i]>=e.sets){const nx=items.findIndex((x,j)=>j>i&&(done[j]||0)<x.sets),any=items.findIndex((x,j)=>(done[j]||0)<x.sets);cur=nx>=0?nx:(any>=0?any:i);}
    const all=items.every((x,j)=>(done[j]||0)>=x.sets);upd({done,cur,restUntil:all?0:Date.now()+60000});});
   det.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>{if(!l)return;const i=+b.dataset.undo;const done=l.done.slice();done[i]=Math.max(0,(done[i]||0)-1);upd({done,cur:i,restUntil:0});});
   const rs=document.getElementById('poRest');if(rs)rs.onclick=()=>upd({restUntil:Date.now()+60000});
-  const en=document.getElementById('poEnd');if(en)en.onclick=()=>{if(confirm(s.name+' 학생 수업을 종료할까요?'))upd({ended:true,endedAt:Date.now(),restUntil:0});};
-  const ro=document.getElementById('poReopen');if(ro)ro.onclick=()=>upd({ended:false});
+  const en=document.getElementById('poEnd');if(en)en.onclick=async()=>{if(!confirm(s.name+' 학생 수업을 종료할까요?'))return;await upd({ended:true,endedAt:Date.now(),restUntil:0});releaseIfEmpty(l&&l.pod,c);};
+  const ro=document.getElementById('poReopen');if(ro)ro.onclick=async()=>{if(l&&l.pod&&PODS[l.pod]){try{await claimPod(l.pod,c);}catch(e){const m=String(e&&e.message||e);return toastP(m.startsWith('LOCK:')?`${m.slice(5)} 코치가 그 POD를 쓰고 있어 다시 열 수 없습니다. POD를 먼저 바꿔 주세요`:'다시 열기 실패: '+m,'err');}}upd({ended:false});};
  }
  document.getElementById('poManBtn').onclick=async()=>{const v=document.getElementById('poManSel').value;if(!v)return toastP('학생을 선택하세요','err');try{const r=await markAttend(v,'coach');toastP(r.already?S[v].name+' 학생은 이미 출석했어요':S[v].name+' 출석 처리 완료');sel=v;drawRoster();drawDetail();}catch(e){fsErr(e);}};
  onClean(COL('att').where('date','==',d).onSnapshot(snap=>{att={};snap.forEach(x=>{const v=x.data();att[v.code]=v;});drawRoster();drawDetail();},fsErr));
  onClean(COL('logs').where('date','==',d).onSnapshot(snap=>{logs={};snap.forEach(x=>{const v=x.data();logs[v.code]=v;});drawRoster();drawDetail();},fsErr));
+ onClean(COL('pods').where('date','==',d).onSnapshot(snap=>{claims={};snap.forEach(x=>{const v=x.data();claims[v.pod]=v;});drawDetail();},fsErr));
+ {const nb=document.getElementById('poCoachNm');if(nb)nb.onclick=askName;if(!coachName)setTimeout(askName,300);}
  every(1000,()=>{if(sel&&logs[sel]&&logs[sel].restUntil>Date.now()-1500)drawDetail();});
  drawRoster();drawDetail();
 }
