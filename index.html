@@ -1276,11 +1276,11 @@ function paLinkErr(e,dflt){
   return '⚠️ 서버 연결 오류. 잠시 후 다시 시도하세요.';
 }
 const _cache={};let _fsReady=false;const _fsLoaded=new Set();
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions','pa_academy_names','pa_center_cfg'];
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions','pa_academy_names','pa_center_cfg','pa_curriculum'];
 /* [0-2] 로그인하지 않은 방문자도 볼 수 있는 공개 데이터 */
 const PA_PUBLIC_KEYS=['pa_notices_c','pa_custom_prods'];
 /* [0-4] 로그인한 사람(학생·학원·코치·키오스크)이 함께 보는 설정 — 나머지 공통 데이터는 관리자만 */
-const PA_SIGNED_KEYS=['pa_schedule_slots','pa_aicoach_config','pa_special_lecture_config','pa_custom_regions','pa_academy_names','pa_center_cfg'];
+const PA_SIGNED_KEYS=['pa_schedule_slots','pa_aicoach_config','pa_special_lecture_config','pa_custom_regions','pa_academy_names','pa_center_cfg','pa_curriculum'];
 function paKeys(){if(!paSignedIn())return PA_PUBLIC_KEYS;if(paRole()==='super_admin')return FS_KEYS;return PA_PUBLIC_KEYS.concat(PA_SIGNED_KEYS);}
 /* [0-4] 역할별로 읽을 학생 문서: 관리자·코치 전체 / 학원 자기 학원 / 학생·학부모 본인 / 키오스크·미연결 없음 */
 function paStuSrc(){const r=paRole();
@@ -6593,6 +6593,17 @@ const BLOCKS={
 const BLOCK_ORDER=['A','B','C','D'],BLOCK_MET={A:3.8,B:5.0,C:6.0,D:8.0};
 /* 체형별 메인 비중 (하체 : 상체 : 코어) — 커리큘럼 6장 */
 const RATIO={tri:[4,4,2],inv:[6,2,2],rec:[4,3,3],dia:[3,3,4],heart:[6,2,2],oval:[4,3,3]};
+/* 관리자가 '📚 운동 커리큘럼' 탭에서 저장한 내용(pa_curriculum)이 있으면 그것을, 없거나 잘못되면 기본값을 씀 */
+const CUR_PARTS=[['lower','하체'],['upper','상체'],['core','코어']],CUR_BODY=['발목','무릎','고관절','허리','어깨'],CUR_D=/^\d+\s*×\s*\d+/;
+function curValid(x){try{if(!x||!x.blocks)return false;return BLOCK_ORDER.every(k=>{const b=x.blocks[k];return b&&typeof b.nm==='string'&&b.nm&&+b.rest>=0&&CUR_PARTS.every(([p])=>Array.isArray(b[p])&&b[p].length>0&&b[p].every(it=>it&&typeof it.n==='string'&&it.n.trim()&&CUR_D.test(String(it.d||''))));});}catch(e){return false;}}
+let _libSrc=null,_libVal=null;
+function LIB(){let raw=null;try{raw=(typeof _cache!=='undefined'&&_cache.pa_curriculum!==undefined)?_cache.pa_curriculum:lG('pa_curriculum',null);}catch(e){}
+ if(raw===_libSrc&&_libVal)return _libVal;_libSrc=raw;
+ if(curValid(raw)){const ratio=Object.assign({},RATIO);Object.keys(RATIO).forEach(k=>{const r=raw.ratio&&raw.ratio[k];if(Array.isArray(r)&&r.length===3&&r.every(v=>+v>=0&&+v<=10)&&r.some(v=>+v>0))ratio[k]=r.map(Number);});
+  const blocks={};BLOCK_ORDER.forEach(k=>{const b=raw.blocks[k];blocks[k]={nm:b.nm,sub:b.sub||'',rest:+b.rest};CUR_PARTS.forEach(([p])=>blocks[k][p]=b[p].map(it=>({n:it.n.trim(),d:String(it.d).trim(),b:CUR_BODY.includes(it.b)?it.b:''})));});
+  _libVal={blocks,ratio,custom:true,at:raw.at||0};}
+ else _libVal={blocks:BLOCKS,ratio:RATIO,custom:false,at:0};
+ return _libVal;}
 const DAYMS=86400000;
 const ymd=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
 const parseYmd=v=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v||''));return m?new Date(+m[1],+m[2]-1,+m[3],12):null;};
@@ -6634,9 +6645,9 @@ function program(c,opts){
  opts=opts||{};const empty={label:'센터 수업',btName:'',items:[],extra:[],planMin:0,meta:{}};
  try{
   const C=cfg(),s=stu(c)||{};const at=opts.date?new Date(opts.date):new Date();at.setHours(12,0,0,0);
-  const bt=getStudentBodyType(c),btKey=bt&&bt.type;const data=EX_DATA[BT_NAME_MAP[btKey]||'']||EX_DATA['직사각형']||{};
-  const ph=phaseOf(c,at),B=BLOCKS[ph.block],day=opts.day||dayTypeOf(c,at),fl=opts.noFlags?{}:flagsOf(c,at);
-  const [L,U,Co]=RATIO[btKey]||[4,3,3];const items=[],seen=new Set();
+  const bt=opts.bt?{type:opts.bt}:getStudentBodyType(c),btKey=bt&&bt.type;const data=EX_DATA[BT_NAME_MAP[btKey]||'']||EX_DATA['직사각형']||{};
+  const L0=opts.lib||LIB();const ph=opts.ph||phaseOf(c,at),B=L0.blocks[ph.block],day=opts.day||dayTypeOf(c,at),fl=opts.noFlags?{}:flagsOf(c,at);
+  const [L,U,Co]=L0.ratio[btKey]||[4,3,3];const items=[],seen=new Set();
   const excl=it=>(fl.valgus&&/점프|홉/.test(it.n)&&!/착지/.test(it.n))||(fl.balance&&/홉|스케이터/.test(it.n))||(fl.back&&/데드리프트|슬램|슈퍼맨/.test(it.n))||(!!opts.skipBody&&it.b===opts.skipBody);
   const add=(it,part,zone,met,restSec)=>{if(!it||seen.has(keyOf(it.n))||excl(it))return null;seen.add(keyOf(it.n));
    let d=it.d||'';if(!it.min)d=lessSets(bump(d,ph.cyc),ph.vol);
@@ -6677,7 +6688,7 @@ function reportData(c){
  const names=(from,weeks)=>{const set=new Set();for(let i=0;i<weeks;i++){const d=new Date(from.getTime()+(i*7+2)*DAYMS);['A','B'].forEach(dy=>program(c,{date:d,day:dy,noFlags:true}).items.forEach(x=>{if(x.part==='메인'||x.part==='마무리')set.add(x.n);}));}set.delete(STRETCH.n);return set;};
  let cur=new Set(),prev=new Set(),theme='',next='';
  if(ph.track==='general'){const bStart=new Date(monday(at).getTime()-ph.w*7*DAYMS);cur=names(bStart,ph.w+1);if(ph.wk-ph.w>=4)prev=names(new Date(bStart.getTime()-28*DAYMS),4);
-  theme=`${ph.block}. ${BLOCKS[ph.block].nm} (${BLOCKS[ph.block].sub})`;const nb=BLOCK_ORDER[(BLOCK_ORDER.indexOf(ph.block)+1)%4];next=`${nb}. ${BLOCKS[nb].nm}`;}
+  const LB=LIB().blocks;theme=`${ph.block}. ${LB[ph.block].nm} (${LB[ph.block].sub})`;const nb=BLOCK_ORDER[(BLOCK_ORDER.indexOf(ph.block)+1)%4];next=`${nb}. ${LB[nb].nm}`;}
  else{cur=names(monday(at),1);theme=`콩쿠르·입시 ${ph.phase} (${ph.days>=0?'D-'+ph.days:'D+'+(-ph.days)})`;next=ph.phase==='강화기'?'특화기':ph.phase==='특화기'?'조정기':(ph.phase==='조정기'||ph.phase==='대회 직전')?'회복기':'일반과정';}
  const fresh=[...cur].filter(n=>!prev.has(n));
  const att=(lG('pa_attendance',{})||{})[c]||{};const since=ymd(new Date(at.getTime()-28*DAYMS));const nAtt=Object.keys(att).filter(k=>att[k]==='O'&&k>=since).length;
@@ -6707,7 +6718,7 @@ function viewReport(arg){
 }
 
 /* 운동 추가용 목록 (오늘 체형 기준 전체 + 서킷) */
-function addPool(c){const out0=[];try{const ph=phaseOf(c,new Date()),B=BLOCKS[ph.block];[['lower','이번 블록 · 하체'],['upper','이번 블록 · 상체'],['core','이번 블록 · 코어']].forEach(([k,g])=>(B[k]||[]).forEach(it=>out0.push({grp:g,n:it.n,d:it.d,zone:(k==='core'||ph.block==='D')?'core':'rack',met:BLOCK_MET[ph.block],part:k==='core'?'마무리':'메인',b:it.b})));}catch(e){}const bt=getStudentBodyType(c);const data=EX_DATA[BT_NAME_MAP[bt&&bt.type]||'']||EX_DATA['직사각형']||{gym:{}};const g=data.gym||{},out=[];
+function addPool(c){const out0=[];try{const ph=phaseOf(c,new Date()),B=LIB().blocks[ph.block];[['lower','이번 블록 · 하체'],['upper','이번 블록 · 상체'],['core','이번 블록 · 코어']].forEach(([k,g])=>(B[k]||[]).forEach(it=>out0.push({grp:g,n:it.n,d:it.d,zone:(k==='core'||ph.block==='D')?'core':'rack',met:BLOCK_MET[ph.block],part:k==='core'?'마무리':'메인',b:it.b})));}catch(e){}const bt=getStudentBodyType(c);const data=EX_DATA[BT_NAME_MAP[bt&&bt.type]||'']||EX_DATA['직사각형']||{gym:{}};const g=data.gym||{},out=[];
  [['upper','상체','rack',5.0],['lower','하체','rack',5.0],['core','코어','core',3.8]].forEach(([k,nm,z,met])=>(g[k]||[]).forEach(it=>{const n=SUBST[it.n]?SUBST[it.n].n:it.n;out.push({grp:nm,n,d:it.d,zone:z,met,part:k==='core'?'마무리':'메인'});}));
  [['upper','상체'],['lower','하체']].forEach(([k,nm])=>(FILL[k]||[]).forEach(it=>out.push({grp:nm,n:it.n,d:it.d,zone:'rack',met:5.0,part:'메인'})));
  CIRCUIT.forEach(it=>out.push({grp:'서킷',n:it.n,d:it.d,zone:'core',met:8.0,part:'메인'}));
@@ -7150,6 +7161,80 @@ function viewTV(pod){
  every(500,draw);draw();
 }
 
+
+/* ================= 관리자 탭: 📚 운동 커리큘럼 편집 (코드 수정 없이 바로 반영) ================= */
+function tabCur(){
+ const b=document.getElementById('aBody');if(!b)return;
+ const clone=o=>JSON.parse(JSON.stringify(o));
+ const L=LIB();let dr={blocks:clone(L.blocks),ratio:clone(L.ratio)},blk='A',dirty=false,pv={bt:'rec',w:0,day:'A'};
+ const raw=lG('pa_curriculum',null)||{};const hist=Array.isArray(raw.hist)?raw.hist:[];
+ const inp='padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)';
+ const normD=v=>String(v||'').replace(/[xX*✕]/g,'×').replace(/\s*×\s*/,'×').trim();
+ const problems=()=>{const out=[];BLOCK_ORDER.forEach(k=>{const B=dr.blocks[k];if(!String(B.nm||'').trim())out.push(`${k}블록: 이름이 비었습니다`);CUR_PARTS.forEach(([p,pn])=>{const a=B[p]||[];if(!a.length)out.push(`${k}블록 ${pn}: 운동이 하나도 없습니다`);a.forEach((it,i)=>{if(!String(it.n||'').trim())out.push(`${k}블록 ${pn} ${i+1}번: 운동 이름이 비었습니다`);if(!CUR_D.test(normD(it.d)))out.push(`${k}블록 ${pn} ${i+1}번 "${it.n||''}": 세트×횟수 형식이 아닙니다 (예: 3×12, 3×30초, 3×8(양쪽))`);});});});return out;};
+ const warns=()=>{const out=[];BLOCK_ORDER.forEach(k=>CUR_PARTS.forEach(([p,pn])=>{const n=(dr.blocks[k][p]||[]).length;if(n>0&&n<3)out.push(`${k}블록 ${pn} ${n}개 — 3개 이상이어야 주마다 바뀌는 효과가 납니다`);}));return out;};
+ const draw=()=>{
+  const B=dr.blocks[blk];
+  const rows=(p)=>(B[p]||[]).map((it,i)=>`<div class="po-row" style="gap:6px;margin-bottom:6px;flex-wrap:wrap">
+   <span class="po-sub" style="width:20px">${i+1}</span>
+   <input data-f="n" data-p="${p}" data-i="${i}" value="${E(it.n)}" placeholder="운동 이름" style="flex:2;min-width:160px;${inp}">
+   <input data-f="d" data-p="${p}" data-i="${i}" value="${E(it.d)}" placeholder="3×12" style="width:120px;${inp}">
+   <select data-f="b" data-p="${p}" data-i="${i}" style="width:96px;${inp}"><option value="">부위 없음</option>${CUR_BODY.map(x=>`<option${it.b===x?' selected':''}>${x}</option>`).join('')}</select>
+   <button class="po-btn sm g" data-mv="-1" data-p="${p}" data-i="${i}" title="위로">↑</button><button class="po-btn sm g" data-mv="1" data-p="${p}" data-i="${i}" title="아래로">↓</button><button class="po-btn sm g" data-del="1" data-p="${p}" data-i="${i}" title="삭제">✕</button></div>`).join('');
+  b.innerHTML=`<h3 style="font-size:14px;margin-bottom:6px;">📚 운동 커리큘럼 편집</h3>
+  <p class="po-note" style="margin-bottom:12px">여기서 바꾸고 <b>저장</b>하면 코치 모드·학생 화면·4주 리포트에 <b>바로</b> 반영됩니다 (코드 수정 필요 없음). 일반과정은 A→B→C→D 블록을 4주씩 돌고, 콩쿠르·입시 과정도 같은 블록에서 운동을 가져옵니다.
+  <br>현재 상태: ${L.custom?`<b>직접 수정한 커리큘럼</b> 사용 중${L.at?` (${new Date(L.at).toLocaleString('ko-KR')} 저장)`:''}`:'<b>기본 커리큘럼</b> 사용 중'}${dirty?' · <b style="color:var(--orange)">저장 안 한 변경 있음</b>':''}</p>
+  <div class="po-row" style="gap:6px;flex-wrap:wrap;margin-bottom:12px">${BLOCK_ORDER.map(k=>`<button class="po-btn sm${k===blk?'':' g'}" data-blk="${k}">${k}. ${E(dr.blocks[k].nm)}</button>`).join('')}</div>
+  <div class="po-card"><div class="po-lbl">${blk}블록 기본 정보</div>
+   <div class="po-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px">
+    <label class="po-sub">블록 이름<input data-bf="nm" value="${E(B.nm)}" style="width:100%;margin-top:4px;${inp}"></label>
+    <label class="po-sub">설명 (학부모 리포트에 보임)<input data-bf="sub" value="${E(B.sub)}" style="width:100%;margin-top:4px;${inp}"></label>
+    <label class="po-sub">메인 운동 세트 사이 휴식(초)<input type="number" min="0" max="300" data-bf="rest" value="${E(B.rest)}" style="width:100%;margin-top:4px;${inp}"></label></div></div>
+  ${CUR_PARTS.map(([p,pn])=>`<div class="po-card" style="margin-top:12px"><div class="po-lbl">${pn} 운동 (${(B[p]||[]).length}개)</div>${rows(p)}<button class="po-btn sm" data-add="${p}" style="margin-top:4px">+ ${pn} 운동 추가</button></div>`).join('')}
+  <p class="po-note" style="margin-top:8px"><b>세트×횟수</b> 쓰는 법: <code>3×12</code> · <code>3×30초</code> · <code>3×8(양쪽)</code> · <code>2×8(각)</code> — 숫자 사이는 × 또는 x. <b>부위</b>는 학생이 그 부위가 아프다고 할 때 그 운동을 빼는 데 씁니다. 같은 부위 안에서는 <b>위에 있는 운동부터</b> 쓰고, 주마다 한 칸씩 밀려서 바뀝니다.</p>
+  <div class="po-card" style="margin-top:12px"><div class="po-lbl">체형별 메인 운동 비중 (하체 : 상체 : 코어)</div>
+   <div class="po-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">${Object.keys(RATIO).map(k=>`<div class="po-row" style="gap:4px"><span style="width:76px;font-weight:700">${E(BT_NAME_MAP[k]||k)}</span>${[0,1,2].map(j=>`<input type="number" min="0" max="10" data-rt="${k}" data-j="${j}" value="${dr.ratio[k][j]}" style="width:52px;${inp}">`).join('')}</div>`).join('')}</div>
+   <p class="po-note" style="margin-top:6px">숫자가 클수록 그 부위 운동이 더 많이 들어갑니다. 예) 4 : 3 : 3 → 하체 40%, 상체 30%, 코어 30%.</p></div>
+  <div class="po-card" style="margin-top:12px"><div class="po-lbl">👀 미리보기 (저장 전 내용으로)</div>
+   <div class="po-row" style="gap:6px;flex-wrap:wrap">
+    <select id="pvBt" style="${inp}">${Object.keys(RATIO).map(k=>`<option value="${k}"${pv.bt===k?' selected':''}>${E(BT_NAME_MAP[k]||k)}</option>`).join('')}</select>
+    <select id="pvW" style="${inp}">${[0,1,2,3].map(w=>`<option value="${w}"${pv.w===w?' selected':''}>${blk}블록 ${w+1}주차${w===3?' (측정 주)':''}</option>`).join('')}</select>
+    <select id="pvDay" style="${inp}"><option value="A"${pv.day==='A'?' selected':''}>하체·라인 날</option><option value="B"${pv.day==='B'?' selected':''}>상체·점프 날</option></select></div>
+   <div id="pvOut" style="margin-top:10px"></div></div>
+  <div id="curMsg"></div>
+  <div class="po-row" style="margin-top:14px;gap:8px;flex-wrap:wrap">
+   <button class="po-btn" id="curSave">💾 저장하고 바로 적용</button>
+   <button class="po-btn g" id="curCancel">변경 취소</button>
+   ${hist.length?`<button class="po-btn g" id="curUndo">↩ 이전 저장본으로 (${new Date(hist[0].at||0).toLocaleDateString('ko-KR')})</button>`:''}
+   <button class="po-btn g" id="curReset">기본 커리큘럼으로 되돌리기</button></div>`;
+  refresh();bind();};
+ const refresh=()=>{const pb=problems(),wn=warns(),m=document.getElementById('curMsg');if(m)m.innerHTML=(pb.length?`<div class="po-card" style="margin-top:12px;border-color:var(--orange)"><div class="po-lbl" style="color:var(--orange)">고쳐야 저장할 수 있어요 (${pb.length})</div>${pb.slice(0,8).map(x=>`<div class="po-sub">• ${E(x)}</div>`).join('')}</div>`:'')+(wn.length?`<div class="po-card" style="margin-top:12px"><div class="po-lbl">참고</div>${wn.map(x=>`<div class="po-sub">• ${E(x)}</div>`).join('')}</div>`:'');
+  const sv=document.getElementById('curSave');if(sv){sv.disabled=!!pb.length;sv.style.opacity=pb.length?'.5':'';}
+  b.querySelectorAll('[data-f="d"]').forEach(x=>x.style.borderColor=CUR_D.test(normD(x.value))?'':'var(--orange)');preview();};
+ const preview=()=>{const o=document.getElementById('pvOut');if(!o)return;
+  if(problems().length){o.innerHTML='<div class="po-sub">빨간 표시를 먼저 고치면 미리보기가 나옵니다.</div>';return;}
+  const lib={blocks:clean().blocks,ratio:dr.ratio};const w=pv.w;
+  const r=program('__preview',{lib,bt:pv.bt,day:pv.day,noFlags:true,ph:{track:'general',phase:'',block:blk,w,cyc:0,wk:w,vol:w===3?0.7:1,deload:w===3}});
+  o.innerHTML=`<div class="po-sub" style="margin-bottom:6px">${E(r.label)} · ${E(r.meta.dayNm||'')} · 코치 수업 약 ${r.planMin}분</div>${r.items.map(x=>`<div class="po-ex"><span><span class="po-sub">${E(x.part)}</span> ${E(x.n)}</span><span>${E(x.d)}</span></div>`).join('')}${r.extra.map(x=>`<div class="po-ex"><span><span class="po-sub">셀프 유산소</span> ${E(x.n)}</span><span>${E(x.d)}</span></div>`).join('')}`;};
+ const clean=()=>{const o={};BLOCK_ORDER.forEach(k=>{const B=dr.blocks[k];o[k]={nm:String(B.nm||'').trim(),sub:String(B.sub||'').trim(),rest:Math.max(0,Math.min(300,+B.rest||0))};CUR_PARTS.forEach(([p])=>o[k][p]=(B[p]||[]).map(it=>({n:String(it.n||'').trim(),d:normD(it.d),b:it.b||''})));});return{blocks:o,ratio:dr.ratio};};
+ const touch=()=>{dirty=true;};
+ const bind=()=>{
+  b.querySelectorAll('[data-blk]').forEach(x=>x.onclick=()=>{blk=x.dataset.blk;draw();});
+  b.querySelectorAll('[data-bf]').forEach(x=>x.onchange=()=>{dr.blocks[blk][x.dataset.bf]=x.dataset.bf==='rest'?+x.value:x.value;touch();refresh();});
+  b.querySelectorAll('[data-f]').forEach(x=>x.onchange=()=>{const it=dr.blocks[blk][x.dataset.p][+x.dataset.i];it[x.dataset.f]=x.dataset.f==='d'?normD(x.value):x.value;if(x.dataset.f==='d')x.value=it.d;touch();refresh();});
+  b.querySelectorAll('[data-mv]').forEach(x=>x.onclick=()=>{const a=dr.blocks[blk][x.dataset.p],i=+x.dataset.i,j=i+(+x.dataset.mv);if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];touch();draw();});
+  b.querySelectorAll('[data-del]').forEach(x=>x.onclick=()=>{const a=dr.blocks[blk][x.dataset.p],i=+x.dataset.i;if(!confirm(`"${a[i].n}" 운동을 뺄까요?`))return;a.splice(i,1);touch();draw();});
+  b.querySelectorAll('[data-add]').forEach(x=>x.onclick=()=>{const p=x.dataset.add;dr.blocks[blk][p].push({n:'',d:'3×12',b:p==='core'?'허리':p==='upper'?'어깨':'무릎'});touch();draw();const ins=b.querySelectorAll(`[data-f="n"][data-p="${p}"]`);if(ins.length)ins[ins.length-1].focus();});
+  b.querySelectorAll('[data-rt]').forEach(x=>x.onchange=()=>{const v=Math.max(0,Math.min(10,Math.round(+x.value||0)));dr.ratio[x.dataset.rt][+x.dataset.j]=v;if(!dr.ratio[x.dataset.rt].some(n=>n>0))dr.ratio[x.dataset.rt]=[4,3,3];x.value=dr.ratio[x.dataset.rt][+x.dataset.j];touch();refresh();});
+  const sel=(id,f)=>{const e=document.getElementById(id);if(e)e.onchange=()=>{pv[f]=f==='w'?+e.value:e.value;preview();};};sel('pvBt','bt');sel('pvW','w');sel('pvDay','day');
+  const sv=document.getElementById('curSave');if(sv)sv.onclick=()=>{if(problems().length)return;const c=clean();const now=Date.now();
+   const h=[];if(L.custom)h.push({at:L.at||0,blocks:clone(L.blocks),ratio:clone(L.ratio)});(hist||[]).forEach(x=>{if(h.length<5)h.push(x);});
+   lS('pa_curriculum',{ver:1,blocks:c.blocks,ratio:c.ratio,at:now,hist:h});toastP('커리큘럼 저장 · 코치 화면에 바로 반영됩니다');try{window.dispatchEvent(new Event('po-data'));}catch(e){}tabCur();};
+  const cc=document.getElementById('curCancel');if(cc)cc.onclick=()=>{if(dirty&&!confirm('저장 안 한 변경을 버릴까요?'))return;tabCur();};
+  const un=document.getElementById('curUndo');if(un)un.onclick=()=>{const p=hist[0];if(!p||!curValid(p))return toastP('이전 저장본이 올바르지 않습니다','err');if(!confirm('바로 전 저장본으로 되돌릴까요?'))return;lS('pa_curriculum',{ver:1,blocks:p.blocks,ratio:p.ratio,at:Date.now(),hist:hist.slice(1)});toastP('이전 저장본으로 되돌렸습니다');try{window.dispatchEvent(new Event('po-data'));}catch(e){}tabCur();};
+  const rs=document.getElementById('curReset');if(rs)rs.onclick=()=>{if(!confirm('기본 커리큘럼으로 되돌릴까요?\n(지금 저장된 내용은 "이전 저장본"으로 남습니다)'))return;const h=[];if(L.custom)h.push({at:L.at||0,blocks:clone(L.blocks),ratio:clone(L.ratio)});(hist||[]).forEach(x=>{if(h.length<5)h.push(x);});lS('pa_curriculum',{ver:1,reset:true,at:Date.now(),hist:h});toastP('기본 커리큘럼으로 되돌렸습니다');try{window.dispatchEvent(new Event('po-data'));}catch(e){}tabCur();};
+ };
+ draw();
+}
 /* ================= 관리자 탭: 센터 운영 / 오늘 출석 ================= */
 function tabOps(){
  const links=[['kiosk','📷 1층 출석 키오스크','태블릿 · iPad'],['coach','🧑‍🏫 코치 모드','코치 iPad']];
@@ -7291,14 +7376,14 @@ rAT=function(){
  if(ar.role==='coach'){aTab='po-today';const tb=document.getElementById('aTabs');
   if(tb){tb.innerHTML='';const b2=document.createElement('button');b2.className='atb';b2.textContent='🧑‍🏫 코치 모드 열기';b2.onclick=()=>{location.hash='#coach';};const b1=document.createElement('button');b1.className='atb on';b1.textContent='✅ 오늘 출석';b1.onclick=()=>rAT();tb.appendChild(b2);tb.appendChild(b1);}
   try{tabToday();}catch(e){console.warn('[PA 운영] 코치 탭',e);}return;}
- if(ar.role==='super_admin')extra.push({id:'po-ops',l:'🏟 센터 운영'},{id:'po-today',l:'✅ 오늘 출석'});
+ if(ar.role==='super_admin')extra.push({id:'po-cur',l:'📚 운동 커리큘럼'},{id:'po-ops',l:'🏟 센터 운영'},{id:'po-today',l:'✅ 오늘 출석'});
  else if(ar.role==='academy_owner'||ar.role==='academy_teacher')extra.push({id:'po-today',l:'✅ 오늘 출석'});
  const mineTab=extra.some(x=>x.id===aTab);
  if(aTab.startsWith('po-')&&!mineTab)aTab=ar.role==='super_admin'?'a-wait':'a-stuMgr';
  const r=_rAT.apply(this,arguments);
  try{const tb=document.getElementById('aTabs');
   if(tb)extra.forEach(t=>{const bt=document.createElement('button');bt.className='atb'+(t.id===aTab?' on':'');bt.textContent=t.l;bt.onclick=()=>{aTab=t.id;rAT();};tb.insertBefore(bt,tb.firstChild);});
-  if(mineTab){(tb?tb.querySelectorAll('.atb'):[]).forEach(x=>{if(!extra.some(t=>t.l===x.textContent))x.classList.remove('on');});if(aTab==='po-ops')tabOps();else tabToday();}
+  if(mineTab){(tb?tb.querySelectorAll('.atb'):[]).forEach(x=>{if(!extra.some(t=>t.l===x.textContent))x.classList.remove('on');});if(aTab==='po-ops')tabOps();else if(aTab==='po-cur')tabCur();else tabToday();}
  }catch(e){console.warn('[PA 운영] 탭',e);}
  return r;
 };
