@@ -620,7 +620,7 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 <div class="mob" id="mob"><div class="ml" onclick="go('home');cMob()">홈</div><div class="ml" onclick="go('notice');cMob()">공지사항</div><div class="ml" onclick="goReserve();cMob()">예약하기</div><div class="ml" onclick="go('body');cMob()">체형분석</div><div class="ml" onclick="goMY();cMob()">MY</div><div class="ml" onclick="go('prod');cMob()">추천제품</div><div class="ml" onclick="go('price');cMob()">가격 안내</div><div class="ml" onclick="go('inquiry');cMob()">문의</div><div class="ml" onclick="go('coach');cMob()">강사소개</div></div>
 
 <div class="pg on" id="pg-home">
-<div class="hero-bg"><div class="hero"><div class="hcont"><div class="eyebrow fu"><span class="pulse"></span>PERFORMANCE ACHIEVEMENT TRAINING</div><h1 class="htitle fu d1"><span class="t1">PERFORM</span><span class="t2">ACHIEVE</span><span class="t3">TRAINING</span><span class="tf">Performance · Achievement · Training</span></h1><p class="hdesc fu d2"><strong>P.A트레이닝</strong>과 함께하는 맞춤형 식단 &amp; 체력 관리.<br>개인별 목표에 맞는 칼로리 설계와 7일 식단표를 매주 업데이트합니다.</p><div class="hbtns fu d3"><div class="btnp" onclick="goMY()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="white" stroke-width="2"/></svg>MY 페이지</div><div class="btng" onclick="go('notice')">공지사항 보기 →</div></div></div><div class="hside fu d4"><div class="hc"><div class="hcl">CURRENT</div><div class="hcv og" style="font-size:24px;white-space:nowrap;">26년 하반기</div><div class="hcs">현재 진행 중</div></div><div class="hc"><div class="hcl">WAITING</div><div class="hcv bl" id="heroWaitCount">-</div><div class="hcs">대기 인원</div></div><div class="hc" style="padding:13px 15px;"><div class="hcl" style="margin-bottom:9px;">이용 신청 / MY 식단표</div><div class="hcbtn" onclick="go('apply')">이용 신청 →</div><div class="hcbtn" onclick="goMY()" style="margin-top:4px;background:rgba(100,160,200,.2);color:var(--accent);">MY 페이지 →</div></div></div></div></div>
+<div class="hero-bg"><div class="hero"><div class="hcont"><div class="eyebrow fu"><span class="pulse"></span>PERFORMANCE ACHIEVEMENT TRAINING</div><h1 class="htitle fu d1"><span class="t1">PERFORM</span><span class="t2">ACHIEVE</span><span class="t3">TRAINING</span><span class="tf">Performance · Achievement · Training</span></h1><p class="hdesc fu d2"><strong>P.A트레이닝</strong>과 함께하는 맞춤형 식단 &amp; 체력 관리.<br>개인별 목표에 맞는 칼로리 설계와 7일 식단표를 매주 업데이트합니다.</p><div class="hbtns fu d3"><div class="btnp" onclick="goMY()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="white" stroke-width="2"/></svg>MY 페이지</div><div class="btng" onclick="go('notice')">공지사항 보기 →</div></div></div><div class="hside fu d4"><div class="hc"><div class="hcl">CURRENT</div><div class="hcv og">4월</div><div class="hcs">현재 진행 중</div></div><div class="hc"><div class="hcl">WAITING</div><div class="hcv bl" id="heroWaitCount">-</div><div class="hcs">대기 인원</div></div><div class="hc" style="padding:13px 15px;"><div class="hcl" style="margin-bottom:9px;">이용 신청 / MY 식단표</div><div class="hcbtn" onclick="go('apply')">이용 신청 →</div><div class="hcbtn" onclick="goMY()" style="margin-top:4px;background:rgba(100,160,200,.2);color:var(--accent);">MY 페이지 →</div></div></div></div></div>
 <div class="sec" style="padding-top:0;"><div class="sec-top"><div><div class="sey">NOTICE</div><h2 class="st">공지사항</h2></div><div class="smore" onclick="go('notice')">전체보기 →</div></div><div class="ng" id="homeN"></div></div>
 </div>
 
@@ -1132,7 +1132,7 @@ return Math.round(s.w*33);
 function recalcStudent(c){
 const s=S[c];if(!s)return;
 s.bmr=s.g==='남'?Math.round(88.362+13.397*s.w+4.799*s.h-5.677*s.age):Math.round(447.593+9.247*s.w+3.098*s.h-4.33*s.age);
-s.tdee=Math.round(s.bmr*1.375);
+s.tdee=Math.round(s.bmr*PA_ACT);
 /* 목표 칼로리 재계산 */
 if(s.goal==='체중감량')s.tar=Math.round(s.tdee*0.85);
 else if(s.goal==='근육증가'||s.goal==='증량+근육')s.tar=Math.round(s.tdee*1.1);
@@ -1185,6 +1185,8 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.firestore();
 /* [0-1 · 0-2] 카카오/입장코드 로그인 → Firebase 로그인 연결 + 데이터 잠금 대응 */
 const PA_AUTH_URL='https://kakaoauth-414257826796.asia-northeast3.run.app';
+/* TDEE 활동 계수: 매일 연습하는 무용 전공생 기준 (보통 활동 1.55) */
+const PA_ACT=1.55;
 /* 로그인은 이 브라우저 탭에서만 유지 (탭을 닫으면 로그아웃 — PC방·공용 기기 대비) */
 /* [0-4] 키오스크로 등록한 기기만 로그인 유지 (껐다 켜도 키오스크 유지) */
 function paIsKioskDevice(){try{return localStorage.getItem('pa_kiosk_device')==='1';}catch(e){return false;}}
@@ -1221,11 +1223,45 @@ function paRole(){return paSignedIn()?String(_paC.role||''):'';}
 const PA_STU_ROLES=['student','father','mother','parent','student_code'];
 function paAcaWriter(){const r=paRole();return (r==='academy_owner'||r==='academy_teacher')&&_paC.academyId?String(_paC.academyId):null;}
 /* [0-4] 계정 연결 (학생·학부모·학원·코치) — 서버에서 확인 후 새 로그인 */
-async function paLink(link){
+async function paLink(link,consent){
   const kt=(window.Kakao&&Kakao.Auth&&Kakao.Auth.getAccessToken)?Kakao.Auth.getAccessToken():null;
   if(!kt){const e=new Error('nokakao');e.reason='nokakao';throw e;}
-  const d=await paTokenSignIn({kakaoAccessToken:kt,link});await paReloadData();return d;
+  const d=await paTokenSignIn({kakaoAccessToken:kt,link,consent});await paReloadData();return d;
 }
+/* 로그인한 사람 자격으로 서버 호출 (보호자 초대·동의 기록·탈퇴) */
+async function paSrv(body){
+  const u=firebase.auth().currentUser;if(!u){const e=new Error('login');e.status=401;throw e;}
+  const t=await u.getIdToken();
+  const r=await fetch(PA_AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(body)});
+  let d={};try{d=await r.json();}catch(e){}
+  if(!r.ok){const e=new Error(d.error||('srv '+r.status));e.status=r.status;e.reason=d.reason||d.error;throw e;}
+  return d;
+}
+const PA_GUARD_ROLES=['father','mother','parent'];
+/* 보호자로 보는 중인지 (카카오 학부모 계정, 또는 테스트용 코드 로그인에서 아버지·어머니 선택) */
+function paIsGuardian(){if(PA_GUARD_ROLES.includes(paRole()))return true;try{const d=JSON.parse(sessionStorage.getItem('pa_login')||'{}');return d.rel==='father'||d.rel==='mother';}catch(e){return false;}}
+/* [개인정보] 동의 창 — 필수 2개 + 선택. 결과: 동의 내용 또는 null(취소) */
+function paConsent(who,opt){opt=opt||{};return new Promise(res=>{
+  const m=document.createElement('div');m.style.cssText='position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px';
+  const g=who==='guardian';
+  m.innerHTML=`<div style="background:#101a27;border:1px solid rgba(255,255,255,.12);border-radius:16px;max-width:460px;width:100%;max-height:88vh;overflow:auto;padding:22px;color:#e8eef5;font-size:13px;line-height:1.6">
+  <div style="font-size:17px;font-weight:900;margin-bottom:6px">${g?'보호자 동의':'개인정보 수집·이용 동의'}</div>
+  <p style="color:#9fb0c3;margin-bottom:12px">${g?'자녀의 운동·체성분 기록을 확인하려면 동의가 필요합니다. 만 14세 미만 자녀는 이 동의가 법정대리인 동의가 됩니다.':'P.A 트레이닝 이용을 위해 아래 내용에 동의해 주세요.'}${opt.under14?'<br><b style="color:#E8622A">만 14세 미만이라 보호자 동의도 따로 필요합니다. 연결 후 MY 페이지의 [보호자 초대]로 보호자에게 코드를 보내 주세요.</b>':''}</p>
+  ${[['privacy',true,'[필수] 개인정보 수집·이용','이름, 학년·나이, 키·몸무게, 연락처(학부모), 출석·예약·운동 기록 — 운동 프로그램 제공과 수업 관리. 탈퇴하면 바로 삭제'],
+     ['sensitive',true,'[필수] 건강 관련 정보 처리','체성분(인바디), 체형 측정, 컨디션·통증 기록 — 맞춤 운동과 부상 예방에만 사용'],
+     ['academy',false,'[선택] 소속 학원에 제공','출석·운동 진행·체성분 변화 요약을 소속 학원 원장님에게 제공 (컨디션·통증은 제공 안 함)'],
+     ['photo',false,'[선택] 체형 사진 촬영','4주마다 정면·측면 사진으로 라인 변화 확인']].map(([k,req,t,d])=>`<label style="display:flex;gap:10px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;margin-bottom:8px;cursor:pointer"><input type="checkbox" data-c="${k}" ${req?'data-req="1"':''} style="margin-top:3px;flex:none"><span><b>${t}</b><br><span style="color:#9fb0c3;font-size:12px">${d}</span></span></label>`).join('')}
+  <div style="font-size:11px;color:#9fb0c3;margin:6px 0 12px">자세한 내용: <a href="#privacy" style="color:#64A0C8;text-decoration:underline" data-pp>개인정보 처리방침</a> · 동의는 언제든 회원 탈퇴로 철회할 수 있습니다.</div>
+  <div id="paCErr" style="color:#E8622A;font-size:12px;min-height:16px"></div>
+  <div style="display:flex;gap:8px;margin-top:6px"><button data-no style="flex:1;padding:12px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,.2);color:#e8eef5">취소</button><button data-all style="flex:1;padding:12px;border-radius:10px;background:rgba(100,160,200,.2);border:1px solid #64A0C8;color:#fff">모두 동의</button><button data-ok style="flex:1;padding:12px;border-radius:10px;background:#64A0C8;border:none;color:#fff;font-weight:900">동의하고 계속</button></div></div>`;
+  document.body.appendChild(m);
+  const fin=v=>{m.remove();res(v);};
+  m.querySelector('[data-no]').onclick=()=>fin(null);
+  m.querySelector('[data-pp]').onclick=e=>{e.preventDefault();window.open(location.pathname+'#privacy','_blank');};
+  m.querySelector('[data-all]').onclick=()=>m.querySelectorAll('[data-c]').forEach(i=>i.checked=true);
+  m.querySelector('[data-ok]').onclick=()=>{const o={};let ok=true;m.querySelectorAll('[data-c]').forEach(i=>{o[i.dataset.c]=i.checked;if(i.dataset.req&&!i.checked)ok=false;});
+    if(!ok){m.querySelector('#paCErr').textContent='필수 항목 2개에 동의해야 이용할 수 있습니다.';return;}fin(o);};
+});}
 function paLinkErr(e,dflt){
   if(e&&e.reason==='nokakao')return '카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';
   if(e&&e.status===429)return '⏳ 시도가 너무 많습니다. 10분 뒤 다시 시도하세요.';
@@ -1235,11 +1271,11 @@ function paLinkErr(e,dflt){
   return '⚠️ 서버 연결 오류. 잠시 후 다시 시도하세요.';
 }
 const _cache={};let _fsReady=false;const _fsLoaded=new Set();
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions','pa_academy_names'];
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions','pa_academy_names','pa_center_cfg'];
 /* [0-2] 로그인하지 않은 방문자도 볼 수 있는 공개 데이터 */
 const PA_PUBLIC_KEYS=['pa_notices_c','pa_custom_prods'];
 /* [0-4] 로그인한 사람(학생·학원·코치·키오스크)이 함께 보는 설정 — 나머지 공통 데이터는 관리자만 */
-const PA_SIGNED_KEYS=['pa_schedule_slots','pa_aicoach_config','pa_special_lecture_config','pa_custom_regions','pa_academy_names'];
+const PA_SIGNED_KEYS=['pa_schedule_slots','pa_aicoach_config','pa_special_lecture_config','pa_custom_regions','pa_academy_names','pa_center_cfg'];
 function paKeys(){if(!paSignedIn())return PA_PUBLIC_KEYS;if(paRole()==='super_admin')return FS_KEYS;return PA_PUBLIC_KEYS.concat(PA_SIGNED_KEYS);}
 /* [0-4] 역할별로 읽을 학생 문서: 관리자·코치 전체 / 학원 자기 학원 / 학생·학부모 본인 / 키오스크·미연결 없음 */
 function paStuSrc(){const r=paRole();
@@ -1254,7 +1290,7 @@ try{FS_KEYS.forEach(k=>{if(paPrivateKey(k))localStorage.removeItem(k);});}catch(
 /* [0-2] 문서 단위로 읽기 — 하나가 막혀도 나머지는 정상 */
 /* [0-3] 학생별 문서 분리 — 학생 관련 데이터는 pa_stu/{학생코드} 문서 하나에 모음.
    pa_data/_v2 표시가 있을 때만 새 구조를 씀 (없으면 기존 구조 그대로). */
-const PA_PER_KEYS=['pa_attendance','pa_schedules','pa_center_exercise','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_students','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_student_region','pa_user_profile','pa_condition_checks','pa_academy_members'];
+const PA_PER_KEYS=['pa_attendance','pa_schedules','pa_center_exercise','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_students','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_student_region','pa_user_profile','pa_condition_checks','pa_academy_members','pa_course','pa_screen','pa_consent'];
 const PA_ARR_KEYS={pa_reservations:'code'};
 let _v2=false;
 function paIsPer(k){return _v2&&(PA_PER_KEYS.includes(k)||Object.prototype.hasOwnProperty.call(PA_ARR_KEYS,k));}
@@ -1504,7 +1540,8 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <button id="linkFather" class="my-tab on" onclick="linkParentType('father')" style="flex:1;padding:12px;text-align:center;font-size:14px;font-weight:700;">👨 아버지</button>
 <button id="linkMother" class="my-tab" onclick="linkParentType('mother')" style="flex:1;padding:12px;text-align:center;font-size:14px;font-weight:700;">👩 어머니</button>
 </div>
-<label class="di">자녀의 입장 코드</label><input class="dc" id="linkCodeP" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false">
+<label class="di">보호자 초대 코드 (8자리)</label><input class="dc" id="linkCodeP" placeholder="예: K7M2Q9XA" maxlength="12" autocomplete="off" spellcheck="false">
+<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;">자녀 MY 페이지의 <b>[보호자 초대]</b> 또는 학원·센터에서 받은 코드를 입력하세요. 코드는 7일 동안 한 번만 쓸 수 있습니다.</div>
 <div class="em" id="linkEmP"></div>
 <button class="dbe" onclick="doKakaoLinkParent()" style="width:100%;background:var(--green);color:#fff;border:none;margin-top:8px;">학부모 계정 연결하기</button>
 <button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
@@ -1563,8 +1600,10 @@ if(!v){em.textContent='코드를 입력하세요';em.classList.add('on');return;
 const pending=JSON.parse(sessionStorage.getItem('pa_kakao_pending')||'null');
 if(!pending){em.textContent='카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';em.classList.add('on');return;}
 em.classList.remove('on');
+/* [개인정보] 동의 먼저 */
+const consent=await paConsent('student');if(!consent){em.textContent='동의해야 계정을 연결할 수 있습니다.';em.classList.add('on');return;}
 /* [0-4] 서버가 코드 확인 후 카카오 연결 */
-try{await paLink({type:'student',code:v});}
+try{await paLink({type:'student',code:v},consent);}
 catch(e){em.textContent=paLinkErr(e,'❌ 존재하지 않는 코드입니다');em.classList.add('on');inp.classList.add('err');return;}
 if(!S[v]){em.textContent='⚠️ 연결은 됐지만 학생 정보를 불러오지 못했습니다. 새로고침 후 다시 로그인해주세요.';em.classList.add('on');return;}
 
@@ -1680,18 +1719,22 @@ toast(`${aca.name} 소속으로 등록되었습니다.`);
 logIn(pending.code,pending.nn,pending.img);go('my');
 }
 async function doKakaoLinkParent(){
-const inp=document.getElementById('linkCodeP'),v=inp.value.trim().toUpperCase(),em=document.getElementById('linkEmP');
-if(!v){em.textContent='자녀의 코드를 입력하세요';em.classList.add('on');return;}
+const inp=document.getElementById('linkCodeP'),v=inp.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''),em=document.getElementById('linkEmP');
+if(!v){em.textContent='보호자 초대 코드를 입력하세요';em.classList.add('on');return;}
 const pending=JSON.parse(sessionStorage.getItem('pa_kakao_pending')||'null');
 if(!pending){em.textContent='카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';em.classList.add('on');return;}
 em.classList.remove('on');
-try{await paLink({type:linkPType,code:v});}
-catch(e){em.textContent=paLinkErr(e,'❌ 존재하지 않는 코드입니다');em.classList.add('on');inp.classList.add('err');return;}
-if(!S[v]){em.textContent='⚠️ 연결은 됐지만 학생 정보를 불러오지 못했습니다. 새로고침 후 다시 로그인해주세요.';em.classList.add('on');return;}
+const consent=await paConsent('guardian');if(!consent){em.textContent='동의해야 자녀와 연결할 수 있습니다.';em.classList.add('on');return;}
+let d;
+try{d=await paLink({type:'guardian',invite:v,relation:linkPType},consent);}
+catch(e){const M={used:'이미 사용한 초대 코드입니다. 새 코드를 받아 주세요.',expired:'기간(7일)이 지난 초대 코드입니다. 새 코드를 받아 주세요.',full:'이 학생에는 보호자가 이미 2명 연결되어 있습니다. 센터에 문의해 주세요.'};
+  em.textContent=M[e&&e.reason]||paLinkErr(e,'❌ 초대 코드가 올바르지 않습니다.');em.classList.add('on');inp.classList.add('err');return;}
+const v2=String(d.code||'');
+if(!S[v2]){em.textContent='⚠️ 연결은 됐지만 학생 정보를 불러오지 못했습니다. 새로고침 후 다시 로그인해주세요.';em.classList.add('on');return;}
 sessionStorage.removeItem('pa_kakao_pending');
 const honorific=linkPType==='father'?'아버님':'어머님';
-toast(`${S[v].name} ${honorific} 계정 연결 완료!`);
-logIn(v,S[v].name+' '+honorific,pending.img);go('my');
+toast(`${S[v2].name} ${honorific} 계정 연결 완료!`);
+logIn(v2,S[v2].name+' '+honorific,pending.img);go('my');
 }
 
 /* 학원 원장/선생 인증 */
@@ -1778,7 +1821,7 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">✅</div><div class="
 }
 function codeLoginAs(role,code){
 if(role==='student'){logIn(code,S[code].name,null);}
-else{const h=role==='father'?'아버님':'어머님';logIn(code,S[code].name+' '+h,null);}
+else{const h=role==='father'?'아버님':'어머님';logIn(code,S[code].name+' '+h,null);try{const d=JSON.parse(sessionStorage.getItem('pa_login')||'{}');d.rel=role;sessionStorage.setItem('pa_login',JSON.stringify(d));}catch(e){}rDB();}
 go('my');
 }
 document.addEventListener('DOMContentLoaded',async()=>{await paAuthReady();await fsInit();await loadStudents();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
@@ -4224,7 +4267,7 @@ ${gRegions().map(r=>`<option value="${r}"${getStuRegion(c)===r?' selected':''}>$
 
 <div style="margin-top:10px;"><div style="font-size:11px;font-weight:700;margin-bottom:6px;">칼로리 비율</div>
 <div style="display:flex;gap:4px;flex-wrap:wrap;">
-${[70,75,80,85,90,95,100,105,110,115,120].map(v=>`<button onclick="adjRatio('${c}','${v}')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ${Math.abs(ratio-v)<=2?'var(--accent)':'var(--border)'};background:${Math.abs(ratio-v)<=2?'rgba(100,160,200,.15)':'transparent'};color:${Math.abs(ratio-v)<=2?'var(--accent)':'var(--muted)'};">${v}%</button>`).join('')}
+${[70,75,80,85,90,95,100,105,110,115,120].filter(v=>!((+S[c].age||0)<18&&v<85)).map(v=>`<button onclick="adjRatio('${c}','${v}')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ${Math.abs(ratio-v)<=2?'var(--accent)':'var(--border)'};background:${Math.abs(ratio-v)<=2?'rgba(100,160,200,.15)':'transparent'};color:${Math.abs(ratio-v)<=2?'var(--accent)':'var(--muted)'};">${v}%</button>`).join('')}
 </div></div>
 
 ${(function(){
@@ -4455,6 +4498,9 @@ toast(`자동 판정: ${t?.name} (${t?.parent}) — 확인 후 저장 버튼을 
 }function adjRatio(c,pct){
 const s=S[c];if(!s)return;
 const ratio=parseInt(pct)/100;
+/* [커리큘럼 7-2] 성장기 안전 하한: 18세 미만은 TDEE의 85% 미만 불가, 누구든 기초대사량 미만 불가 */
+if((+s.age||0)<18&&ratio<0.85){toast('18세 미만은 TDEE의 85% 아래로 내릴 수 없습니다 (성장기 안전 기준)','err');return;}
+if(s.bmr&&Math.round(s.tdee*ratio)<s.bmr){toast('목표 칼로리를 기초대사량('+s.bmr+'kcal) 아래로 잡을 수 없습니다','err');return;}
 s.tar=Math.round(s.tdee*ratio);
 /* 커스텀 식단 삭제 → 새 칼로리로 자동 재생성 */
 const custom=lG('pa_custom_diets',{});
@@ -4482,8 +4528,10 @@ if(!code||!name||!h||!w){toast('코드, 이름, 키, 몸무게는 필수입니�
 if(S[code]){toast('이미 존재하는 코드','err');return;}
 const gc=goal==='체중감량'?'gl':goal==='근육증가'?'gg':'gb';
 const bmr=g==='남'?Math.round(88.362+13.397*w+4.799*h-5.677*age):Math.round(447.593+9.247*w+3.098*h-4.33*age);
-const tdee=Math.round(bmr*1.375);
+const tdee=Math.round(bmr*PA_ACT);
 if(!tar){if(goal==='체중감량')tar=Math.round(tdee*0.85);else if(goal==='근육증가'||goal==='증량+근육')tar=Math.round(tdee*1.1);else tar=tdee;}
+if(age<18&&tar<Math.round(tdee*0.85)){tar=Math.round(tdee*0.85);toast('18세 미만이라 목표 칼로리를 TDEE의 85%('+tar+'kcal)로 맞췄습니다');}
+if(tar<bmr)tar=bmr;
 S[code]={name,age,h,w,g,goal,gc,bmr,tdee,tar,wts:[w]};
 CODES[code]={n:name,e:mkE(365)};
 const cs=lG('pa_custom_students',null)||{};cs[code]=S[code];lS('pa_custom_students',cs);
@@ -4730,7 +4778,7 @@ const w=wl.find(x=>x.id===id);if(!w)return;
 const code=generateCode(w.name,w.g);
 /* 목표 kcal 계산 */
 const bmr=w.g==='남'?Math.round(88.362+13.397*w.w+4.799*w.h-5.677*w.age):Math.round(447.593+9.247*w.w+3.098*w.h-4.33*w.age);
-const tdee=Math.round(bmr*1.375);
+const tdee=Math.round(bmr*PA_ACT);
 let tar=w.tar||0;
 if(!tar){
 if(w.goal==='체중감량')tar=Math.round(tdee*0.85);
@@ -6368,7 +6416,7 @@ btns.insertBefore(b,btns.firstChild.nextSibling);
 .po-rost{display:flex;flex-direction:column;gap:8px;}
 .po-ri{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:var(--card);border:1px solid var(--border);text-align:left;width:100%;color:var(--text);cursor:pointer;}
 .po-ri.sel{border-color:var(--accent);background:var(--card2);}
-.po-pods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.po-pods{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
 .po-pods button{font-size:12px;font-weight:700;padding:10px 4px;border-radius:10px;border:1px solid var(--border);color:var(--text);}
 .po-pods button.on{background:var(--orange);border-color:var(--orange);}
 .po-exr{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:12px;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;}
@@ -6430,13 +6478,19 @@ const LIVE=db.collection('pa_data').doc('_live');
 const COL=n=>LIVE.collection(n);
 const QR_ROTATE=30,QR_VALID=45;
 const PODS={
- '2F-POD1':{floor:'2층',no:1,name:'파워랙 A'},
- '2F-POD2':{floor:'2층',no:2,name:'파워랙 B'},
- '2F-POD3':{floor:'2층',no:3,name:'코어 존'},
- '3F-POD4':{floor:'3층',no:4,name:'파워랙 A'},
- '3F-POD5':{floor:'3층',no:5,name:'파워랙 B'},
- '3F-POD6':{floor:'3층',no:6,name:'코어 존'}
+ '2F-POD1':{floor:'2층',no:1,name:'파워랙 A',kind:'rack'},
+ '2F-POD2':{floor:'2층',no:2,name:'파워랙 B',kind:'rack'},
+ '2F-POD3':{floor:'2층',no:3,name:'코어 존',kind:'core'},
+ '2F-CARDIO':{floor:'2층',no:0,name:'유산소 존',kind:'cardio'},
+ '3F-POD4':{floor:'3층',no:4,name:'파워랙 A',kind:'rack'},
+ '3F-POD5':{floor:'3층',no:5,name:'파워랙 B',kind:'rack'},
+ '3F-POD6':{floor:'3층',no:6,name:'코어 존',kind:'core'},
+ '3F-CARDIO':{floor:'3층',no:0,name:'유산소 존',kind:'cardio'}
 };
+/* 구역 종류별 정원: 파워랙 3명 · 코어 존 12명 · 유산소 존 = 기구 수(관리자 설정, 기본 5: 런닝머신 3 · 스텝밀 2) */
+const ZONE_MAX={rack:3,core:12,get cardio(){return cfg().cardioMax;}};
+const ZONE_NM={rack:'파워랙',core:'코어 존',cardio:'유산소 존',any:'배정 구역'};
+const kindOf=p=>PODS[p]?PODS[p].kind:'';
 const $=s=>document.querySelector(s);
 const ov=()=>document.getElementById('poOv');
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -6444,8 +6498,8 @@ const p2=n=>String(n).padStart(2,'0');
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());};
 const hm=ms=>{const d=new Date(ms);return p2(d.getHours())+':'+p2(d.getMinutes());};
 const fmtSec=s=>Math.floor(s/60)+':'+p2(s%60);
-const podLabel=p=>PODS[p]?`${PODS[p].floor} POD ${PODS[p].no}`:'미배정';
-const podFull=p=>PODS[p]?`${PODS[p].floor} POD ${PODS[p].no} · ${PODS[p].name}`:'POD 미배정';
+const podLabel=p=>PODS[p]?(PODS[p].no?`${PODS[p].floor} POD ${PODS[p].no}`:`${PODS[p].floor} ${PODS[p].name}`):'미배정';
+const podFull=p=>PODS[p]?(PODS[p].no?`${PODS[p].floor} POD ${PODS[p].no} · ${PODS[p].name}`:`${PODS[p].floor} ${PODS[p].name}`):'구역 미배정';
 const mask=n=>{n=String(n||'');return n.length<=1?n:n.length===2?n[0]+'○':n[0]+'○'.repeat(n.length-2)+n[n.length-1];};
 const stu=c=>(typeof S!=='undefined'&&S[c])?S[c]:null;
 const acaOf=c=>{const id=getStuAcademy(c);const a=id?gAcademies()[id]:null;return{id,name:a?a.name:''};};
@@ -6486,14 +6540,173 @@ function rsvToday(c){
   hrs.sort((a,b)=>a-b);return `${p2(hrs[0])}:00~${p2(hrs[hrs.length-1]+1)}:00`;}catch(e){return '';}
 }
 /* 오늘 운동 = 홈페이지 체형별 프로그램(헬스장 버전) 그대로 */
-function program(c){
- let r=null;const old=LC;
- try{LC=c;r=getTodayExProgram('gym');}catch(e){console.warn('[PA 운영] 프로그램',e);}finally{LC=old;}
- if(!r||r.rest||!Array.isArray(r.sections))return{label:'오늘 프로그램',btName:'',items:[]};
- const items=[];
- r.sections.forEach(sec=>(sec.items||[]).forEach(it=>{const m=/(\d+)\s*[×xX*]/.exec(it.d||'');items.push({n:String(it.n||''),d:String(it.d||''),sets:m?Math.max(1,Math.min(+m[1],6)):1,part:String(sec.name||'')});}));
- return{label:String(r.label||''),btName:String(r.btName||''),items:items.slice(0,12)};
+/* [3단계] 센터 수업 틀 — 관리자 → 센터 운영에서 분 단위로 바꿀 수 있음 */
+const CFG_DEF={warm:8,main:32,finish:10,cardio:10,cardioLoss:20,cardioMax:5};
+function cfg(){const v=lG('pa_center_cfg',null)||{};const o={};Object.keys(CFG_DEF).forEach(k=>{const n=+v[k];o[k]=v[k]!=null&&n>=0&&n<=120?n:CFG_DEF[k];});if(!(o.cardioMax>=1&&o.cardioMax<=10))o.cardioMax=CFG_DEF.cardioMax;o.total=o.warm+o.main+o.finish;return o;}
+/* 센터 장비(파워랙·덤벨·밴드·스텝박스·런닝머신·스텝밀)에 없는 기구 → 대체 운동 */
+const SUBST={'레그프레스':{n:'바벨 스쿼트',alt:['불가리안 스플릿 스쿼트','고블릿 스쿼트']},'레그컬':{n:'덤벨 루마니안 데드리프트',alt:['싱글레그 루마니안 데드리프트']},'랫풀다운':{n:'밴드 어시스티드 풀업'},'시티드 로우':{n:'바벨 벤트오버 로우',alt:['원암 덤벨 로우']},'트라이셉 딥스':{n:'벤치 딥스'},'로잉머신':{n:'스텝밀'}};
+/* 체형별 목록이 짧은 날 50분을 채울 센터 기본 운동 (같은 부위) */
+const FILL={upper:[{n:'덤벨 숄더프레스',d:'3×12'},{n:'원암 덤벨 로우',d:'3×12(양쪽)'},{n:'밴드 페이스풀',d:'3×15'},{n:'푸시업',d:'3×12'},{n:'덤벨 리어델트 플라이',d:'3×15'}],
+ lower:[{n:'고블릿 스쿼트',d:'3×12'},{n:'덤벨 루마니안 데드리프트',d:'3×12'},{n:'불가리안 스플릿 스쿼트',d:'3×10(양쪽)'},{n:'스텝박스 스텝업',d:'3×12(양쪽)'},{n:'사이드 런지',d:'3×10(양쪽)'},{n:'힙쓰러스트',d:'3×15'}]};
+/* 같은 운동 판단 (바벨·덤벨·와이드 등 앞말 빼고 비교) */
+const keyOf=n=>{const k=String(n).replace(/\s|\(.*?\)/g,'').replace(/^(바벨|덤벨|와이드|워킹|제자리)/,'');return /스쿼트$/.test(k)&&!/스플릿|점프/.test(k)?'스쿼트':k;};
+const WARM_SETS={
+ upper:[{n:'폼롤러 등·가슴 이완',d:'2분',min:2,met:2.5},{n:'암서클 · 밴드 풀어파트',d:'2×15',min:3,met:3.5},{n:'캣카우 · 흉추 회전',d:'1분씩',min:3,met:2.5}],
+ lower:[{n:'폼롤러 하체 이완',d:'2분',min:2,met:2.5},{n:'레그스윙 (앞뒤·옆)',d:'각 10회',min:3,met:3.0},{n:'밴드 글루트 활성화',d:'2×12',min:3,met:3.5}],
+ full:[{n:'폼롤러 전신 이완',d:'2분',min:2,met:2.5},{n:'월드 그레이티스트 스트레칭',d:'양쪽 5회',min:3,met:3.0},{n:'밴드 활성화 (힙·어깨)',d:'2×12',min:3,met:3.5}]
+};
+const CIRCUIT=[{n:'스텝박스 스텝업',d:'3×12(양쪽)'},{n:'점프 스쿼트',d:'3×12'},{n:'마운틴클라이머',d:'3×30초'},{n:'스텝박스 사이드 스텝',d:'3×30초'},{n:'버피',d:'3×8'},{n:'워킹 런지',d:'3×12(양쪽)'}];
+const STRETCH={n:'마무리 스트레칭',d:'2분',min:2,met:2.3};
+const CARDIO_MET=n=>/스텝밀|계단/.test(n)?8.8:/인클라인|경사|워킹/.test(n)?5.3:/인터벌|러닝|조깅/.test(n)?7.0:5.0;
+/* 세트·시간 추정: 1회 약 3초, '초'는 그대로, (양쪽)은 2배 · 세트 사이 휴식 · 운동 바꾸는 시간 1분 */
+function estimate(it,restSec){
+ const m=/(\d+)\s*[×xX*]\s*(\d+)\s*(초)?/.exec(it.d||'');const sets=m?Math.max(1,Math.min(+m[1],6)):1;
+ let work=m?(m[3]?+m[2]:+m[2]*3):40;if(/양쪽|각/.test(it.d||''))work*=2;
+ const rest=restSec!=null?restSec:(m&&!m[3]&&+m[2]>=15?45:60);
+ return{sets,rest,min:Math.round((sets*work+(sets-1)*rest)/60+1)};
 }
+/* ===== [커리큘럼] 일반과정 4주 블록 순환 · 콩쿠르/입시 D-day 단계 =====
+   b = 주로 쓰는 부위 (통증 규칙에서 그 부위 운동을 뺄 때 사용) */
+const BLOCKS={
+ A:{nm:'기초 안정',sub:'자세·코어·발목',rest:60,
+  lower:[{n:'고블릿 스쿼트 (3초 내려가기)',d:'3×12',b:'무릎'},{n:'글루트 브릿지',d:'3×12',b:'고관절'},{n:'밴드 몬스터 워크',d:'3×10(양쪽)',b:'고관절'},{n:'낮은 박스 스텝다운',d:'3×8(양쪽)',b:'무릎'},{n:'리버스 런지',d:'3×8(양쪽)',b:'무릎'},{n:'카프레이즈 (천천히)',d:'3×15',b:'발목'}],
+  upper:[{n:'무릎 푸시업',d:'3×10',b:'어깨'},{n:'밴드 풀어파트',d:'3×15',b:'어깨'},{n:'원암 덤벨 로우 (가볍게)',d:'3×12(양쪽)',b:'어깨'},{n:'Y-T-W 레이즈',d:'2×8(각)',b:'어깨'}],
+  core:[{n:'데드버그',d:'3×10',b:'허리'},{n:'버드독',d:'3×8(양쪽)',b:'허리'},{n:'한발 서기 밸런스',d:'3×30초(양쪽)',b:'발목'},{n:'팔로프 프레스 (밴드)',d:'3×10(양쪽)',b:'허리'}]},
+ B:{nm:'라인 만들기',sub:'하체 슬림·둔근·어깨 라인',rest:45,
+  lower:[{n:'불가리안 스플릿 스쿼트',d:'3×12(양쪽)',b:'무릎'},{n:'힙쓰러스트',d:'3×15',b:'고관절'},{n:'사이드 런지',d:'3×12(양쪽)',b:'무릎'},{n:'덤벨 루마니안 데드리프트',d:'3×15',b:'허리'},{n:'커트시 런지',d:'3×12(양쪽)',b:'무릎'},{n:'케이블 킥백',d:'3×15(양쪽)',b:'고관절'}],
+  upper:[{n:'레터럴 레이즈',d:'3×15',b:'어깨'},{n:'밴드 페이스풀',d:'3×15',b:'어깨'},{n:'덤벨 숄더프레스 (가볍게)',d:'3×15',b:'어깨'},{n:'리어델트 플라이',d:'3×15',b:'어깨'},{n:'케이블 로우',d:'3×15',b:'어깨'}],
+  core:[{n:'사이드 플랭크',d:'3×30초(양쪽)',b:'허리'},{n:'힐 터치 크런치',d:'3×20',b:'허리'},{n:'플랭크 힙 딥',d:'3×12(양쪽)',b:'허리'},{n:'리버스 크런치',d:'3×12',b:'허리'}]},
+ C:{nm:'파워·점프',sub:'도약력·착지',rest:90,
+  lower:[{n:'스쿼트 점프',d:'4×6',b:'무릎'},{n:'낮은 박스 점프',d:'4×5',b:'무릎'},{n:'스텝업 무릎 들기',d:'3×8(양쪽)',b:'무릎'},{n:'스케이터 점프',d:'3×8(양쪽)',b:'발목'},{n:'착지 멈추기 (드롭 랜딩)',d:'3×6',b:'무릎'},{n:'한발 홉 앤 스틱',d:'3×5(양쪽)',b:'발목'}],
+  upper:[{n:'메디신볼 체스트 패스',d:'4×6',b:'어깨'},{n:'메디신볼 오버헤드 슬램',d:'3×8',b:'어깨'},{n:'푸시업',d:'3×8',b:'어깨'},{n:'밴드 풀어파트',d:'3×15',b:'어깨'}],
+  core:[{n:'메디신볼 회전 던지기',d:'3×6(양쪽)',b:'허리'},{n:'할로우 홀드',d:'3×20초',b:'허리'},{n:'한발 서기 밸런스 (눈 감고)',d:'3×20초(양쪽)',b:'발목'},{n:'데드버그',d:'3×10',b:'허리'}]},
+ D:{nm:'지구력·컨디셔닝',sub:'작품 끝까지 버티기',rest:20,
+  lower:[{n:'스텝박스 스텝업',d:'3×40초',b:'무릎'},{n:'워킹 런지',d:'3×40초',b:'무릎'},{n:'스케이터 (낮은 강도)',d:'3×40초',b:'발목'},{n:'점핑잭',d:'3×40초',b:'발목'},{n:'스쿼트 투 카프레이즈',d:'3×40초',b:'발목'}],
+  upper:[{n:'플랭크 숄더탭',d:'3×40초',b:'어깨'},{n:'베어 크롤',d:'3×40초',b:'어깨'},{n:'푸시업 (무릎 가능)',d:'3×40초',b:'어깨'}],
+  core:[{n:'마운틴클라이머',d:'3×40초',b:'허리'},{n:'플랭크',d:'3×40초',b:'허리'},{n:'바이시클 크런치',d:'3×40초',b:'허리'},{n:'버피 (낮은 강도)',d:'3×30초',b:'무릎'}]}
+};
+const BLOCK_ORDER=['A','B','C','D'],BLOCK_MET={A:3.8,B:5.0,C:6.0,D:8.0};
+/* 체형별 메인 비중 (하체 : 상체 : 코어) — 커리큘럼 6장 */
+const RATIO={tri:[4,4,2],inv:[6,2,2],rec:[4,3,3],dia:[3,3,4],heart:[6,2,2],oval:[4,3,3]};
+const DAYMS=86400000;
+const ymd=d=>d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());
+const parseYmd=v=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v||''));return m?new Date(+m[1],+m[2]-1,+m[3],12):null;};
+const monday=d=>{const x=new Date(d);x.setHours(12,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;};
+function courseOf(c){const v=(lG('pa_course',{})||{})[c]||{};return{track:v.track==='contest'?'contest':'general',dday:v.dday||'',start:v.start||'',event:v.event||''};}
+function startOf(c){const st=parseYmd(courseOf(c).start);if(st)return st;const att=(lG('pa_attendance',{})||{})[c]||{};const ds=Object.keys(att).filter(k=>att[k]==='O'&&parseYmd(k)).sort();return ds.length?parseYmd(ds[0]):parseYmd(ymd(new Date()));}
+function screens(c){const a=(lG('pa_screen',{})||{})[c];return Array.isArray(a)?a.filter(x=>x&&parseYmd(x.date)).sort((x,y)=>String(x.date).localeCompare(String(y.date))):[];}
+/* 4주 체크 결과 → 주의 표시 (커리큘럼 8장 기준) */
+function flagsOf(c,at){
+ const sc=screens(c).filter(x=>{const d=parseYmd(x.date);return d<=at&&(at-d)<=56*DAYMS;});const z=sc[sc.length-1];if(!z)return{};
+ const n=v=>v===''||v==null||isNaN(+v)?null:+v,f={};
+ const bl=n(z.balL),br=n(z.balR);if(bl!=null&&br!=null&&(Math.min(bl,br)<30||Math.abs(bl-br)>=10))f.balance=true;
+ const kl=n(z.kneeL),kr=n(z.kneeR);if(kl!=null&&kr!=null&&(Math.min(kl,kr)<10||Math.abs(kl-kr)>=2))f.ankle=true;
+ if(z.sqL==='bad'||z.sqR==='bad')f.valgus=true;
+ const pl=n(z.spL),pr=n(z.spR);if(pl&&pr&&Math.abs(pl-pr)/Math.max(pl,pr)>=0.1)f.plank=pl<pr?'왼쪽':'오른쪽';
+ if(z.back)f.back=true;return f;}
+const FLAG_NM={balance:'한발 균형 부족',ankle:'발목 가동성 부족',valgus:'한발 스쿼트 무릎 무너짐',plank:'사이드 플랭크 좌우 차이',back:'허리 통증'};
+/* 오늘의 과정 단계 */
+function phaseOf(c,at){
+ const cs=courseOf(c),dd=parseYmd(cs.dday);
+ if(cs.track==='contest'&&dd){const days=Math.round((dd-at)/DAYMS);
+  if(days>=0&&days<=84){const wl=Math.ceil(days/7);
+   if(wl>=7)return{track:'contest',phase:'강화기',block:wl%2?'B':'C',w:(12-wl)%4,cyc:0,days,vol:1};
+   if(wl>=3)return{track:'contest',phase:'특화기',block:wl%2?'D':'C',w:(6-wl)%4,cyc:0,days,vol:0.85};
+   if(days<=1)return{track:'contest',phase:'대회 직전',block:'A',w:0,cyc:0,days,vol:0.5,taper:true,light:true};
+   return{track:'contest',phase:'조정기',block:'C',w:0,cyc:0,days,vol:0.6,taper:true};}
+  if(days<0&&days>=-14)return{track:'contest',phase:'회복기',block:'A',w:0,cyc:0,days,vol:0.6,taper:true};}
+ const wk=Math.max(0,Math.round((monday(at)-monday(startOf(c)))/(7*DAYMS)));
+ return{track:'general',phase:'',block:BLOCK_ORDER[Math.floor(wk/4)%4],w:wk%4,cyc:Math.floor(wk/16),wk,vol:wk%4===3?0.7:1,deload:wk%4===3};}
+/* 이번 주 몇 번째 개인 수업인지: 첫째·셋째 = 하체·라인 날, 둘째·넷째 = 상체·점프 날 */
+function dayTypeOf(c,at){const att=(lG('pa_attendance',{})||{})[c]||{};const m=monday(at),t=ymd(at);let n=0;Object.keys(att).forEach(k=>{const d=parseYmd(k);if(d&&att[k]==='O'&&d>=m&&k<t)n++;});return n%2?'B':'A';}
+/* 두 번째 순환부터 횟수 +2 (시간 운동은 +5초), 측정 주·조정기는 세트 줄이기 */
+function bump(d,cyc){if(!cyc)return d;return String(d).replace(/(\d+)\s*×\s*(\d+)(\s*초)?/,(all,st,r,sec)=>`${st}×${sec?(+r+5*Math.min(cyc,2)):(+r+2*Math.min(cyc,2))}${sec||''}`);}
+function lessSets(d,vol){if(vol>=1)return d;return String(d).replace(/^(\d+)\s*×/,(a,st)=>`${Math.max(2,Math.round(+st*vol))}×`);}
+function rot(a,k){if(!a.length)return[];k=((k%a.length)+a.length)%a.length;return a.slice(k).concat(a.slice(0,k));}
+function seqOf(w,n){const cur={},keys=Object.keys(w).filter(k=>w[k]>0),tot=keys.reduce((a,k)=>a+w[k],0),out=[];keys.forEach(k=>cur[k]=0);
+ for(let i=0;i<n&&keys.length;i++){let best=null;keys.forEach(k=>{cur[k]+=w[k];if(best==null||cur[k]>cur[best])best=k;});cur[best]-=tot;out.push(best);}return out;}
+function program(c,opts){
+ opts=opts||{};const empty={label:'센터 수업',btName:'',items:[],extra:[],planMin:0,meta:{}};
+ try{
+  const C=cfg(),s=stu(c)||{};const at=opts.date?new Date(opts.date):new Date();at.setHours(12,0,0,0);
+  const bt=getStudentBodyType(c),btKey=bt&&bt.type;const data=EX_DATA[BT_NAME_MAP[btKey]||'']||EX_DATA['직사각형']||{};
+  const ph=phaseOf(c,at),B=BLOCKS[ph.block],day=opts.day||dayTypeOf(c,at),fl=opts.noFlags?{}:flagsOf(c,at);
+  const [L,U,Co]=RATIO[btKey]||[4,3,3];const items=[],seen=new Set();
+  const excl=it=>(fl.valgus&&/점프|홉/.test(it.n)&&!/착지/.test(it.n))||(fl.balance&&/홉|스케이터/.test(it.n))||(fl.back&&/데드리프트|슬램|슈퍼맨/.test(it.n))||(!!opts.skipBody&&it.b===opts.skipBody);
+  const add=(it,part,zone,met,restSec)=>{if(!it||seen.has(keyOf(it.n))||excl(it))return null;seen.add(keyOf(it.n));
+   let d=it.d||'';if(!it.min)d=lessSets(bump(d,ph.cyc),ph.vol);
+   const e=it.min?{sets:1,rest:0,min:it.min}:estimate({d},restSec);
+   const o={n:it.n,d,sets:e.sets,part,zone,rest:e.rest,met:it.met||met,min:e.min,b:it.b||''};items.push(o);return o;};
+  /* 1) 워밍업 — 4주 체크에서 걸린 항목을 먼저 */
+  const warm=[];
+  if(fl.ankle)warm.push({n:'종아리·발목 가동성 (무릎-벽 드릴)',d:'양쪽 1분',min:2,met:2.5,b:'발목'});
+  if(fl.valgus)warm.push({n:'밴드 글루트 활성화',d:'2×12',min:3,met:3.5,b:'고관절'});
+  if(fl.balance)warm.push({n:'한발 서기 밸런스',d:'양쪽 30초',min:2,met:2.5,b:'발목'});
+  (WARM_SETS[day==='A'?'lower':'upper']||WARM_SETS.full).forEach(w=>warm.push(w));
+  let t=0;for(const w of warm){if(t+w.min>C.warm&&t>0)break;if(add(w,'워밍업','any'))t+=w.min;}
+  /* 2) 메인 — 블록 테마, 체형 비중 + 하체 날/상체 날, 주마다 한 칸씩 교체(= 약 3분의 1) */
+  const wts=day==='A'?{lower:L*1.6,upper:U*0.4,core:Co*0.5}:{lower:L*0.6,upper:U*1.6,core:Co*0.5};
+  const sh=(ph.taper?0:ph.w)+(day==='B'?2:0);const lists={lower:rot(B.lower,sh),upper:rot(B.upper,sh+1),core:rot(B.core,sh+2)};
+  /* 측정 주·조정기는 세트를 줄이고 운동 개수도 그대로 두기 위해 메인 시간도 줄임 · 대회 전날·당일은 가볍게 10분 */
+  const budget=Math.round(C.main*(ph.light?0.3:ph.taper?0.6:ph.deload?0.7:1)),met=BLOCK_MET[ph.block];t=0;
+  for(const part of seqOf(wts,14)){const Lp=lists[part];let it=null;while(Lp.length&&!it){const x=Lp.shift();if(!seen.has(keyOf(x.n))&&!excl(x))it=x;}if(!it)continue;
+   const e=estimate({d:lessSets(bump(it.d,ph.cyc),ph.vol)},B.rest);if(t+e.min>budget+2&&items.filter(x=>x.part==='메인').length>=3)break;
+   const o=add(it,'메인',(ph.block==='D'||part==='core')?'core':'rack',met,B.rest);if(o)t+=o.min;}
+  /* 3) 마무리 — 블록 코어 + (좌우 차이 있으면) 약한 쪽 사이드 플랭크 + 스트레칭 */
+  t=0;if(fl.plank){const o=add({n:`사이드 플랭크 (${fl.plank} 1세트 더)`,d:'1×30초',b:'허리'},'마무리','core',3.8,30);if(o)t+=o.min;}
+  for(const it of rot(B.core,ph.w+3)){const e=estimate({d:lessSets(bump(it.d,ph.cyc),ph.vol)},30);if(t+e.min>C.finish-STRETCH.min&&t>0)break;const o=add(it,'마무리','core',3.8,30);if(o)t+=o.min;}
+  add(STRETCH,'마무리','core');
+  /* 4) 추천 셀프 유산소 (코치 수업 밖) */
+  const goalLoss=String(s.goal||'').includes('감량');let cmin=goalLoss?C.cardioLoss:C.cardio;if(ph.taper)cmin=Math.round(cmin/2);const extra=[];
+  if(cmin>0){const eq=n=>/스텝밀|로잉/.test(n)?'스텝밀':/인클라인|경사|워킹/.test(n)?'런닝머신 인클라인 워킹':'런닝머신 러닝';const cands=[...new Set(((data.gym||{}).cardio||[]).map(x=>eq(x.n)))];const nm=cands.length?cands[(ph.wk||0)%cands.length]:'스텝밀';
+   const mhr=220-(+s.age||17);extra.push({n:nm,d:`${cmin}분 · 심박 ${Math.round(mhr*0.6)}~${Math.round(mhr*0.7)}`,min:cmin,zone:'cardio',met:CARDIO_MET(nm)});}
+  const planMin=items.reduce((a,b)=>a+(b.min||0),0);
+  const label=ph.track==='contest'?`🏆 ${ph.phase} · ${ph.days>=0?'D-'+ph.days:'D+'+(-ph.days)}`:`${ph.block}. ${B.nm} · ${ph.w+1}/4주${ph.cyc?` · ${ph.cyc+1}순환`:''}${ph.deload?' · 측정 주':''}`;
+  return{label,btName:String(data.name||''),items:items.slice(0,14),extra,planMin,
+   meta:Object.assign({},ph,{day,dayNm:day==='A'?'하체·라인 날':'상체·점프 날',blockNm:B.nm,blockSub:B.sub,flags:Object.keys(fl).map(k=>FLAG_NM[k])})};
+ }catch(e){console.warn('[PA 운영] 프로그램',e);return empty;}
+}
+/* ===== [커리큘럼 9장] 4주 리포트 ===== */
+function reportData(c){
+ const at=new Date();at.setHours(12,0,0,0);const ph=phaseOf(c,at);
+ const names=(from,weeks)=>{const set=new Set();for(let i=0;i<weeks;i++){const d=new Date(from.getTime()+(i*7+2)*DAYMS);['A','B'].forEach(dy=>program(c,{date:d,day:dy,noFlags:true}).items.forEach(x=>{if(x.part==='메인'||x.part==='마무리')set.add(x.n);}));}set.delete(STRETCH.n);return set;};
+ let cur=new Set(),prev=new Set(),theme='',next='';
+ if(ph.track==='general'){const bStart=new Date(monday(at).getTime()-ph.w*7*DAYMS);cur=names(bStart,ph.w+1);if(ph.wk-ph.w>=4)prev=names(new Date(bStart.getTime()-28*DAYMS),4);
+  theme=`${ph.block}. ${BLOCKS[ph.block].nm} (${BLOCKS[ph.block].sub})`;const nb=BLOCK_ORDER[(BLOCK_ORDER.indexOf(ph.block)+1)%4];next=`${nb}. ${BLOCKS[nb].nm}`;}
+ else{cur=names(monday(at),1);theme=`콩쿠르·입시 ${ph.phase} (${ph.days>=0?'D-'+ph.days:'D+'+(-ph.days)})`;next=ph.phase==='강화기'?'특화기':ph.phase==='특화기'?'조정기':(ph.phase==='조정기'||ph.phase==='대회 직전')?'회복기':'일반과정';}
+ const fresh=[...cur].filter(n=>!prev.has(n));
+ const att=(lG('pa_attendance',{})||{})[c]||{};const since=ymd(new Date(at.getTime()-28*DAYMS));const nAtt=Object.keys(att).filter(k=>att[k]==='O'&&k>=since).length;
+ const sc=screens(c),z=sc[sc.length-1]||null,y=sc.length>1?sc[sc.length-2]:null;
+ const avg=(o,a,b)=>{if(!o)return null;const x=+o[a],w=+o[b];return isNaN(x)||isNaN(w)||o[a]===''||o[b]===''?null:Math.round((x+w)/2);};
+ const meas=[['한발 서기 (눈 감고, 좌우 평균)','balL','balR','초'],['사이드 플랭크 (좌우 평균)','spL','spR','초']].map(([nm,a,b,u])=>({nm,u,now:avg(z,a,b),before:avg(y,a,b)}));
+ meas.push({nm:'제자리 수직 점프',u:'cm',now:z&&z.jump!==''&&z.jump!=null?+z.jump:null,before:y&&y.jump!==''&&y.jump!=null?+y.jump:null});
+ const ib=getInbody(c).slice(0,2);
+ return{ph,theme,next,fresh,nAtt,meas,ib,note:z&&z.note||'',lastCheck:z&&z.date||''};
+}
+function reportHtml(c){
+ const r=reportData(c),s=stu(c)||{};const dlt=(a,b,u)=>a==null?'<span class="po-sub">기록 없음</span>':`<b>${a}${u}</b>${b!=null?` <span class="po-sub">(지난번 ${b}${u}, ${a-b>=0?'+':''}${Math.round((a-b)*10)/10}${u})</span>`:''}`;
+ let ibh='<span class="po-sub">인바디 기록 없음</span>';if(r.ib.length>=2){const z=r.ib[0],o=r.ib[1];const dm=(+z.skeletalMuscle||0)-(+o.skeletalMuscle||0),df=(+z.bodyFatPct||0)-(+o.bodyFatPct||0);ibh=`골격근 <b class="po-up">${dm>=0?'+':''}${dm.toFixed(1)}kg</b> · 체지방률 <b class="po-dn">${df>=0?'+':''}${df.toFixed(1)}%p</b> <span class="po-sub">(${E(o.date||'')} → ${E(z.date||'')})</span>`;}else if(r.ib.length===1)ibh='<span class="po-sub">측정 1회 — 다음 측정부터 변화가 보입니다</span>';
+ return `<div class="po-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+ <div class="po-card"><div class="po-lbl">이번 테마</div><div style="font-size:18px;font-weight:900">${E(r.theme)}</div><div class="po-sub" style="margin-top:4px">다음: ${E(r.next)}</div></div>
+ <div class="po-card"><div class="po-lbl">새로 배운 운동 ${r.fresh.length}개</div><div style="line-height:1.9">${r.fresh.length?r.fresh.map(n=>`<span class="po-chip" style="background:rgba(100,160,200,.15);margin:0 4px 4px 0">${E(n)}</span>`).join(''):'<span class="po-sub">없음</span>'}</div></div>
+ <div class="po-card"><div class="po-lbl">최근 4주 출석</div><div style="font-size:22px;font-weight:900">${r.nAtt}회</div></div>
+ <div class="po-card"><div class="po-lbl">측정 운동 ${r.lastCheck?`<span class="po-sub">· ${E(r.lastCheck)} 체크</span>`:''}</div>${r.meas.map(m=>`<div class="po-ex"><span>${E(m.nm)}</span><span>${dlt(m.now,m.before,m.u)}</span></div>`).join('')}</div>
+ <div class="po-card"><div class="po-lbl">체성분</div>${ibh}</div>
+ ${r.note?`<div class="po-card"><div class="po-lbl">코치 한마디</div><div style="font-weight:700">${E(r.note)}</div></div>`:''}
+ </div>`;
+}
+function viewReport(arg){
+ cleanup();const R=paRole();const c=(R==='super_admin'||R==='coach')&&arg&&stu(arg)?arg:LC;const s=stu(c);
+ if(!s){open(top('4주 리포트','')+`<div class="po-wrap"><div class="po-card" style="text-align:center;padding:40px 20px"><div class="po-h2">로그인이 필요합니다</div><button class="po-btn" style="margin-top:12px" onclick="PO.close();goMY();">MY 페이지로</button></div></div>`);return;}
+ open(top(E(s.name)+' · 4주 리포트',E(acaOf(c).name||''))+`<div class="po-wrap" style="max-width:720px;margin:0 auto">${reportHtml(c)}<p class="po-note" style="margin-top:12px">매 블록 4주차에 측정하고 새 리포트가 만들어집니다.</p></div>`);
+}
+
+/* 운동 추가용 목록 (오늘 체형 기준 전체 + 서킷) */
+function addPool(c){const out0=[];try{const ph=phaseOf(c,new Date()),B=BLOCKS[ph.block];[['lower','이번 블록 · 하체'],['upper','이번 블록 · 상체'],['core','이번 블록 · 코어']].forEach(([k,g])=>(B[k]||[]).forEach(it=>out0.push({grp:g,n:it.n,d:it.d,zone:(k==='core'||ph.block==='D')?'core':'rack',met:BLOCK_MET[ph.block],part:k==='core'?'마무리':'메인',b:it.b})));}catch(e){}const bt=getStudentBodyType(c);const data=EX_DATA[BT_NAME_MAP[bt&&bt.type]||'']||EX_DATA['직사각형']||{gym:{}};const g=data.gym||{},out=[];
+ [['upper','상체','rack',5.0],['lower','하체','rack',5.0],['core','코어','core',3.8]].forEach(([k,nm,z,met])=>(g[k]||[]).forEach(it=>{const n=SUBST[it.n]?SUBST[it.n].n:it.n;out.push({grp:nm,n,d:it.d,zone:z,met,part:k==='core'?'마무리':'메인'});}));
+ [['upper','상체'],['lower','하체']].forEach(([k,nm])=>(FILL[k]||[]).forEach(it=>out.push({grp:nm,n:it.n,d:it.d,zone:'rack',met:5.0,part:'메인'})));
+ CIRCUIT.forEach(it=>out.push({grp:'서킷',n:it.n,d:it.d,zone:'core',met:8.0,part:'메인'}));
+ const seen=new Set();return out0.concat(out).filter(x=>{if(seen.has(x.n))return false;seen.add(x.n);return true;});}
 
 /* ---------- 출석 처리 (키오스크 · 코치 공통) ---------- */
 /* 출석 취소 (코치 모드) — 오늘 출석·운동 기록 삭제, 출석부 'O' 제거, 사용한 QR은 다시 못 쓰게 */
@@ -6513,7 +6726,7 @@ async function markAttend(c,via){
  const now=Date.now(),pr=program(c),aca=acaOf(c);
  const b=db.batch();
  b.set(attRef,{date:d,code:c,name:s.name,aca:aca.id||'',at:now,via});
- b.set(COL('logs').doc(key),{date:d,code:c,aca:aca.id||'',pod:'',label:pr.label,btName:pr.btName,items:pr.items,cur:0,done:pr.items.map(()=>0),restUntil:0,ended:false,startedAt:now},{merge:true});
+ b.set(COL('logs').doc(key),{date:d,code:c,aca:aca.id||'',pod:'',label:pr.label,btName:pr.btName,items:pr.items,extra:pr.extra,cur:0,done:pr.items.map(()=>0),restUntil:0,ended:false,startedAt:now},{merge:true});
  await b.commit();
  /* 기존 출석부(pa_attendance)에도 표시 — 트랜잭션으로 해당 칸만 추가 */
  try{if(typeof _v2!=='undefined'&&_v2){await db.collection('pa_stu').doc(c).set({code:c,pa_attendance:{[d]:'O'}},{merge:true});}else{const ref=db.collection('pa_data').doc('pa_attendance');
@@ -6525,7 +6738,7 @@ async function markAttend(c,via){
 /* ---------- 화면 틀 ---------- */
 function open(html){const o=ov();o.innerHTML=html;o.classList.add('on');o.scrollTop=0;document.body.style.overflow='hidden';}
 function close(){cleanup();const o=ov();o.classList.remove('on');o.innerHTML='';document.body.style.overflow='';
- if(/^#(kiosk|coach|tv|myqr)/.test(location.hash))history.replaceState(null,'',location.pathname+location.search);}
+ if(/^#(kiosk|coach|tv|myqr|report|privacy)/.test(location.hash))history.replaceState(null,'',location.pathname+location.search);}
 function top(title,sub,right){return `<div class="po-top"><div class="po-row" style="gap:14px;min-width:0"><div class="logo" style="font-size:22px">P.A</div><div style="min-width:0"><div class="po-ttl">${title}</div>${sub?`<div class="po-sub">${sub}</div>`:''}</div></div><div class="po-row">${right||''}<button class="po-x" onclick="PO.close()">닫기</button></div></div>`;}
 function needAdmin(what){
  const coach=what==='코치 모드';
@@ -6574,7 +6787,8 @@ function viewMyQR(){
   const items=log&&Array.isArray(log.items)&&log.items.length?log.items:program(c).items;
   b.innerHTML=`<div class="po-card" style="padding:28px 18px"><div style="font-size:64px;line-height:1">✅</div><div class="po-h2" style="margin:12px 0 4px;font-size:22px">출석 완료</div><div class="po-sub">${att&&att.at?hm(att.at)+' 체크인':''}</div>
   <div class="po-card" style="margin-top:16px;background:var(--card2)"><div class="po-lbl">오늘 수업</div><div style="font-size:20px;font-weight:900">${rt?rt+' · ':''}${log&&log.pod?podFull(log.pod):'코치님이 POD를 안내해 드려요'}</div><div class="po-note" style="margin-top:6px">4층 탈의실에서 환복 후 운동층으로 올라가세요</div></div>
-  ${items.length?`<div style="margin-top:16px;text-align:left"><div class="po-lbl">오늘 운동</div>${items.map(e=>`<div class="po-ex"><span>${E(e.n)}</span><span class="po-sub">${E(e.d)}</span></div>`).join('')}</div>`:''}</div>`;
+  ${(()=>{const ex=log&&Array.isArray(log.extra)?log.extra:program(c).extra;return ex.length?`<div class="po-card" style="margin-top:12px;background:rgba(100,160,200,.1);text-align:left"><div class="po-lbl">🏃 수업 전·후 셀프 유산소 (${ZONE_NM.cardio})</div>${ex.map(x=>`<div style="font-weight:900">${E(x.n)} <span class="po-sub">${E(x.d)}</span></div>`).join('')}</div>`:'';})()}
+  ${items.length?`<div style="margin-top:16px;text-align:left"><div class="po-lbl">오늘 코치 수업 · ${E(program(c).label)}</div>${items.map(e=>`<div class="po-ex"><span>${E(e.n)}</span><span class="po-sub">${E(e.d)}</span></div>`).join('')}</div>`:''}</div>`;
  }
  function renderQR(){
   const b=body();if(!b)return;const left=Math.max(0,QR_ROTATE-Math.floor((Date.now()-issuedAt)/1000));
@@ -6679,11 +6893,11 @@ function viewCoach(selArg){
  let coachName=R0==='coach'?String(_paC.nm||'코치'):(()=>{try{return localStorage.getItem('po_coach_name')||'';}catch(e){return '';}})();
  const askName=()=>{const v=prompt('코치 이름을 입력하세요 (POD 사용 표시에 쓰입니다)',coachName||'');if(v&&v.trim()){coachName=v.trim().slice(0,12);try{localStorage.setItem('po_coach_name',coachName);}catch(e){}const bt=document.getElementById('poCoachNm');if(bt)bt.textContent='코치: '+coachName;}};
  /* POD 중복 사용 방지: 학생이 남아 있는 POD는 처음 배정한 코치만 사용 */
- const POD_MAX=p=>/POD(3|6)$/.test(p)?12:3;
+ const POD_MAX=p=>ZONE_MAX[kindOf(p)]||3;
  const activeOn=(p,except)=>Object.values(logs).filter(x=>x&&x.date===d&&x.pod===p&&!x.ended&&x.code!==except);
- const podOwner=p=>{const cl=claims[p];return cl&&activeOn(p).length?cl:null;};
+ const podOwner=p=>{if(kindOf(p)==='cardio')return null;const cl=claims[p];return cl&&activeOn(p).length?cl:null;};
  const lockedFor=p=>{const o=podOwner(p);return o&&o.coachId!==COACH_ID?o:null;};
- async function claimPod(p,c){const ref=COL('pods').doc(d+'_'+p);await db.runTransaction(async t=>{const doc=await t.get(ref);const cl=doc.exists?doc.data():null;const others=activeOn(p,c);
+ async function claimPod(p,c){if(kindOf(p)==='cardio'){if(activeOn(p,c).length>=POD_MAX(p))throw new Error('FULL');return;}const ref=COL('pods').doc(d+'_'+p);await db.runTransaction(async t=>{const doc=await t.get(ref);const cl=doc.exists?doc.data():null;const others=activeOn(p,c);
    if(cl&&cl.coachId!==COACH_ID&&others.length)throw new Error('LOCK:'+(cl.coachName||'다른'));
    if(others.length>=POD_MAX(p))throw new Error('FULL');
    t.set(ref,{date:d,pod:p,coachId:COACH_ID,coachName:coachName||'코치',at:Date.now()});});}
@@ -6711,6 +6925,14 @@ function viewCoach(selArg){
   if(!sel){det.innerHTML=`<div class="po-card" style="text-align:center;padding:50px 20px"><div style="font-size:40px">👈</div><div class="po-h2" style="margin-top:10px">학생을 선택하세요</div><p class="po-note">출석하면 목록에 바로 초록색으로 표시됩니다.</p></div>`;return;}
   const c=sel,s=stu(c),l=logs[c],a=att[c],aca=acaOf(c),cd=gCondToday(c),ib=getInbody(c).slice(0,3);
   const items=l&&Array.isArray(l.items)&&l.items.length?l.items:program(c).items;
+  const planOf=a=>a.reduce((x,y)=>x+(y.min||estimate(y).min),0);
+  function courseCard(cc,lg,aa){const pr=program(cc),m=pr.meta||{},cs=courseOf(cc),pn=lg&&lg.pain;
+   return `<div class="po-card"><div class="po-row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div><div class="po-lbl" style="margin:0">📅 과정</div><div style="font-size:16px;font-weight:900;margin-top:4px">${cs.track==='contest'?'콩쿠르·입시':'일반과정'} · ${E(pr.label)}</div><div class="po-sub" style="margin-top:2px">오늘: ${E(m.dayNm||'')}${cs.track==='contest'&&cs.event?' · '+E(cs.event):''}${m.flags&&m.flags.length?` · <span style="color:var(--orange)">주의: ${m.flags.map(E).join(', ')}</span>`:''}</div></div>
+    <div class="po-row" style="flex-wrap:wrap"><button class="po-btn sm g" id="poCourse">과정 설정</button><button class="po-btn sm g" id="poScreen">4주 체크 입력</button><button class="po-btn sm g" id="poReport">4주 리포트</button></div></div>
+    ${pn&&pn.s>=7?`<div class="po-warn po-card" style="margin-top:10px;padding:10px"><b style="color:var(--orange)">통증 ${pn.s}점 (${E(pn.part)})</b> — 수업을 멈추고 보호자에게 연락, 진료를 권해 주세요.</div>`:pn&&pn.s>=4?`<div class="po-note" style="margin-top:8px;color:var(--orange)">통증 ${pn.s}점 (${E(pn.part)}) — 그 부위 운동을 뺐습니다.</div>`:''}
+    ${aa&&lg&&!lg.ended?`<div class="po-row" style="margin-top:10px;flex-wrap:wrap"><span class="po-sub">오늘 통증</span><select id="poPainS" style="padding:7px;border-radius:8px;background:var(--card2);color:#fff;border:1px solid var(--border)">${Array.from({length:11},(_,k)=>`<option value="${k}" ${pn&&pn.s===k?'selected':''}>${k}점</option>`).join('')}</select><select id="poPainP" style="padding:7px;border-radius:8px;background:var(--card2);color:#fff;border:1px solid var(--border)">${['발목','무릎','고관절','허리','어깨'].map(x=>`<option ${pn&&pn.part===x?'selected':''}>${x}</option>`).join('')}</select><button class="po-btn sm" id="poPainBtn">적용</button><span class="po-sub">0~3 진행 · 4~6 그 부위 빼기 · 7 이상 중단</span></div>`:''}</div>`;}
+  const secMin=(a,p)=>a.filter(x=>x.part===p).reduce((x,y)=>x+(y.min||0),0);
+  const extraOf=(lg,cc)=>lg&&Array.isArray(lg.extra)?lg.extra:program(cc).extra;
   const restLeft=l&&l.restUntil>Date.now()?Math.ceil((l.restUntil-Date.now())/1000):0;
   let ibDelta='';if(ib.length>=2){const z=ib[0],o=ib[ib.length-1];const dm=(+z.skeletalMuscle||0)-(+o.skeletalMuscle||0),df=(+z.bodyFatPct||0)-(+o.bodyFatPct||0);ibDelta=`<div class="po-note" style="margin-top:8px">최근 ${ib.length}회 변화: 골격근 <span class="po-up">${dm>=0?'+':''}${dm.toFixed(1)}kg</span> · 체지방률 <span class="po-dn">${df>=0?'+':''}${df.toFixed(1)}%p</span></div>`;}
   const live=!!a&&!(l&&l.ended);
@@ -6722,29 +6944,49 @@ function viewCoach(selArg){
    <div class="po-card ${cd&&cd.score<=2?'po-warn':''}"><div class="po-lbl">오늘 컨디션</div>${cd?`<div style="font-size:16px;font-weight:900">${(typeof COND_EMOJIS!=='undefined'&&COND_EMOJIS[cd.score-1])||''} ${(typeof COND_LABELS!=='undefined'&&COND_LABELS[cd.score-1])||E(cd.score)}</div>${(cd.tags||[]).length?`<div style="margin-top:6px">${cd.tags.map(t=>`<span class="po-chip" style="background:rgba(232,98,42,.15);color:var(--orange);margin:0 4px 4px 0">${E(t)}</span>`).join('')}</div>`:''}${cd.memo?`<div class="po-note" style="margin-top:6px">메모: ${E(cd.memo)}</div>`:''}`:'<div class="po-note">오늘 컨디션 체크 기록 없음</div>'}</div>
    <div class="po-card"><div class="po-lbl">인바디 최근 ${ib.length||''}회</div>${ib.length?`<table class="po-ib"><tr><th>측정일</th><th>체중</th><th>골격근</th><th>체지방률</th></tr>${ib.map(r=>`<tr><td>${E(r.date||'')}</td><td>${r.weight!=null?E(r.weight)+'kg':'-'}</td><td>${r.skeletalMuscle!=null?E(r.skeletalMuscle)+'kg':'-'}</td><td>${r.bodyFatPct!=null?E(r.bodyFatPct)+'%':'-'}</td></tr>`).join('')}</table>${ibDelta}`:'<div class="po-note">인바디 기록 없음</div>'}</div>
   </div>
-  <div class="po-card"><div class="po-lbl">POD 배정 ${a?'':'(출석 후 가능)'}</div><div class="po-pods">${Object.keys(PODS).map(p=>{const mine=!!(l&&l.pod===p),lk=lockedFor(p),n=activeOn(p,c).length,full=!mine&&n>=POD_MAX(p);
+  ${courseCard(c,l,a)}
+  <div class="po-card"><div class="po-lbl">구역 배정 ${a?'':'(출석 후 가능)'}</div><div class="po-pods">${Object.keys(PODS).map(p=>{const mine=!!(l&&l.pod===p),lk=lockedFor(p),n=activeOn(p,c).length,full=!mine&&n>=POD_MAX(p);
    return `<button data-p="${p}" class="${mine?'on':''}" ${!a||(!mine&&(lk||full))?'disabled':''}>${podLabel(p)}<br><span style="font-weight:500;font-size:11px;opacity:.85">${lk?E(lk.coachName||'다른')+' 코치 사용 중':full?'정원 마감':PODS[p].name}</span>${n?`<br><span style="font-weight:500;font-size:10.5px;opacity:.7">현재 ${n}명</span>`:''}</button>`;}).join('')}</div>
    ${Object.keys(PODS).some(p=>lockedFor(p))?`<div class="po-note" style="margin-top:8px">다른 코치가 쓰는 POD는 선택할 수 없습니다. 그 코치의 학생이 모두 수업 종료되면 자동으로 풀립니다. ${IS_ADM?Object.keys(PODS).filter(p=>lockedFor(p)).map(p=>`<button class="po-btn sm g" style="margin:4px 4px 0 0" data-unlock="${p}">${podLabel(p)} 잠금 강제 해제</button>`).join(''):'급하면 관리자에게 잠금 해제를 요청하세요.'}</div>`:''}</div>
-  <div class="po-card"><div class="po-row" style="justify-content:space-between;margin-bottom:10px;flex-wrap:wrap"><div class="po-lbl" style="margin:0">오늘 운동 · ${E((l&&l.btName)||program(c).btName||'')} ${E((l&&l.label)||'')}</div><div class="po-sub">진행 ${doneSets(l)}/${totalSets(l)||items.reduce((x,y)=>x+y.sets,0)}세트 ${restLeft?`· <b style="color:var(--orange)">휴식 ${fmtSec(restLeft)}</b>`:''}</div></div>
-   ${items.length?items.map((e,i)=>{const dn=l&&l.done?l.done[i]||0:0,cur=live&&l&&l.cur===i;return `<div class="po-exr ${cur?'cur':''} ${dn>=e.sets?'done':''}"><div><div style="font-weight:900">${i+1}. ${E(e.n)}</div><div class="po-sub">${E(e.part)} · ${E(e.d)}</div>${live&&!cur&&dn<e.sets?`<button class="po-btn sm g" style="margin-top:6px" data-cur="${i}">이 운동으로 이동</button>`:''}</div>
-    <div class="po-dots">${Array.from({length:e.sets},(_,k)=>`<div class="po-dot ${k<dn?'f':''}">${k+1}</div>`).join('')}${live?`<button class="po-btn sm" data-set="${i}" ${dn>=e.sets?'disabled':''}>세트 완료</button><button class="po-btn sm g" data-undo="${i}" ${dn?'':'disabled'}>−</button>`:''}</div></div>`;}).join(''):'<div class="po-note">오늘은 프로그램이 없는 날이에요 (휴식일). 코치가 직접 지도합니다.</div>'}
+  <div class="po-card"><div class="po-row" style="justify-content:space-between;margin-bottom:10px;flex-wrap:wrap"><div class="po-lbl" style="margin:0">오늘 운동 · ${E((l&&l.btName)||program(c).btName||'')} ${E((l&&l.label)||program(c).label||'')}</div><div class="po-sub">코치 수업 예상 <b style="color:${planOf(items)>cfg().total+5?'var(--orange)':'var(--text)'}">${planOf(items)}분</b> / ${cfg().total}분 · 진행 ${doneSets(l)}/${totalSets(l)||items.reduce((x,y)=>x+y.sets,0)}세트 ${restLeft?`· <b style="color:var(--orange)">휴식 ${fmtSec(restLeft)}</b>`:''}</div></div>
+   ${extraOf(l,c).length?`<div class="po-note" style="margin:-4px 0 10px;padding:8px 10px;border-radius:10px;background:rgba(100,160,200,.1)">🏃 추천 셀프 유산소 (수업 전·후, ${ZONE_NM.cardio}): ${extraOf(l,c).map(x=>`<b>${E(x.n)}</b> ${E(x.d)}`).join(' · ')}</div>`:''}
+   ${items.length?items.map((e,i)=>{const dn=l&&l.done?l.done[i]||0:0,cur=live&&l&&l.cur===i;const hd=(i===0||items[i-1].part!==e.part)?`<div class="po-lbl" style="margin:${i?'14px':'0'} 0 6px">${E(e.part)} ${secMin(items,e.part)?`<span class="po-sub">· 약 ${secMin(items,e.part)}분</span>`:''}</div>`:'';return `${hd}<div class="po-exr ${cur?'cur':''} ${dn>=e.sets?'done':''}"><div><div style="font-weight:900">${i+1}. ${E(e.n)}</div><div class="po-sub">${E(e.d)}${e.rest?` · 휴식 ${e.rest}초`:''}${e.zone&&e.zone!=='any'?` · 📍 ${ZONE_NM[e.zone]||''}`:''}</div>${live&&!cur&&dn<e.sets?`<button class="po-btn sm g" style="margin-top:6px" data-cur="${i}">이 운동으로 이동</button>`:''}${live&&!dn?`<button class="po-btn sm g" style="margin:6px 0 0 4px" data-rm="${i}">빼기</button>`:''}</div>
+    <div class="po-dots">${Array.from({length:e.sets},(_,k)=>`<div class="po-dot ${k<dn?'f':''}">${k+1}</div>`).join('')}${live?`<button class="po-btn sm" data-set="${i}" ${dn>=e.sets?'disabled':''}>세트 완료</button><button class="po-btn sm g" data-undo="${i}" ${dn?'':'disabled'}>−</button>`:''}</div></div>`;}).join(''):'<div class="po-note">오늘 프로그램이 없습니다. 아래에서 운동을 추가하세요.</div>'}
+   ${live?`<div class="po-row" style="margin-top:10px;flex-wrap:wrap"><select id="poAddEx" style="flex:1;min-width:200px;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><option value="">+ 운동 추가 (오늘 체형 운동 목록)</option>${(()=>{const P=addPool(c);return [...new Set(P.map(x=>x.grp))].map(g=>`<optgroup label="${E(g)}">${P.map((x,j)=>x.grp===g?`<option value="${j}">${E(x.n)} · ${E(x.d)}</option>`:'').join('')}</optgroup>`).join('');})()}</select><button class="po-btn sm" id="poAddExBtn">추가</button></div>`:''}
    ${a?`<div class="po-row" style="margin-top:10px;justify-content:flex-end;flex-wrap:wrap">${l&&l.ended?`<span class="po-chip" style="background:rgba(255,255,255,.12)">${hm(l.endedAt)} 수업 종료</span><button class="po-btn sm g" id="poReopen">종료 취소</button>`:`<button class="po-btn sm g" id="poRest">휴식 60초</button><button class="po-btn sm o" id="poEnd">수업 종료</button>`}</div>`:''}
   </div></div>`;
   const ref=COL('logs').doc(d+'_'+c);
   /* 키오스크 출석(서버 기록)은 운동 목록이 비어 있음 → 코치가 처음 누를 때 오늘 프로그램을 채움 */
-  const upd=o=>{if(l&&!(Array.isArray(l.items)&&l.items.length)){const pr=program(c);if(pr.items.length)o=Object.assign({label:pr.label,btName:pr.btName,items:pr.items,done:pr.items.map(()=>0)},o);}const prev=logs[c]||{};const next=Object.assign({},prev,o);const nl=Object.assign({},logs,{[c]:next});return ref.set(o,{merge:true}).then(()=>pushDisplay([prev.pod,next.pod],nl)).catch(fsErr);};
+  const upd=o=>{if(l&&!(Array.isArray(l.items)&&l.items.length)){const pr=program(c);if(pr.items.length)o=Object.assign({label:pr.label,btName:pr.btName,items:pr.items,extra:pr.extra,done:pr.items.map(()=>0)},o);}const prev=logs[c]||{};const next=Object.assign({},prev,o);const nl=Object.assign({},logs,{[c]:next});return ref.set(o,{merge:true}).then(()=>pushDisplay([prev.pod,next.pod],nl)).catch(fsErr);};
   const ab=document.getElementById('poAttBtn');if(ab)ab.onclick=async()=>{ab.disabled=true;try{await markAttend(c,'coach');toastP(s.name+' 출석 처리 완료');}catch(e){fsErr(e);ab.disabled=false;}};
   det.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{const p=b.dataset.p,prevPod=l&&l.pod;if(prevPod===p)return;
    if(!coachName)askName();b.disabled=true;
    try{await claimPod(p,c);await upd({pod:p});releaseIfEmpty(prevPod,c);toastP(`${s.name} → ${podFull(p)}`);}
-   catch(e){const m=String(e&&e.message||e);toastP(m.startsWith('LOCK:')?`${m.slice(5)} 코치가 사용 중인 POD입니다`:m==='FULL'?'이 POD는 정원이 찼습니다':'배정 실패: '+m,'err');drawDetail();}});
+   catch(e){const m=String(e&&e.message||e);toastP(m.startsWith('LOCK:')?`${m.slice(5)} 코치가 사용 중인 POD입니다`:m==='FULL'?'이 구역은 정원이 찼습니다':'배정 실패: '+m,'err');drawDetail();}});
   det.querySelectorAll('[data-unlock]').forEach(b=>b.onclick=()=>{const p=b.dataset.unlock,o=lockedFor(p);if(!confirm(`${podLabel(p)}의 잠금을 강제로 해제할까요?\n(${o?o.coachName:'다른'} 코치가 아직 쓰고 있다면 겹칠 수 있습니다)`))return;COL('pods').doc(d+'_'+p).delete().then(()=>toastP(podLabel(p)+' 잠금 해제')).catch(fsErr);});
   const ca=document.getElementById('poCancelAtt');if(ca)ca.onclick=async()=>{if(!confirm(`${s.name} 학생의 오늘 출석을 취소할까요?\n\n오늘 운동 기록과 POD 배정도 함께 지워집니다.`))return;ca.disabled=true;
    try{const pod=l&&l.pod;await cancelAttend(c);if(pod){const nl=Object.assign({},logs);delete nl[c];pushDisplay([pod],nl);releaseIfEmpty(pod,c);}toastP(s.name+' 출석을 취소했습니다');}catch(e){fsErr(e);ca.disabled=false;}};
   det.querySelectorAll('[data-cur]').forEach(b=>b.onclick=()=>upd({cur:+b.dataset.cur,restUntil:0}));
   det.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{if(!l)return;const i=+b.dataset.set,e=items[i];const done=(Array.isArray(l.done)?l.done:items.map(()=>0)).slice();done[i]=Math.min(e.sets,(done[i]||0)+1);
    let cur=i;if(done[i]>=e.sets){const nx=items.findIndex((x,j)=>j>i&&(done[j]||0)<x.sets),any=items.findIndex((x,j)=>(done[j]||0)<x.sets);cur=nx>=0?nx:(any>=0?any:i);}
-   const all=items.every((x,j)=>(done[j]||0)>=x.sets);upd({done,cur,restUntil:all?0:Date.now()+60000});});
+   const all=items.every((x,j)=>(done[j]||0)>=x.sets);upd({done,cur,restUntil:all||!(e.rest>0||e.rest==null)?0:Date.now()+(e.rest||60)*1000});});
+  /* 운동 빼기 · 추가 (코치 재량) */
+  {const bc=document.getElementById('poCourse');if(bc)bc.onclick=()=>courseModal(c);const bs=document.getElementById('poScreen');if(bs)bs.onclick=()=>screenModal(c);
+   const br=document.getElementById('poReport');if(br)br.onclick=()=>{const m=document.createElement('div');m.className='po-modal';m.innerHTML=`<div class="po-card" style="max-width:720px;width:100%;max-height:88vh;overflow:auto;text-align:left"><div class="po-row" style="justify-content:space-between;margin-bottom:10px"><div class="po-h2">${E(s.name)} · 4주 리포트</div><button class="po-x" data-x>닫기</button></div>${reportHtml(c)}</div>`;m.querySelector('[data-x]').onclick=()=>m.remove();ov().appendChild(m);};
+   const pb=document.getElementById('poPainBtn');if(pb)pb.onclick=()=>{const sc=+document.getElementById('poPainS').value,part=document.getElementById('poPainP').value;const pain={s:sc,part,at:Date.now()};
+    if(sc>=4&&sc<=6){const od=(l&&Array.isArray(l.done)?l.done:[]);const keep=items.map((x,j)=>({x,j})).filter(o=>o.x.b!==part||(od[o.j]||0)>0);const ni=keep.map(o=>o.x),nd=keep.map(o=>od[o.j]||0);
+     upd({pain,items:ni,done:nd,cur:Math.min(l&&l.cur||0,Math.max(0,ni.length-1))});toastP(`${part} 운동 ${items.length-ni.length}개를 뺐습니다`);}
+    else{upd({pain});if(sc>=7)toastP('통증 7점 이상: 수업을 멈추고 보호자에게 연락해 주세요','err');}};}
+  det.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const i=+b.dataset.rm,e=items[i];if(!confirm(`'${e.n}'을(를) 오늘 운동에서 뺄까요?`))return;
+   const ni=items.filter((_,j)=>j!==i),od=(l&&Array.isArray(l.done)?l.done:[]),nd=items.map((_,j)=>od[j]||0).filter((_,j)=>j!==i);let cur=l&&l.cur||0;if(cur>i)cur--;cur=Math.min(cur,Math.max(0,ni.length-1));
+   upd({items:ni,done:nd,cur});});
+  {const ab2=document.getElementById('poAddExBtn');if(ab2)ab2.onclick=()=>{const v=document.getElementById('poAddEx').value;if(v==='')return toastP('추가할 운동을 고르세요','err');const x=addPool(c)[+v];const est=estimate(x,x.zone==='core'?30:null);
+   const it={n:x.n,d:x.d,sets:est.sets,part:x.part,zone:x.zone,rest:est.rest,met:x.met,min:est.min,b:x.b||''};
+   const od=(l&&Array.isArray(l.done)?l.done:[]),nd=items.map((_,j)=>od[j]||0);
+   /* 마무리 스트레칭 앞에 넣기 */
+   let at=items.length;const si=items.findIndex(y=>y.n===STRETCH.n);if(si>=0)at=si;
+   if(it.part==='메인'){let lm=-1;items.forEach((y,j)=>{if(y.part==='메인'||y.part==='워밍업')lm=j;});if(lm>=0)at=lm+1;}
+   const ni=items.slice(0,at).concat([it],items.slice(at));nd.splice(at,0,0);upd({items:ni,done:nd});toastP(x.n+' 추가');};}
   det.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>{if(!l)return;const i=+b.dataset.undo;const done=l.done.slice();done[i]=Math.max(0,(done[i]||0)-1);upd({done,cur:i,restUntil:0});});
   const rs=document.getElementById('poRest');if(rs)rs.onclick=()=>upd({restUntil:Date.now()+60000});
   const en=document.getElementById('poEnd');if(en)en.onclick=async()=>{if(!confirm(s.name+' 학생 수업을 종료할까요?'))return;await upd({ended:true,endedAt:Date.now(),restUntil:0});releaseIfEmpty(l&&l.pod,c);};
@@ -6756,25 +6998,132 @@ function viewCoach(selArg){
  onClean(COL('pods').where('date','==',d).onSnapshot(snap=>{claims={};snap.forEach(x=>{const v=x.data();claims[v.pod]=v;});drawDetail();},fsErr));
  if(IS_ADM){const nb=document.getElementById('poCoachNm');if(nb)nb.onclick=askName;if(!coachName)setTimeout(askName,300);}
  every(1000,()=>{if(sel&&logs[sel]&&logs[sel].restUntil>Date.now()-1500)drawDetail();});
+ {const rd=()=>{drawRoster();drawDetail();};window.addEventListener('po-data',rd);onClean(()=>window.removeEventListener('po-data',rd));}
  drawRoster();drawDetail();
+}
+
+/* [커리큘럼] 과정 설정 창 */
+function modalBox(title,body){const m=document.createElement('div');m.className='po-modal';m.innerHTML=`<div class="po-card" style="max-width:560px;width:100%;max-height:88vh;overflow:auto;text-align:left"><div class="po-row" style="justify-content:space-between;margin-bottom:10px"><div class="po-h2">${title}</div><button class="po-x" data-x>닫기</button></div>${body}</div>`;m.querySelector('[data-x]').onclick=()=>m.remove();ov().appendChild(m);return m;}
+const inSt='width:100%;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border);margin-top:4px';
+function courseModal(c){const s=stu(c),cs=courseOf(c);
+ const m=modalBox(E(s.name)+' · 과정 설정',`<label class="po-sub">과정<select id="pcT" style="${inSt}"><option value="general" ${cs.track==='general'?'selected':''}>일반과정 (4주 블록 순환)</option><option value="contest" ${cs.track==='contest'?'selected':''}>콩쿠르·입시과정 (D-day 역산)</option></select></label>
+ <div id="pcC" style="margin-top:10px"><label class="po-sub">대회·실기 이름<input id="pcE" maxlength="30" value="${E(cs.event)}" placeholder="예: OO 무용 콩쿠르" style="${inSt}"></label><label class="po-sub" style="display:block;margin-top:8px">D-day<input id="pcD" type="date" value="${E(cs.dday)}" style="${inSt}"></label></div>
+ <label class="po-sub" style="display:block;margin-top:10px">일반과정 시작일 (블록 계산 기준)<input id="pcS" type="date" value="${E(cs.start||ymd(startOf(c)))}" style="${inSt}"></label>
+ <p class="po-note" style="margin-top:8px">콩쿠르·입시과정은 D-12주부터 강화기 → 특화기(D-6주) → 조정기(D-2주, 감량 금지) → 회복기(2주) 순서로 자동 진행되고, 끝나면 일반과정으로 돌아갑니다.</p>
+ <button class="po-btn" id="pcSave" style="width:100%;margin-top:10px">저장</button>`);
+ const sync=()=>{m.querySelector('#pcC').style.display=m.querySelector('#pcT').value==='contest'?'':'none';};m.querySelector('#pcT').onchange=sync;sync();
+ m.querySelector('#pcSave').onclick=()=>{const tr=m.querySelector('#pcT').value,dd=m.querySelector('#pcD').value,st=m.querySelector('#pcS').value,ev=m.querySelector('#pcE').value.trim().slice(0,30);
+  if(tr==='contest'&&!parseYmd(dd))return toastP('D-day를 입력하세요','err');
+  const all=lG('pa_course',{})||{};all[c]={track:tr,dday:tr==='contest'?dd:'',event:tr==='contest'?ev:'',start:parseYmd(st)?st:'',at:Date.now()};lS('pa_course',all);m.remove();toastP('과정 저장 · 다음 출석부터 반영됩니다');window.dispatchEvent(new Event('po-data'));};
+}
+/* [커리큘럼 8장] 4주 체크 입력 창 */
+function screenModal(c){const s=stu(c),last=screens(c).slice(-1)[0]||{};const v=k=>E(last[k]!=null?last[k]:'');
+ const pair=(nm,a,b,u,hint)=>`<div style="margin-top:10px"><div class="po-sub">${nm} <span style="opacity:.7">${hint}</span></div><div class="po-row"><input data-k="${a}" type="number" step="0.5" placeholder="왼쪽 ${u}" style="${inSt}"><input data-k="${b}" type="number" step="0.5" placeholder="오른쪽 ${u}" style="${inSt}"></div></div>`;
+ const m=modalBox(E(s.name)+' · 4주 체크',`<p class="po-note">지난 체크: ${last.date?E(last.date):'없음'}</p>
+ ${pair('한발 서기 (눈 감고)','balL','balR','초','30초 미만·좌우 10초 차이 주의')}
+ ${pair('무릎-벽 테스트','kneeL','kneeR','cm','10cm 미만·좌우 2cm 차이 주의')}
+ <div style="margin-top:10px"><div class="po-sub">한발 스쿼트 5회 (무릎이 안쪽으로 무너지는지)</div><div class="po-row">${['sqL','sqR'].map((k,i)=>`<select data-k="${k}" style="${inSt}"><option value="ok">${i?'오른쪽':'왼쪽'} 정상</option><option value="bad">${i?'오른쪽':'왼쪽'} 무너짐</option></select>`).join('')}</div></div>
+ ${pair('사이드 플랭크','spL','spR','초','좌우 10% 차이 주의')}
+ <label class="po-sub" style="display:block;margin-top:10px"><input type="checkbox" data-k="back"> 뒤로 젖히기·아라베스크에서 허리 통증 있음</label>
+ <label class="po-sub" style="display:block;margin-top:10px">제자리 수직 점프 (cm)<input data-k="jump" type="number" step="0.5" style="${inSt}"></label>
+ <label class="po-sub" style="display:block;margin-top:10px">코치 한마디 (리포트에 표시)<input data-k="note" maxlength="60" placeholder="예: 착지가 안정적이에요" style="${inSt}"></label>
+ <button class="po-btn" id="psSave" style="width:100%;margin-top:12px">저장</button>`);
+ m.querySelector('#psSave').onclick=()=>{const o={date:ymd(new Date())};m.querySelectorAll('[data-k]').forEach(i=>{const k=i.dataset.k;o[k]=i.type==='checkbox'?i.checked:i.tagName==='SELECT'?i.value:(i.type==='number'?(i.value===''?'':+i.value):i.value.trim());});
+  const all=lG('pa_screen',{})||{};const arr=(Array.isArray(all[c])?all[c]:[]).filter(x=>x&&x.date!==o.date);arr.push(o);all[c]=arr.slice(-24);lS('pa_screen',all);m.remove();window.dispatchEvent(new Event('po-data'));
+  const f=flagsOf(c,parseYmd(o.date));const fs=Object.keys(f).map(k=>FLAG_NM[k]);toastP(fs.length?'저장 · 주의: '+fs.join(', ')+' — 다음 수업부터 운동에 반영':'저장 · 주의 항목 없음');
+  if(o.back)setTimeout(()=>alert('허리 통증이 있어 허리를 뒤로 꺾는 동작은 빼겠습니다.\n보호자에게 진료를 권해 주세요.'),200);};
+}
+
+/* ===== [보호자] 내 아이 확인하기 (보기 전용) ===== */
+let GUN=[];const gClean=()=>{GUN.forEach(f=>{try{f();}catch(e){}});GUN=[];};
+function guardianDash(c){
+ gClean();const s=stu(c);if(!s)return;const box=document.getElementById('myDB');if(!box)return;
+ const d=today(),key=d+'_'+c;let att=null,log=null;const ym=d.slice(0,7);
+ const rec=(lG('pa_attendance',{})||{})[c]||{};const nMonth=Object.keys(rec).filter(k=>k.startsWith(ym)&&rec[k]==='O').length;
+ box.style.display='block';document.getElementById('loginBox').style.display='none';
+ box.innerHTML=`<div style="max-width:760px;margin:0 auto;padding:16px">
+  <div style="font-size:22px;font-weight:900;margin-bottom:4px">👨‍👩‍👧 내 아이 확인하기</div>
+  <div class="po-sub" style="margin-bottom:14px">${E(s.name)}${acaOf(c).name?' · '+E(acaOf(c).name):''} · 보기 전용 화면입니다</div>
+  <div id="poGLive"></div>
+  <div class="po-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:12px">
+   <div class="po-card"><div class="po-lbl">이번 달 출석</div><div style="font-size:22px;font-weight:900">${nMonth}회</div></div>
+   <div class="po-card"><div class="po-lbl">레슨 예약</div><button class="po-btn sm" onclick="goReserve()">예약·일정 보기</button></div>
+  </div>
+  <div style="margin-top:12px">${reportHtml(c)}</div>
+  <div class="po-card" style="margin-top:12px"><div class="po-lbl">계정</div><div class="po-row" style="flex-wrap:wrap"><a href="#privacy" class="po-btn sm g">개인정보 처리방침</a><button class="po-btn sm g" id="poGDel">회원 탈퇴</button></div></div>
+ </div>`;
+ const draw=()=>{const el=document.getElementById('poGLive');if(!el)return;
+  if(!att){el.innerHTML=`<div class="po-card" style="text-align:center;padding:22px"><div style="font-size:30px">🕒</div><div style="font-weight:900;margin-top:6px">현재 수업 중이 아닙니다</div><div class="po-sub" style="margin-top:4px">아이가 센터에서 출석하면 이 화면에 위치와 진행 상황이 나타납니다.</div></div>`;return;}
+  const ended=log&&log.ended,tot=totalSets(log),ds=doneSets(log);
+  if(ended){el.innerHTML=`<div class="po-card"><div class="po-lbl">오늘 수업 · 종료</div><div style="font-weight:900;font-size:17px">${hm(att.at)} 출석 → ${log.endedAt?hm(log.endedAt):''} 수업 종료</div><div class="po-sub" style="margin-top:4px">진행 ${ds}/${tot}세트 · 수고했어요</div></div>`;return;}
+  el.innerHTML=`<div class="po-card" style="border-color:var(--green)"><div class="po-lbl" style="color:var(--green)">● 지금 수업 중</div>
+   <div style="font-size:19px;font-weight:900">${log&&log.pod?E(podFull(log.pod)):'구역 배정 전 (코치님이 안내 중)'}</div>
+   <div class="po-sub" style="margin-top:4px">${hm(att.at)} 출석 · ${log&&log.label?E(log.label):''}</div>
+   ${tot?`<div class="po-bar" style="margin-top:10px"><i style="width:${Math.round(ds/tot*100)}%"></i></div><div class="po-sub" style="margin-top:4px">진행 ${ds}/${tot}세트</div>`:''}
+   <div class="po-card" style="margin-top:12px;background:var(--card2);text-align:center"><div style="font-size:24px">📹</div><div class="po-sub">구역 CCTV 보기 — 센터 CCTV 설치 후 아이가 있는 구역 화면만 열립니다 (준비 중)</div></div></div>`;};
+ GUN.push(COL('att').doc(key).onSnapshot(x=>{att=x.exists?x.data():null;draw();},e=>console.warn(e)));
+ GUN.push(COL('logs').doc(key).onSnapshot(x=>{log=x.exists?x.data():null;draw();},e=>console.warn(e)));
+ draw();
+ document.getElementById('poGDel').onclick=()=>deleteFlow(c,true);
+}
+/* ===== 보호자 초대 코드 ===== */
+async function inviteFlow(c){
+ const s=stu(c);if(!s)return;const R=paRole();
+ if(!confirm(`${s.name} 학생의 보호자 초대 코드를 만들까요?\n\n· 7일 동안 한 번만 쓸 수 있습니다\n· 예전에 만든 쓰지 않은 코드는 무효가 됩니다\n· 학생당 보호자는 최대 2명입니다`))return;
+ let d;try{d=await paSrv({invite:{code:c}});}catch(e){toastP(e.status===429?'잠시 후 다시 시도해 주세요':'초대 코드를 만들지 못했습니다: '+(e.reason||e.message),'err');return;}
+ const exp=new Date(d.expiresAt);const msg=`[P.A 트레이닝] ${s.name} 학생 보호자 연결 안내\n\npatraining.co.kr → MY → 카카오로 시작하기 → "학부모" → 아래 코드 입력\n\n보호자 초대 코드: ${d.invite}\n(${exp.getMonth()+1}/${exp.getDate()}까지, 1회용)`;
+ const m=document.createElement('div');m.className='po-modal';m.style.zIndex='10060';
+ m.innerHTML=`<div class="po-card" style="max-width:420px;width:100%;text-align:center"><div class="po-h2">보호자 초대 코드</div><div class="po-code" style="margin:12px 0">${E(d.invite)}</div><div class="po-sub">${exp.getMonth()+1}월 ${exp.getDate()}일까지 · 한 번만 사용</div>
+  <textarea readonly style="width:100%;height:130px;margin-top:12px;padding:10px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border);font-size:12px">${E(msg)}</textarea>
+  <div class="po-row" style="margin-top:10px"><button class="po-btn" data-cp style="flex:1">안내 문구 복사</button><button class="po-btn g" data-x style="flex:1">닫기</button></div></div>`;
+ (ov()&&ov().classList.contains('on')?ov():document.body).appendChild(m);
+ m.querySelector('[data-x]').onclick=()=>m.remove();
+ m.querySelector('[data-cp]').onclick=async()=>{try{await navigator.clipboard.writeText(msg);toastP('복사했습니다. 카톡이나 문자로 보내 주세요');}catch(e){m.querySelector('textarea').select();toastP('글자를 길게 눌러 복사해 주세요');}};
+}
+/* ===== 회원 탈퇴 ===== */
+async function deleteFlow(c,isGuard){
+ const s=stu(c)||{};let scope='self';
+ if(isGuard){const all=confirm(`보호자 계정을 탈퇴합니다.\n\n[확인] ${s.name||'자녀'} 학생의 운동·체성분 기록까지 모두 삭제\n[취소] 내 보호자 연결만 해제 (아이 기록은 유지)`);scope=all?'child':'self';}
+ const what=isGuard&&scope==='self'?'보호자 연결을 해제합니다. 아이 기록은 그대로 남습니다.':`${s.name||''} 학생의 모든 기록(출석·운동·체성분·식단·예약·동의 기록)과 연결된 카카오 로그인이 즉시 삭제되며 되돌릴 수 없습니다.`;
+ const typed=prompt(`${what}\n\n계속하려면 "탈퇴"라고 입력하세요.`);if(typed!=='탈퇴'){if(typed!=null)toastP('입력이 달라 취소했습니다','err');return;}
+ try{await paSrv({deleteAccount:{scope}});}catch(e){toastP('탈퇴 처리 실패: '+(e.reason||e.message)+' — 센터로 연락해 주세요','err');return;}
+ try{if(window.Kakao&&Kakao.API&&Kakao.Auth.getAccessToken())await Kakao.API.request({url:'/v1/user/unlink'});}catch(e){}
+ gClean();try{doLogout();}catch(e){}alert('탈퇴가 완료되었습니다. 이용해 주셔서 감사합니다.');
+}
+/* ===== 개인정보 처리방침 (초안 — 시행 전 전문가 검토) ===== */
+function viewPrivacy(){
+ cleanup();const H=(t)=>`<div class="po-h2" style="margin:20px 0 8px;font-size:16px">${t}</div>`;
+ open(top('개인정보 처리방침','시행일 2026년 10월 15일 (초안)')+`<div class="po-wrap" style="max-width:760px;margin:0 auto;font-size:13.5px;line-height:1.75">
+ <p>P.A 트레이닝(이하 "센터")은 「개인정보 보호법」에 따라 회원의 개인정보를 보호하고 관련 고충을 신속하게 처리하기 위해 다음과 같이 처리방침을 둡니다.</p>
+ ${H('1. 처리 목적')}<p>회원 확인과 로그인, 맞춤 운동 프로그램·식단 제공, 출석·예약·수업 관리, 체성분·체형 변화 리포트 제공, 부상 예방, 보호자·소속 학원 안내, 문의 응대.</p>
+ ${H('2. 처리 항목')}<p><b>필수:</b> 이름, 나이(학년), 성별, 키, 몸무게, 학생 코드, 카카오 회원번호, 출석·예약·운동 기록<br><b>건강 관련(별도 동의):</b> 체성분(인바디), 체형 측정값, 컨디션·통증 기록<br><b>보호자:</b> 카카오 회원번호, 자녀와의 관계<br><b>선택:</b> 체형 사진, 소속 학원 제공 동의 여부<br><b>문의·이용 신청:</b> 이름, 연락처, 문의 내용</p>
+ ${H('3. 보유 기간과 파기')}<p>회원 탈퇴 시 즉시 삭제합니다. 다만 관계 법령에 따라 보관해야 하는 정보(예: 대금 결제·계약 기록 5년, 소비자 불만 처리 기록 3년 — 전자상거래법)는 해당 기간 동안 분리 보관 후 삭제합니다. 시스템 장애 대비 백업본은 최대 7일 보관 후 자동 삭제됩니다. 전자 파일은 복구할 수 없는 방법으로 삭제합니다.</p>
+ ${H('4. 만 14세 미만 아동')}<p>만 14세 미만 아동의 개인정보는 법정대리인(보호자)의 동의를 받아 처리합니다. 보호자는 보호자 초대 코드로 자녀 계정에 연결할 때 동의하며, 언제든 열람·정정·삭제를 요청할 수 있습니다.</p>
+ ${H('5. 제3자 제공')}<p>회원이 동의한 경우에 한해 소속 무용학원에 출석·운동 진행·체성분 변화 요약을 제공합니다. 컨디션·통증 정보는 제공하지 않습니다.</p>
+ ${H('6. 처리 위탁과 국외 이전')}<p>· Google LLC (Firebase·Google Cloud): 회원 데이터 저장·로그인 처리 — 서울 리전(asia-northeast3)<br>· 주식회사 카카오: 카카오 로그인<br>· Anthropic PBC (미국): 음식 사진 칼로리 분석 기능을 쓸 때 사진을 분석 목적으로 전송 (이용 시점에 미국으로 전송, 분석 후 센터에 저장되지 않음)<br>※ 국외 이전 항목·시기·방법은 시행 전 확정해 고지합니다.</p>
+ ${H('7. 회원과 보호자의 권리')}<p>개인정보 열람·정정·삭제·처리정지를 요청할 수 있습니다. MY 페이지의 [회원 탈퇴]로 즉시 삭제할 수 있고, 그 밖의 요청은 아래 연락처로 하시면 지체 없이 처리합니다.</p>
+ ${H('8. 안전성 확보 조치')}<p>역할별 접근 제한(학생 본인·보호자는 본인 자녀만, 학원은 소속 학생만, 키오스크는 출석만), 전송 구간 암호화(HTTPS), 관리자 접근 기록, 공용 기기 로그아웃 시 기기 내 회원 데이터 삭제.</p>
+ ${H('9. 영상정보처리기기(CCTV)')}<p>CCTV 설치 시 설치 목적·장소·촬영 범위·보관 기간·열람 절차를 별도 「영상정보처리기기 운영·관리 방침」으로 공개합니다. 탈의실·샤워실에는 설치하지 않습니다.</p>
+ ${H('10. 개인정보 보호책임자')}<p>이태경 (대표) · ltk6154@gmail.com · 010-5252-0121</p>
+ <p class="po-note" style="margin-top:18px">이 처리방침은 초안입니다. 정식 시행 전에 개인정보 전문가 검토를 거쳐 확정합니다. 개인정보 침해 신고·상담: 개인정보침해신고센터(국번 없이 118).</p></div>`);
 }
 
 /* ================= 포드 TV ================= */
 function viewTVPick(){
  cleanup();
- open(top('포드 TV','이 TV가 맡을 POD를 고르세요')+`<div class="po-wrap"><div class="po-grid po-g2">${Object.keys(PODS).map(p=>`<a class="po-card" style="color:var(--text);text-decoration:none" href="#tv=${p}"><div style="font-size:22px;font-weight:900">${podLabel(p)}</div><div class="po-sub">${PODS[p].name}</div></a>`).join('')}</div><p class="po-note" style="margin-top:14px">TV 브라우저에서 이 주소를 열고 전체 화면으로 두면 됩니다. TV에는 로그인이 필요 없고, 이름 일부와 운동만 표시됩니다.</p></div>`);
+ open(top('포드 TV','이 TV가 맡을 구역을 고르세요')+`<div class="po-wrap"><div class="po-grid po-g2">${Object.keys(PODS).map(p=>`<a class="po-card" style="color:var(--text);text-decoration:none" href="#tv=${p}"><div style="font-size:22px;font-weight:900">${podLabel(p)}</div><div class="po-sub">${PODS[p].name}</div></a>`).join('')}</div><p class="po-note" style="margin-top:14px">TV 브라우저에서 이 주소를 열고 전체 화면으로 두면 됩니다. TV에는 로그인이 필요 없고, 이름 일부와 운동만 표시됩니다.</p></div>`);
 }
 function viewTV(pod){
  cleanup();keepAwake();
  const P=PODS[pod];let logs=[];
- open(`<div class="po-tv"><div class="tb"><div class="pn">${P.floor} <span>POD ${P.no}</span> · ${P.name}</div><div class="po-row" style="gap:2vw"><div class="logo" style="font-size:4vh">P.A TRAINING</div><div class="clk" id="poClk"></div></div></div><div class="body" id="poTvb"></div></div>
+ open(`<div class="po-tv"><div class="tb"><div class="pn">${P.floor} <span>${P.no?'POD '+P.no:P.name}</span>${P.no?' · '+P.name:''}</div><div class="po-row" style="gap:2vw"><div class="logo" style="font-size:4vh">P.A TRAINING</div><div class="clk" id="poClk"></div></div></div><div class="body" id="poTvb"></div></div>
  <button class="po-btn sm g po-tvx" id="poFs">전체 화면</button>`);
  document.getElementById('poFs').onclick=()=>{const el=document.documentElement;try{(el.requestFullscreen||el.webkitRequestFullscreen).call(el);}catch(e){}};
  function draw(){
   const ck=document.getElementById('poClk');if(ck){const n=new Date();ck.textContent=p2(n.getHours())+':'+p2(n.getMinutes())+':'+p2(n.getSeconds());}
   const b=document.getElementById('poTvb');if(!b)return;
   const act=logs.slice().sort((x,y)=>x.startedAt-y.startedAt).slice(0,3);
-  if(!act.length){b.style.gridTemplateColumns='1fr';b.innerHTML=`<div class="idle"><div class="big">POD ${P.no}</div><div style="font-size:4vh;font-weight:900">대기 중</div><div style="font-size:2.8vh;color:var(--muted)">1층 키오스크에서 QR 출석 후 입장하세요</div></div>`;return;}
+  if(!act.length){b.style.gridTemplateColumns='1fr';b.innerHTML=`<div class="idle"><div class="big">${P.no?'POD '+P.no:'유산소'}</div><div style="font-size:4vh;font-weight:900">대기 중</div><div style="font-size:2.8vh;color:var(--muted)">1층 키오스크에서 QR 출석 후 입장하세요</div></div>`;return;}
   b.style.gridTemplateColumns=`repeat(${act.length},1fr)`;
   b.innerHTML=act.map(l=>{const items=Array.isArray(l.items)?l.items:[],tot=totalSets(l),ds=doneSets(l),col=/^#[0-9A-Fa-f]{6}$/.test(l.col||'')?l.col:'#64A0C8';
    const head=`<div class="who"><div class="po-av" style="background:${col}26;color:${col};border:2px solid ${col}">${E((l.disp||'?')[0])}</div><div style="min-width:0"><div class="nm">${E(l.disp||'')}</div><div style="font-size:2.4vh;color:var(--muted)">${E(l.btName||'')} ${E(l.label||'')}</div></div></div>`;
@@ -6809,9 +7158,20 @@ function tabOps(){
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">📷 키오스크 기기</div><div id="poDevList"><div class="po-note">불러오는 중…</div></div>
   <div class="po-row" style="margin-top:10px;flex-wrap:wrap"><input id="poNewDev" maxlength="20" placeholder="기기 이름 (예: 1층 iPad)" style="flex:1;min-width:160px;padding:10px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><button class="po-btn sm" id="poAddDev">기기 추가</button></div>
   <p class="po-note" style="margin-top:8px">키오스크로 쓸 기기에서 <b>${E(site())}#kiosk</b> 를 열고 <b>등록 코드</b>를 입력하면 끝입니다. 기기를 잃어버리면 <b>사용 중지</b>를 누르세요. 키오스크는 출석만 할 수 있고 학생 정보는 볼 수 없습니다.</p></div>
+ <div class="po-card" style="margin-top:12px"><div class="po-lbl">🕒 센터 수업 틀 (분)</div>
+  <div class="po-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px" id="poCfg">${[['warm','워밍업'],['main','메인 근력'],['finish','마무리 (코어·스트레칭)'],['cardio','셀프 유산소 추천 (기본)'],['cardioLoss','셀프 유산소 추천 (감량 목표)'],['cardioMax','유산소 존 정원 (층별 기구 수)']].map(([k,nm])=>`<label class="po-sub">${nm}<input type="number" min="0" max="120" data-cfg="${k}" value="${cfg()[k]}" style="width:100%;margin-top:4px;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"></label>`).join('')}</div>
+  <div class="po-row" style="margin-top:10px;justify-content:space-between;flex-wrap:wrap"><span class="po-sub" id="poCfgSum">코치 수업 합계 ${cfg().total}분</span><button class="po-btn sm" id="poCfgSave">저장</button></div>
+  <p class="po-note" style="margin-top:8px">학생 체형·요일에 맞춰 워밍업 → 메인 근력 → 마무리 순서로 이 시간 안에 들어가게 운동 개수를 자동으로 맞춥니다. 셀프 유산소는 코치 수업 밖(수업 전·후 유산소 존)입니다. 유산소 존 정원은 층별 런닝머신+스텝밀 대수로 넣으세요(기본 런닝머신 3 + 스텝밀 2 = 5). 이미 출석한 학생은 다음 출석부터 반영됩니다.</p></div>
+ <div class="po-card" style="margin-top:12px"><div class="po-lbl">🔥 TDEE 다시 계산 (활동 계수 ${PA_ACT})</div><p class="po-note">기존 학생은 예전 계수(1.375)로 계산되어 있습니다. 누르면 모든 학생의 TDEE를 다시 계산하고, 목표 칼로리는 지금 비율을 유지합니다(18세 미만은 85% 이상, 기초대사량 이상).</p><button class="po-btn sm" id="poTdee" style="margin-top:8px">전체 학생 다시 계산</button></div>
  <div class="po-card" style="margin-top:12px" id="poV2"><div class="po-lbl">🗂 데이터 구조 (0-3 학생별 분리)</div><div class="po-note" id="poV2St">상태 확인 중…</div><div class="po-row" style="margin-top:10px;flex-wrap:wrap"><button class="po-btn sm" id="poV2Run">학생별 분리 실행</button><button class="po-btn sm g" id="poV2Back">되돌리기</button></div><pre id="poV2Log" style="white-space:pre-wrap;font-size:12px;color:var(--muted);margin-top:10px"></pre></div>
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">학생 출석 QR</div><p class="po-note">학생은 카카오 로그인 → <b>MY 페이지 맨 위 "출석 QR 열기"</b>를 누르면 됩니다. QR은 30초마다 바뀝니다.</p></div>`;
  v2Card();staffCards();
+ {const tb=document.getElementById('poTdee');if(tb)tb.onclick=()=>{if(!confirm('모든 학생의 TDEE와 목표 칼로리를 다시 계산할까요?'))return;let n=0;const ps=lG('pa_students',{})||{},cs=lG('pa_custom_students',{})||{};
+  Object.keys(S).forEach(c=>{const x=S[c];if(!x||!x.bmr)return;const r=x.tar&&x.tdee?x.tar/x.tdee:1;x.tdee=Math.round(x.bmr*PA_ACT);let t=Math.round(x.tdee*r);if((+x.age||0)<18)t=Math.max(t,Math.round(x.tdee*0.85));t=Math.max(t,x.bmr);x.tar=t;if(ps[c])ps[c]=Object.assign({},ps[c],{tdee:x.tdee,tar:x.tar});if(cs[c])cs[c]=Object.assign({},cs[c],{tdee:x.tdee,tar:x.tar});n++;});
+  lS('pa_students',ps);lS('pa_custom_students',cs);toastP(n+'명 다시 계산했습니다');};}
+ {const box=document.getElementById('poCfg'),sum=document.getElementById('poCfgSum');const read=()=>{const o={};box.querySelectorAll('[data-cfg]').forEach(i=>{o[i.dataset.cfg]=Math.max(0,Math.min(120,Math.round(+i.value||0)));if(i.dataset.cfg==='cardioMax')o.cardioMax=Math.max(1,Math.min(10,o.cardioMax||5));});return o;};
+  box.oninput=()=>{const o=read();sum.textContent='코치 수업 합계 '+(o.warm+o.main+o.finish)+'분';};
+  document.getElementById('poCfgSave').onclick=()=>{const o=read();if(o.warm+o.main+o.finish<10)return toastP('합계가 너무 짧습니다','err');lS('pa_center_cfg',o);toastP('수업 틀 저장 · 합계 '+(o.warm+o.main+o.finish)+'분');};}
 }
 /* [0-4] 코치 계정 · 키오스크 기기 관리 (관리자만) */
 const RC='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -6870,8 +7230,12 @@ function tabToday(){
   <div class="po-card" style="margin-top:12px"><div class="po-lbl">오늘 ${isAca?'우리 학원 ':''}학생</div>${mine.length?mine.map(c=>{const l=logs[c];return `<div class="po-li">${avatar(c)}<div style="flex:1;min-width:0"><b>${E(S[c].name)}</b> ${isAca?'':`<span class="po-sub">${E(acaOf(c).name||'')}</span>`}<div class="po-sub">${rsvToday(c)||'예약 없음'} · ${podLabel(l&&l.pod)}</div></div>${stat(c)}</div>`;}).join(''):'<div class="po-note">오늘 예약하거나 출석한 학생이 없습니다. 학생이 키오스크에서 QR 출석하면 바로 표시됩니다.</div>'}</div>
   <div class="po-card" style="margin-top:12px"><div class="po-lbl">이번 달 출석 · 인바디 변화</div>${codes.length?codes.map(c=>{const rec=pa[c]||{};const cnt=Object.keys(rec).filter(k=>k.startsWith(ym)&&rec[k]==='O').length;const ib=getInbody(c);let ch='<span class="po-sub">인바디 기록 없음</span>';
    if(ib.length>=2){const z=ib[0],o=ib[ib.length-1];const dm=(+z.skeletalMuscle||0)-(+o.skeletalMuscle||0),df=(+z.bodyFatPct||0)-(+o.bodyFatPct||0);ch=`<div>골격근 <span class="po-up">${dm>=0?'+':''}${dm.toFixed(1)}kg</span></div><div>체지방률 <span class="po-dn">${df>=0?'+':''}${df.toFixed(1)}%p</span></div>`;}
-   return `<div class="po-li" style="flex-wrap:wrap"><div style="flex:1;min-width:160px"><b>${E(S[c].name)}</b> ${btChip(c)}<div class="po-sub" style="margin-top:4px">이번 달 출석 ${cnt}회</div></div><div style="text-align:right;font-size:13px">${ch}</div></div>`;}).join(''):'<div class="po-note">등록된 학생이 없습니다.</div>'}</div>
-  ${isAca?'<p class="po-note" style="margin-top:12px">컨디션·통증 메모 등 건강 상세 정보는 원장님 화면에 표시하지 않습니다.</p>':''}`;
+   const cs=(lG('pa_consent',{})||{})[c]||{},gN=Object.keys(cs.g||{}).length;const canInv=ar.role==='super_admin'||ar.role==='academy_owner';
+   return `<div class="po-li" style="flex-wrap:wrap"><div style="flex:1;min-width:160px"><b>${E(S[c].name)}</b> ${btChip(c)}<div class="po-sub" style="margin-top:4px">이번 달 출석 ${cnt}회 · 동의 ${cs.s?'학생 ✓':'학생 ✗'} · 보호자 ${gN}명${(+S[c].age||99)<14&&!gN?' <b style="color:var(--orange)">(만 14세 미만 · 보호자 동의 필요)</b>':''}</div>${canInv?`<button class="po-btn sm g" style="margin-top:6px" data-inv="${E(c)}">보호자 초대 코드</button>`:''}</div><div style="text-align:right;font-size:13px">${ch}</div></div>`;}).join(''):'<div class="po-note">등록된 학생이 없습니다.</div>'}</div>
+  ${isAca?'<p class="po-note" style="margin-top:12px">컨디션·통증 메모 등 건강 상세 정보는 원장님 화면에 표시하지 않습니다.</p>':''}
+  ${ar.role!=='super_admin'?'<div class="po-row" style="margin-top:14px;justify-content:flex-end"><a href="#privacy" class="po-btn sm g">개인정보 처리방침</a><button class="po-btn sm g" id="poStaffDel">계정 탈퇴 (연결 해제)</button></div>':''}`;
+  el.querySelectorAll('[data-inv]').forEach(b=>b.onclick=()=>inviteFlow(b.dataset.inv));
+  const sd=document.getElementById('poStaffDel');if(sd)sd.onclick=async()=>{if(prompt('이 카카오 계정의 연결을 해제하고 탈퇴합니다. 학생 기록은 지워지지 않습니다.\n계속하려면 "탈퇴"라고 입력하세요.')!=='탈퇴')return;try{await paSrv({deleteAccount:{scope:'self'}});}catch(e){return toastP('실패: '+(e.reason||e.message),'err');}try{await Kakao.API.request({url:'/v1/user/unlink'});}catch(e){}try{doLogout();}catch(e){}alert('탈퇴가 완료되었습니다.');};
  }
  const set=new Set(codes);
  TABCLEAN.push(qA(COL('att').where('date','==',d)).onSnapshot(snap=>{att={};snap.forEach(x=>{const v=x.data();if(set.has(v.code))att[v.code]=v;});draw();},fsErr));
@@ -6886,16 +7250,35 @@ function route(){
  if(n==='coach')return viewCoach(arg);
  if(n==='tv')return arg&&PODS[arg]?viewTV(arg):viewTVPick();
  if(n==='myqr')return viewMyQR();
+ if(n==='report')return viewReport(arg);
+ if(n==='privacy')return viewPrivacy();
  if(ov()&&ov().classList.contains('on'))close();
 }
 window.addEventListener('hashchange',route);
 document.addEventListener('DOMContentLoaded',()=>{
- if(/^#tv/.test(location.hash)){route();return;}
- let t=0;const w=setInterval(()=>{t+=200;if((typeof _fsReady!=='undefined'&&_fsReady&&(Object.keys(S).length||!['super_admin','coach'].includes(paRole())))||t>8000){clearInterval(w);if(/^#(kiosk|coach|myqr)/.test(location.hash))route();}},200);});
+ if(/^#(tv|privacy)/.test(location.hash)){route();return;}
+ let t=0;const w=setInterval(()=>{t+=200;if((typeof _fsReady!=='undefined'&&_fsReady&&(Object.keys(S).length||!['super_admin','coach'].includes(paRole())))||t>8000){clearInterval(w);if(/^#(kiosk|coach|myqr|report|privacy)/.test(location.hash))route();}},200);});
 
 /* ---------- 기존 화면에 연결 (기존 함수는 그대로 두고 뒤에 덧붙임) ---------- */
 const _rDB=rDB;
-rDB=function(){const r=_rDB.apply(this,arguments);try{if(LC&&stu(LC)&&isStuActive(LC)){const box=document.getElementById('myDB');if(box&&!document.getElementById('poMyQR')){const d=document.createElement('div');d.id='poMyQR';d.className='po-myqr';d.innerHTML=`<div><div style="font-size:16px;font-weight:900">📲 출석 QR</div><div class="po-sub" style="margin-top:2px">센터 1층 키오스크에 비추면 출석됩니다</div></div><button class="po-btn" onclick="location.hash='#myqr'">출석 QR 열기</button>`;box.insertBefore(d,box.firstChild);}}}catch(e){console.warn('[PA 운영] MY QR',e);}return r;};
+rDB=function(){
+ if(LC&&stu(LC)&&paIsGuardian()){try{guardianDash(LC);consentCheck(LC,true);}catch(e){console.warn('[PA 보호자]',e);}return;}
+ gClean();
+ const r=_rDB.apply(this,arguments);try{if(LC&&stu(LC))consentCheck(LC,false);}catch(e){}try{const box=document.getElementById('myDB');if(box&&LC&&stu(LC)&&!document.getElementById('poMyAcc')){const a=document.createElement('div');a.id='poMyAcc';a.className='po-card';a.style.cssText='margin:16px auto;max-width:760px';
+   const cs=(lG('pa_consent',{})||{})[LC]||{},under14=(+stu(LC).age||99)<14,gN=Object.keys(cs.g||{}).length;
+   a.innerHTML=`${under14&&!gN?`<div class="po-note" style="color:var(--orange);margin-bottom:8px">만 14세 미만은 보호자 동의가 필요합니다. 아래 [보호자 초대]로 보호자에게 코드를 보내 주세요.</div>`:''}<div class="po-lbl">계정 · 보호자 ${gN}명 연결</div><div class="po-row" style="flex-wrap:wrap"><button class="po-btn sm" id="poInv">👨‍👩‍👧 보호자 초대</button><a href="#privacy" class="po-btn sm g">개인정보 처리방침</a><button class="po-btn sm g" id="poDel">회원 탈퇴</button></div>`;
+   box.appendChild(a);a.querySelector('#poInv').onclick=()=>inviteFlow(LC);a.querySelector('#poDel').onclick=()=>deleteFlow(LC,false);}}catch(e){console.warn('[PA 계정]',e);}
+ try{if(LC&&stu(LC)&&isStuActive(LC)){const box=document.getElementById('myDB');if(box&&!document.getElementById('poMyQR')){const d=document.createElement('div');d.id='poMyQR';d.className='po-myqr';d.innerHTML=`<div><div style="font-size:16px;font-weight:900">📲 출석 QR</div><div class="po-sub" style="margin-top:2px">센터 1층 키오스크에 비추면 출석됩니다</div></div><div class="po-row" style="flex-wrap:wrap"><button class="po-btn g" onclick="location.hash='#report'">📋 4주 리포트</button><button class="po-btn" onclick="location.hash='#myqr'">출석 QR 열기</button></div>`;box.insertBefore(d,box.firstChild);}}}catch(e){console.warn('[PA 운영] MY QR',e);}return r;};
+/* 이미 연결된 학생·보호자 중 동의 기록이 없으면 한 번 받기 */
+let _cAsked=false;
+async function consentCheck(c,guard){
+ if(_cAsked)return;const R=paRole();if(!R||R==='super_admin'||R==='coach'||R==='kiosk')return;
+ const cs=(lG('pa_consent',{})||{})[c];if(!_fsLoaded.has('pa_consent'))return;
+ const u=firebase.auth().currentUser;const has=guard?!!(cs&&cs.g&&u&&cs.g[u.uid]):!!(cs&&cs.s);if(has)return;
+ _cAsked=true;const o=await paConsent(guard?'guardian':'student',{under14:!guard&&(+(stu(c)||{}).age||99)<14});
+ if(!o){toastP('필수 동의 전에는 일부 기능이 제한될 수 있습니다','err');return;}
+ try{await paSrv({consent:o});toastP('동의가 저장되었습니다');}catch(e){console.warn('[PA 동의]',e);}
+}
 const _rAT=rAT;
 rAT=function(){
  tabCleanup();
@@ -6915,7 +7298,7 @@ rAT=function(){
  return r;
 };
 
-return{close,route,open:h=>{location.hash=h;}};
+return{close,route,open:h=>{location.hash=h;},_program:program};
 })();
 </script>
 <!-- ===== /P.A 센터 운영 모듈 ===== -->
