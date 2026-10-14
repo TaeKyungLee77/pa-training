@@ -1186,13 +1186,15 @@ const db=firebase.firestore();
 /* [0-1 · 0-2] 카카오/입장코드 로그인 → Firebase 로그인 연결 + 데이터 잠금 대응 */
 const PA_AUTH_URL='https://kakaoauth-414257826796.asia-northeast3.run.app';
 /* 로그인은 이 브라우저 탭에서만 유지 (탭을 닫으면 로그아웃 — PC방·공용 기기 대비) */
-try{firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});}catch(e){}
+/* [0-4] 키오스크로 등록한 기기만 로그인 유지 (껐다 켜도 키오스크 유지) */
+function paIsKioskDevice(){try{return localStorage.getItem('pa_kiosk_device')==='1';}catch(e){return false;}}
+try{firebase.auth().setPersistence(paIsKioskDevice()?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION).catch(()=>{});}catch(e){}
 function paSignedIn(){try{return !!firebase.auth().currentUser;}catch(e){return false;}}
 function paAuthReady(){return new Promise(res=>{let done=false;const fin=()=>{if(!done){done=true;res();}};try{const u=firebase.auth().onAuthStateChanged(()=>{try{u();}catch(e){}fin();});}catch(e){fin();}setTimeout(fin,4000);});}
 async function paTokenSignIn(body){
   const r=await fetch(PA_AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   let d={};try{d=await r.json();}catch(e){}
-  if(!r.ok||!d.token){const err=new Error(d.error||('auth '+r.status));err.status=r.status;err.reason=d.reason;throw err;}
+  if(!r.ok||!d.token){const err=new Error(d.error||('auth '+r.status));err.status=r.status;err.reason=d.reason;err.data=d;throw err;}
   await firebase.auth().signInWithCustomToken(d.token);
   console.log('[PA] Firebase 로그인 완료:',firebase.auth().currentUser.uid,'역할:',d.role);
   return d;
@@ -1200,9 +1202,9 @@ async function paTokenSignIn(body){
 async function paFirebaseSignIn(){
   try{
     const kt=(window.Kakao&&Kakao.Auth&&Kakao.Auth.getAccessToken)?Kakao.Auth.getAccessToken():null;
-    if(!kt){console.warn('[PA] 카카오 토큰 없음 — Firebase 로그인 불가');return false;}
-    await paTokenSignIn({kakaoAccessToken:kt});return true;
-  }catch(e){console.warn('[PA] Firebase 로그인 실패:',e);return false;}
+    if(!kt){console.warn('[PA] 카카오 토큰 없음 — Firebase 로그인 불가');return null;}
+    return await paTokenSignIn({kakaoAccessToken:kt});
+  }catch(e){console.warn('[PA] Firebase 로그인 실패:',e);return null;}
 }
 /* 입장 코드 로그인 (테스트용 — 애플 로그인 도입 시 삭제 예정). 결과: ok | invalid | expired | limit | error */
 async function paCodeSignIn(code){
@@ -1212,10 +1214,43 @@ async function paCodeSignIn(code){
 function paFirebaseSignOut(){try{return firebase.auth().signOut().then(()=>{fsListen();}).catch(()=>{});}catch(e){}}
 /* 로그인 직후 데이터 다시 불러오기 */
 async function paReloadData(){await fsInit();await loadStudents();fsListen();}
+/* [0-4] 로그인 역할 (로그인 서버가 정해 준 값 — 화면 표시용. 실제 잠금은 Firestore 규칙이 함) */
+let _paC={};
+async function paLoadClaims(){_paC={};try{const u=firebase.auth().currentUser;if(u){const r=await u.getIdTokenResult();_paC=r.claims||{};}}catch(e){console.warn('[PA] 역할 확인 실패',e);}return _paC;}
+function paRole(){return paSignedIn()?String(_paC.role||''):'';}
+const PA_STU_ROLES=['student','father','mother','parent','student_code'];
+function paAcaWriter(){const r=paRole();return (r==='academy_owner'||r==='academy_teacher')&&_paC.academyId?String(_paC.academyId):null;}
+/* [0-4] 계정 연결 (학생·학부모·학원·코치) — 서버에서 확인 후 새 로그인 */
+async function paLink(link){
+  const kt=(window.Kakao&&Kakao.Auth&&Kakao.Auth.getAccessToken)?Kakao.Auth.getAccessToken():null;
+  if(!kt){const e=new Error('nokakao');e.reason='nokakao';throw e;}
+  const d=await paTokenSignIn({kakaoAccessToken:kt,link});await paReloadData();return d;
+}
+function paLinkErr(e,dflt){
+  if(e&&e.reason==='nokakao')return '카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';
+  if(e&&e.status===429)return '⏳ 시도가 너무 많습니다. 10분 뒤 다시 시도하세요.';
+  if(e&&e.reason==='inactive')return '🔒 사용 중지된 코드입니다. 관리자에게 문의하세요.';
+  if(e&&e.reason==='used')return '이미 다른 카카오 계정에 연결된 초대 코드입니다. 관리자에게 새 코드를 요청하세요.';
+  if(e&&(e.reason==='invalid'||e.reason==='missing'||e.status===404||e.status===400))return dflt;
+  return '⚠️ 서버 연결 오류. 잠시 후 다시 시도하세요.';
+}
 const _cache={};let _fsReady=false;const _fsLoaded=new Set();
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions'];
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions','pa_academy_names'];
 /* [0-2] 로그인하지 않은 방문자도 볼 수 있는 공개 데이터 */
 const PA_PUBLIC_KEYS=['pa_notices_c','pa_custom_prods'];
+/* [0-4] 로그인한 사람(학생·학원·코치·키오스크)이 함께 보는 설정 — 나머지 공통 데이터는 관리자만 */
+const PA_SIGNED_KEYS=['pa_schedule_slots','pa_aicoach_config','pa_special_lecture_config','pa_custom_regions','pa_academy_names'];
+function paKeys(){if(!paSignedIn())return PA_PUBLIC_KEYS;if(paRole()==='super_admin')return FS_KEYS;return PA_PUBLIC_KEYS.concat(PA_SIGNED_KEYS);}
+/* [0-4] 역할별로 읽을 학생 문서: 관리자·코치 전체 / 학원 자기 학원 / 학생·학부모 본인 / 키오스크·미연결 없음 */
+function paStuSrc(){const r=paRole();
+  if(r==='super_admin'||r==='coach')return{q:PA_STU()};
+  if((r==='academy_owner'||r==='academy_teacher')&&_paC.academyId)return{q:PA_STU().where('aca','==',String(_paC.academyId))};
+  if(PA_STU_ROLES.includes(r)&&_paC.code)return{d:PA_STU().doc(String(_paC.code))};
+  return null;}
+async function paStuGet(){const src=paStuSrc();if(!src)return null;if(src.q){const snap=await src.q.get();return snap.docs;}const d=await src.d.get();return d.exists?[d]:[];}
+/* [0-4] 회원 데이터는 이 기기(브라우저 저장소)에 남기지 않음 — 예전에 남은 것도 지움 (PC방·공용 기기 대비) */
+function paPrivateKey(k){return FS_KEYS.includes(k)&&!PA_PUBLIC_KEYS.includes(k);}
+try{FS_KEYS.forEach(k=>{if(paPrivateKey(k))localStorage.removeItem(k);});}catch(e){}
 /* [0-2] 문서 단위로 읽기 — 하나가 막혀도 나머지는 정상 */
 /* [0-3] 학생별 문서 분리 — 학생 관련 데이터는 pa_stu/{학생코드} 문서 하나에 모음.
    pa_data/_v2 표시가 있을 때만 새 구조를 씀 (없으면 기존 구조 그대로). */
@@ -1238,46 +1273,51 @@ function paAssemble(docs){
 async function paCommitOps(ops){for(let i=0;i<ops.length;i+=400){const b=db.batch();ops.slice(i,i+400).forEach(o=>o(b));await b.commit();}}
 /* 바뀐 학생 문서만 저장 (다른 학생 기록은 건드리지 않음) */
 function paWritePer(k,oldV,newV){
-  const ops=[],FV=firebase.firestore.FieldValue;
+  const ops=[],FV=firebase.firestore.FieldValue,A=paAcaWriter();
   if(Object.prototype.hasOwnProperty.call(PA_ARR_KEYS,k)){
     const f=PA_ARR_KEYS[k];const g=a=>{const m={};(Array.isArray(a)?a:[]).forEach(r=>{const c=r&&r[f];if(c==null){console.warn('[PA] 학생코드 없는 기록은 저장 안 됨:',k,r);return;}(m[c]=m[c]||[]).push(r);});return m;};
     const o=g(oldV),n=g(newV);
     new Set([...Object.keys(o),...Object.keys(n)]).forEach(c=>{if(!paValidId(c)){console.warn('[PA] 저장 불가 코드:',c);return;}if(JSON.stringify(o[c]||[])===JSON.stringify(n[c]||[]))return;
-      ops.push(b=>b.set(PA_STU().doc(c),{code:c,[k]:n[c]||[]},{mergeFields:['code',k]}));});
+      const data={code:c,[k]:n[c]||[]},fields=['code',k];if(A){data.aca=A;fields.push('aca');}
+      ops.push(b=>b.set(PA_STU().doc(c),data,{mergeFields:fields}));});
   }else{
     const o=(oldV&&typeof oldV==='object')?oldV:{},n=(newV&&typeof newV==='object')?newV:{};
     new Set([...Object.keys(o),...Object.keys(n)]).forEach(c=>{if(!paValidId(c)){console.warn('[PA] 저장 불가 코드:',c);return;}if(JSON.stringify(o[c])===JSON.stringify(n[c]))return;
       const del=n[c]===undefined,data={code:c,[k]:del?FV.delete():n[c]},fields=['code',k];
       if(k==='pa_academy_members'){data.aca=del?FV.delete():String(n[c]);fields.push('aca');}
+      else if(A){data.aca=A;fields.push('aca');}
       ops.push(b=>b.set(PA_STU().doc(c),data,{mergeFields:fields}));});
   }
   if(ops.length)paCommitOps(ops).catch(e=>{console.warn('[PA] 학생 문서 저장오류:',k,e);try{toast('저장 중 오류가 발생했습니다. 새로고침 후 다시 시도해 주세요.','err');}catch(_){}});
 }
 async function fsInit(){
-  const keys=paSignedIn()?FS_KEYS:PA_PUBLIC_KEYS;let ok=0;
+  await paLoadClaims();
+  const keys=paKeys();let ok=0;
   await Promise.all(keys.map(async k=>{try{const d=await db.collection('pa_data').doc(k).get();if(d.exists)_cache[k]=d.data().value;else delete _cache[k];_fsLoaded.add(k);ok++;}catch(e){console.warn('[PA] 읽기 실패:',k,e&&e.code||e);}}));
   _v2=false;
   if(paSignedIn()){
     try{const f=await db.collection('pa_data').doc('_v2').get();
-      if(f.exists){const snap=await PA_STU().get();_v2=true;paAssemble(snap.docs);console.log('[PA] 학생별 문서 구조(0-3) 사용 · 학생 문서 '+snap.size+'개');}
+      if(f.exists){_v2=true;const docs=await paStuGet();if(docs){paAssemble(docs);console.log('[PA] 학생별 문서 구조(0-3) 사용 · 학생 문서 '+docs.length+'개 · 역할 '+paRole());}else{console.log('[PA] 학생 데이터 없음 · 역할 '+(paRole()||'미연결'));}}
     }catch(e){console.warn('[PA] 학생 문서 읽기 실패:',e&&e.code||e);PA_PER_KEYS.concat(Object.keys(PA_ARR_KEYS)).forEach(k=>_fsLoaded.delete(k));}
   }
   _fsReady=ok>0;
-  console.log('[PA] Firestore 연결 ('+(paSignedIn()?'로그인':'비로그인')+') '+ok+'/'+keys.length+'개 문서 로드');
+  console.log('[PA] Firestore 연결 ('+(paSignedIn()?'로그인 · '+(paRole()||'역할 없음'):'비로그인')+') '+ok+'/'+keys.length+'개 문서 로드');
 }
-function lG(k,d){if(_cache[k]!==undefined)return JSON.parse(JSON.stringify(_cache[k]));if(_fsLoaded.has(k))return d;try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
+function lG(k,d){if(_cache[k]!==undefined)return JSON.parse(JSON.stringify(_cache[k]));if(_fsLoaded.has(k)||paPrivateKey(k))return d;try{return JSON.parse(localStorage.getItem(k))||d;}catch(e){return d;}}
 /* [0-2] 서버에서 제대로 읽어온 문서만 서버에 저장 (못 읽은 문서를 빈 값으로 덮어쓰는 사고 방지)
    [0-3] 학생 데이터는 바뀐 학생 문서만 저장 */
-function lS(k,v){const c=JSON.parse(JSON.stringify(v));const prev=_cache[k];_cache[k]=c;try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
+function lS(k,v){const c=JSON.parse(JSON.stringify(v));const prev=_cache[k];_cache[k]=c;if(!paPrivateKey(k)){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
   if(!(_fsReady&&_fsLoaded.has(k)&&paSignedIn())){console.warn('[PA] 서버 저장 건너뜀 (로그인 전이거나 아직 못 읽은 문서):',k);return;}
   if(paIsPer(k)){paWritePer(k,prev,c);return;}
   db.collection('pa_data').doc(k).set({value:c}).catch(e=>console.warn('[PA] 저장오류:',k,e));}
 let _fsUnsubs=[];
-function fsListen(){_fsUnsubs.forEach(u=>{try{u();}catch(e){}});_fsUnsubs=[];const keys=paSignedIn()?FS_KEYS:PA_PUBLIC_KEYS;
+function fsListen(){_fsUnsubs.forEach(u=>{try{u();}catch(e){}});_fsUnsubs=[];const keys=paKeys();
   keys.forEach(k=>{if(paIsPer(k))return;_fsUnsubs.push(db.collection('pa_data').doc(k).onSnapshot(d=>{if(d.exists)_cache[k]=d.data().value;_fsLoaded.add(k);},e=>console.warn('[PA] 리스너:',k,e&&e.code||e)));});
-  if(_v2&&paSignedIn())_fsUnsubs.push(PA_STU().onSnapshot(snap=>{paAssemble(snap.docs);},e=>console.warn('[PA] 학생 문서 리스너:',e&&e.code||e)));}
+  const src=(_v2&&paSignedIn())?paStuSrc():null,er=e=>console.warn('[PA] 학생 문서 리스너:',e&&e.code||e);
+  if(src&&src.q)_fsUnsubs.push(src.q.onSnapshot(snap=>{paAssemble(snap.docs);},er));
+  if(src&&src.d)_fsUnsubs.push(src.d.onSnapshot(d=>{paAssemble(d.exists?[d]:[]);},er));}
 /* [0-2] 로그아웃 시 이 기기에 남은 회원 데이터 지우기 */
-function paClearLocal(){_fsUnsubs.forEach(u=>{try{u();}catch(e){}});_fsUnsubs=[];_v2=false;FS_KEYS.forEach(k=>{if(PA_PUBLIC_KEYS.includes(k))return;delete _cache[k];_fsLoaded.delete(k);try{localStorage.removeItem(k);}catch(e){}});try{Object.keys(S).forEach(c=>{delete S[c];});}catch(e){}}
+function paClearLocal(){_fsUnsubs.forEach(u=>{try{u();}catch(e){}});_fsUnsubs=[];_v2=false;_paC={};try{localStorage.removeItem('pa_kiosk_device');}catch(e){}FS_KEYS.forEach(k=>{if(PA_PUBLIC_KEYS.includes(k))return;delete _cache[k];_fsLoaded.delete(k);try{localStorage.removeItem(k);}catch(e){}});try{Object.keys(S).forEach(c=>{delete S[c];});}catch(e){}}
 
 /* ===== [0-3] 관리자 도구: 서버 백업 · 학생별 분리 · 검증 · 되돌리기 ===== */
 function paCanon(x){if(Array.isArray(x))return x.map(paCanon);if(x&&typeof x==='object'){const o={};Object.keys(x).sort().forEach(k=>{o[k]=paCanon(x[k]);});return o;}return x;}
@@ -1387,37 +1427,30 @@ return;
 if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
 try{Kakao.Auth.authorize({redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 코드 로그인을 이용하세요','err');document.getElementById('dbox').classList.add('on');}}
 /* 카카오 유저 처리 (공용) */
-async function handleKakaoUser(r){if(!(await paFirebaseSignIn())){toast('로그인 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.','err');return;}await paReloadData();const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
-if(kid===getAdminKakaoId()){setN('관리자 ('+nn+')',img);toast(nn+' 관리자님 환영합니다!');go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');aOK=true;window._acaMode=false;rAT();return;}
-const map=lG('pa_kakao_users',{});const mapped=map[kid];
-/* 학원 원장/선생 자동 로그인 */
-if(mapped&&(mapped.role==='academy_owner'||mapped.role==='academy_teacher')&&mapped.academyId){
-  const acas=gAcademies();const a=acas[mapped.academyId];
-  if(a){
-    /* 토큰 유효성 재검증: 토큰이 재발급됐으면 매핑 무효 */
-    const stillValid=mapped.role==='academy_owner'?a.owner?.kid===kid:(a.teachers||[]).some(t=>t.kid===kid);
-    if(stillValid){
-      const isOwner=mapped.role==='academy_owner';
-      const displayName=mapped.name+(isOwner?' 원장':' 선생');
-      sessionStorage.setItem('pa_login',JSON.stringify({code:'',name:displayName,img,acaRole:mapped.role,academyId:mapped.academyId}));
-      setN(displayName,img);
-      toast(`${a.name} ${isOwner?'원장':'선생'}님 환영합니다!`);
-      /* 마지막 사용일 업데이트 */
-      if(isOwner)a.ownerLastUsed=new Date().toISOString();else a.teacherLastUsed=new Date().toISOString();
-      sAcademies(acas);
-      go('admin');
-      document.getElementById('aLock').style.display='none';
-      document.getElementById('aPanel').classList.add('on');
-      aOK=false;window._acaMode=true;
-      rAT();
-      return;
-    }else{
-      /* 토큰이 재발급되어 권한 잃음 */
-      delete map[kid];lS('pa_kakao_users',map);
-      toast('학원 권한이 만료되었습니다. 새 암호구문으로 재인증하세요.','err');
-    }
-  }
+async function handleKakaoUser(r){const _d=await paFirebaseSignIn();if(!_d){toast('로그인 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.','err');return;}await paReloadData();const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
+/* [0-4] 역할은 로그인 서버가 확인해서 알려줌 (화면에서 연결표를 직접 읽지 않음) */
+if(_d.role==='super_admin'){setN('관리자 ('+nn+')',img);toast(nn+' 관리자님 환영합니다!');go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');aOK=true;window._acaMode=false;rAT();try{paSyncAcademyNames();}catch(e){}return;}
+if(_d.role==='coach'){
+  const cn=String(_d.nm||'코치');
+  sessionStorage.setItem('pa_login',JSON.stringify({code:'',name:cn+' 코치',img,acaRole:'coach'}));
+  setN(cn+' 코치',img);toast(cn+' 코치님 환영합니다!');
+  go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');
+  aOK=false;window._acaMode=false;rAT();location.hash='#coach';return;
 }
+if((_d.role==='academy_owner'||_d.role==='academy_teacher')&&_d.academyId){
+  const isOwner=_d.role==='academy_owner';
+  const displayName=String(_d.nm||'')+(isOwner?' 원장':' 선생');
+  sessionStorage.setItem('pa_login',JSON.stringify({code:'',name:displayName,img,acaRole:_d.role,academyId:_d.academyId}));
+  setN(displayName,img);
+  toast(`${_d.academyName||''} ${isOwner?'원장':'선생'}님 환영합니다!`);
+  go('admin');
+  document.getElementById('aLock').style.display='none';
+  document.getElementById('aPanel').classList.add('on');
+  aOK=false;window._acaMode=true;
+  rAT();
+  return;
+}
+const mapped=PA_STU_ROLES.includes(_d.role)&&_d.code?{code:String(_d.code),role:_d.role}:null;
 const c=typeof mapped==='string'?mapped:mapped?.code;
 const role=typeof mapped==='string'?'student':mapped?.role||'student';
 if(c&&S[c]){
@@ -1454,7 +1487,8 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <button class="dbe" onclick="linkChoose('student')" style="width:100%;margin-bottom:10px;background:var(--accent);color:#fff;border:none;padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">🏋️ 본인 (학생)</button>
 <button class="dbe" onclick="linkChoose('parent')" style="width:100%;margin-bottom:10px;background:rgba(111,207,151,.15);color:var(--green);border:1px solid rgba(111,207,151,.25);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">👨‍👩‍👧 학부모</button>
 <button class="dbe" onclick="linkChoose('owner')" style="width:100%;margin-bottom:10px;background:rgba(232,98,42,.12);color:var(--orange);border:1px solid rgba(232,98,42,.3);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">👑 학원 원장</button>
-<button class="dbe" onclick="linkChoose('teacher')" style="width:100%;background:rgba(100,160,200,.12);color:var(--accent);border:1px solid rgba(100,160,200,.3);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">🎓 학원 선생/코치</button>
+<button class="dbe" onclick="linkChoose('teacher')" style="width:100%;background:rgba(100,160,200,.12);color:var(--accent);border:1px solid rgba(100,160,200,.3);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">🎓 학원 선생님</button>
+<button class="dbe" onclick="linkChoose('coach')" style="width:100%;margin-top:10px;background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.18);padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">🧑‍🏫 P.A 코치 (초대 코드)</button>
 </div>
 <div id="linkStep2S" style="display:none;">
 <div style="font-size:12px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">📋 본인 확인을 위해 정보를 입력하세요</div>
@@ -1485,7 +1519,7 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
 </div>
 <div id="linkStep2T" style="display:none;">
-<div style="font-size:12px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">🎓 학원 선생/코치 인증</div>
+<div style="font-size:12px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">🎓 학원 선생님 인증</div>
 <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6;">학원 원장님으로부터 받은<br><strong style="color:var(--accent);">선생용 암호구문</strong>을 입력하세요</div>
 <label class="di" style="font-size:11px;">이름 (학원 내 표시용)</label><input class="dc" id="linkAcaNmT" placeholder="예: 이코치" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
 <label class="di" style="font-size:11px;">암호구문 (16자, 4-4-4-4)</label><input class="dc" id="linkTokT" placeholder="예: K3xP-9mQR-vN7L-2sBy" maxlength="19" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:1px;">
@@ -1493,34 +1527,46 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <button class="dbe" onclick="doKakaoLinkAcademy('teacher')" style="width:100%;background:var(--accent);color:#fff;border:none;margin-top:8px;">선생 인증하기</button>
 <button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
 </div>
+<div id="linkStep2C" style="display:none;">
+<div style="font-size:12px;color:var(--text);margin-bottom:14px;text-align:center;font-weight:700;">🧑‍🏫 P.A 코치 연결</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6;">P.A 트레이닝 관리자에게 받은<br><strong style="color:var(--text);">코치 초대 코드</strong>(8자리)를 입력하세요</div>
+<label class="di" style="font-size:11px;">초대 코드</label><input class="dc" id="linkInvC" placeholder="예: K7M2Q9XA" maxlength="12" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:2px;">
+<div class="em" id="linkEmC"></div>
+<button class="dbe" onclick="doKakaoLinkCoach()" style="width:100%;background:var(--accent);color:#fff;border:none;margin-top:8px;">코치 계정 연결하기</button>
+<button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
+</div>
 <div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:18px;">코드를 모르시면 선생님께 문의하세요<br>ltk6154@gmail.com</div></div>`;
 /* 입력 이벤트 바인딩 */
 ['linkCodeS','linkCodeP'].forEach(id=>{const inp=document.getElementById(id);if(inp){inp.addEventListener('input',function(){this.value=this.value.toUpperCase();});inp.addEventListener('keydown',e=>{if(e.key==='Enter'){id==='linkCodeS'?doKakaoLinkStudent():doKakaoLinkParent();}});}});
 ['linkTokO','linkTokT'].forEach(id=>{const inp=document.getElementById(id);if(inp){inp.addEventListener('keydown',e=>{if(e.key==='Enter')doKakaoLinkAcademy(id==='linkTokO'?'owner':'teacher');});}});
+{const ic=document.getElementById('linkInvC');if(ic){ic.addEventListener('input',function(){this.value=this.value.toUpperCase();});ic.addEventListener('keydown',e=>{if(e.key==='Enter')doKakaoLinkCoach();});}}
 }
 let linkPType='father';
 function linkChoose(type){
 document.getElementById('linkStep1').style.display='none';
-['linkStep2S','linkStep2P','linkStep2O','linkStep2T'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+['linkStep2S','linkStep2P','linkStep2O','linkStep2T','linkStep2C'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
 if(type==='student'){document.getElementById('linkStep2S').style.display='block';document.getElementById('linkCodeS').focus();}
 else if(type==='parent'){document.getElementById('linkStep2P').style.display='block';document.getElementById('linkCodeP').focus();}
 else if(type==='owner'){document.getElementById('linkStep2O').style.display='block';document.getElementById('linkAcaNmO').focus();}
 else if(type==='teacher'){document.getElementById('linkStep2T').style.display='block';document.getElementById('linkAcaNmT').focus();}
+else if(type==='coach'){document.getElementById('linkStep2C').style.display='block';document.getElementById('linkInvC').focus();}
 }
 function linkBack(){
 document.getElementById('linkStep1').style.display='block';
-['linkStep2S','linkStep2P','linkStep2O','linkStep2T'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+['linkStep2S','linkStep2P','linkStep2O','linkStep2T','linkStep2C'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
 }
 function linkParentType(t){linkPType=t;document.getElementById('linkFather').className='my-tab'+(t==='father'?' on':'');document.getElementById('linkMother').className='my-tab'+(t==='mother'?' on':'');}
 
-function doKakaoLinkStudent(){
+async function doKakaoLinkStudent(){
 const inp=document.getElementById('linkCodeS'),v=inp.value.trim().toUpperCase(),em=document.getElementById('linkEmS');
 if(!v){em.textContent='코드를 입력하세요';em.classList.add('on');return;}
-if(!S[v]){em.textContent='❌ 존재하지 않는 코드입니다';em.classList.add('on');inp.classList.add('err');return;}
 const pending=JSON.parse(sessionStorage.getItem('pa_kakao_pending')||'null');
 if(!pending){em.textContent='카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';em.classList.add('on');return;}
-/* 카카오 매핑 등록 (학생) */
-const map=lG('pa_kakao_users',{});map[pending.kid]={code:v,role:'student'};lS('pa_kakao_users',map);
+em.classList.remove('on');
+/* [0-4] 서버가 코드 확인 후 카카오 연결 */
+try{await paLink({type:'student',code:v});}
+catch(e){em.textContent=paLinkErr(e,'❌ 존재하지 않는 코드입니다');em.classList.add('on');inp.classList.add('err');return;}
+if(!S[v]){em.textContent='⚠️ 연결은 됐지만 학생 정보를 불러오지 못했습니다. 새로고침 후 다시 로그인해주세요.';em.classList.add('on');return;}
 
 /* 🔔 특강 모드 ON이고 학원이 1개 이상 등록되어 있으면 → 그룹 질문 */
 if(isSpecialLectureMode()&&Object.keys(gAcademies()).length>0){
@@ -1633,13 +1679,15 @@ sessionStorage.removeItem('pa_kakao_pending');
 toast(`${aca.name} 소속으로 등록되었습니다.`);
 logIn(pending.code,pending.nn,pending.img);go('my');
 }
-function doKakaoLinkParent(){
+async function doKakaoLinkParent(){
 const inp=document.getElementById('linkCodeP'),v=inp.value.trim().toUpperCase(),em=document.getElementById('linkEmP');
 if(!v){em.textContent='자녀의 코드를 입력하세요';em.classList.add('on');return;}
-if(!S[v]){em.textContent='❌ 존재하지 않는 코드입니다';em.classList.add('on');inp.classList.add('err');return;}
 const pending=JSON.parse(sessionStorage.getItem('pa_kakao_pending')||'null');
 if(!pending){em.textContent='카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';em.classList.add('on');return;}
-const map=lG('pa_kakao_users',{});map[pending.kid]={code:v,role:linkPType};lS('pa_kakao_users',map);
+em.classList.remove('on');
+try{await paLink({type:linkPType,code:v});}
+catch(e){em.textContent=paLinkErr(e,'❌ 존재하지 않는 코드입니다');em.classList.add('on');inp.classList.add('err');return;}
+if(!S[v]){em.textContent='⚠️ 연결은 됐지만 학생 정보를 불러오지 못했습니다. 새로고침 후 다시 로그인해주세요.';em.classList.add('on');return;}
 sessionStorage.removeItem('pa_kakao_pending');
 const honorific=linkPType==='father'?'아버님':'어머님';
 toast(`${S[v].name} ${honorific} 계정 연결 완료!`);
@@ -1647,7 +1695,7 @@ logIn(v,S[v].name+' '+honorific,pending.img);go('my');
 }
 
 /* 학원 원장/선생 인증 */
-function doKakaoLinkAcademy(kind){
+async function doKakaoLinkAcademy(kind,replace){
 const isOwner=kind==='owner';
 const nmInp=document.getElementById(isOwner?'linkAcaNmO':'linkAcaNmT');
 const tokInp=document.getElementById(isOwner?'linkTokO':'linkTokT');
@@ -1663,58 +1711,22 @@ if(!att.ok){em.textContent=att.msg;em.classList.add('on');return;}
 
 const pending=JSON.parse(sessionStorage.getItem('pa_kakao_pending')||'null');
 if(!pending){em.textContent='카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';em.classList.add('on');return;}
+em.classList.remove('on');
 
-/* 모든 학원에서 일치하는 토큰 검색 */
-const acas=gAcademies();
-let matchedId=null,matchedAca=null;
-Object.entries(acas).forEach(([id,a])=>{
-  const target=isOwner?a.ownerToken:a.teacherToken;
-  if(target&&target===tok){matchedId=id;matchedAca=a;}
-});
-
-if(!matchedId){
-  failAcaAttempt();
-  em.textContent='❌ 일치하는 암호구문이 없습니다. 다시 확인하세요.';
+/* [0-4] 암호구문 확인·등록은 서버에서 (암호구문 목록은 화면에 내려오지 않음) */
+let d;
+try{d=await paLink({type:isOwner?'owner':'teacher',name:nm,passphrase:tok,replace:!!replace});}
+catch(e){
+  if(e&&e.status===409&&e.reason==='confirm'){
+    if(confirm(`이미 다른 원장(${(e.data&&e.data.ownerName)||''})이 등록되어 있습니다.\n교체하시겠습니까?`))return doKakaoLinkAcademy(kind,true);
+    return;
+  }
+  if(e&&(e.reason==='invalid'||e.status===404))failAcaAttempt();
+  em.textContent=paLinkErr(e,'❌ 일치하는 암호구문이 없습니다. 다시 확인하세요.');
   em.classList.add('on');tokInp.classList.add('err');
   return;
 }
-
-/* 인증 성공 — 카카오 매핑 + 학원 정보에 등록 */
 clearAcaAttempt();
-const acasUpdated=gAcademies();
-const a=acasUpdated[matchedId];
-if(isOwner){
-  /* 기존 원장이 있으면 교체 */
-  if(a.owner&&a.owner.kid!==pending.kid){
-    if(!confirm(`이미 다른 원장(${a.owner.name})이 등록되어 있습니다.\n교체하시겠습니까?`)){
-      return;
-    }
-    /* 기존 원장 카카오 매핑 제거 */
-    const ku0=lG('pa_kakao_users',{});delete ku0[a.owner.kid];lS('pa_kakao_users',ku0);
-  }
-  a.owner={kid:pending.kid,name:nm,since:new Date().toISOString()};
-  a.ownerLastUsed=new Date().toISOString();
-}else{
-  /* 선생 추가 (중복 체크) */
-  a.teachers=a.teachers||[];
-  const exists=a.teachers.find(t=>t.kid===pending.kid);
-  if(!exists){
-    a.teachers.push({kid:pending.kid,name:nm,since:new Date().toISOString()});
-  }else{
-    exists.name=nm;
-  }
-  a.teacherLastUsed=new Date().toISOString();
-}
-sAcademies(acasUpdated);
-
-/* pa_kakao_users 매핑 등록 */
-const ku=lG('pa_kakao_users',{});
-ku[pending.kid]={
-  role:isOwner?'academy_owner':'academy_teacher',
-  academyId:matchedId,
-  name:nm
-};
-lS('pa_kakao_users',ku);
 sessionStorage.removeItem('pa_kakao_pending');
 
 /* 학원 권한자용 세션 저장 */
@@ -1723,11 +1735,11 @@ sessionStorage.setItem('pa_login',JSON.stringify({
   code:'',
   name:displayName,
   img:pending.img,
-  acaRole:isOwner?'academy_owner':'academy_teacher',
-  academyId:matchedId
+  acaRole:d.role,
+  academyId:d.academyId
 }));
 setN(displayName,pending.img);
-toast(`${a.name} ${isOwner?'원장':'선생'} 인증 완료!`);
+toast(`${d.academyName||''} ${isOwner?'원장':'선생'} 인증 완료!`);
 go('admin');
 /* 학원 권한자용 관리자 패널 활성화 */
 document.getElementById('aLock').style.display='none';
@@ -1735,6 +1747,23 @@ document.getElementById('aPanel').classList.add('on');
 aOK=false;/* super_admin 아님 */
 window._acaMode=true;
 rAT();
+}
+/* [0-4] P.A 코치 계정 연결 (관리자가 만든 초대 코드) */
+async function doKakaoLinkCoach(){
+const inp=document.getElementById('linkInvC'),v=inp.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''),em=document.getElementById('linkEmC');
+if(!v){em.textContent='초대 코드를 입력하세요';em.classList.add('on');return;}
+const pending=JSON.parse(sessionStorage.getItem('pa_kakao_pending')||'null');
+if(!pending){em.textContent='카카오 정보를 찾을 수 없습니다. 다시 로그인해주세요.';em.classList.add('on');return;}
+em.classList.remove('on');
+let d;
+try{d=await paLink({type:'coach',invite:v});}
+catch(e){em.textContent=paLinkErr(e,'❌ 초대 코드가 올바르지 않습니다.');em.classList.add('on');inp.classList.add('err');return;}
+sessionStorage.removeItem('pa_kakao_pending');
+const cn=String(d.nm||'코치');
+sessionStorage.setItem('pa_login',JSON.stringify({code:'',name:cn+' 코치',img:pending.img,acaRole:'coach'}));
+setN(cn+' 코치',pending.img);toast(cn+' 코치 계정 연결 완료!');
+go('admin');document.getElementById('aLock').style.display='none';document.getElementById('aPanel').classList.add('on');
+aOK=false;window._acaMode=false;rAT();location.hash='#coach';
 }
 async function doCode(){const inp=document.getElementById('dcI'),v=inp.value.trim().toUpperCase(),em=document.getElementById('em');if(!v)return;inp.value=v;{const cr=await paCodeSignIn(v);if(cr!=='ok'){em.textContent=cr==='expired'?'⏰ 유효기간 만료. 선생님께 재발급 요청':cr==='limit'?'⏳ 시도가 너무 많습니다. 10분 뒤 다시 시도하세요.':cr==='error'?'⚠️ 서버 연결 오류. 잠시 후 다시 시도하세요.':'❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}await paReloadData();}if(!S[v]){em.textContent='❌ 코드가 올바르지 않습니다.';em.classList.add('on');inp.classList.add('err');return;}if(CODES[v]&&new Date()>new Date(CODES[v].e)){em.textContent='⏰ 유효기간 만료. 선생님께 재발급 요청';em.classList.add('on');return;}em.classList.remove('on');inp.classList.remove('err');
 /* 코드 확인 성공 → 역할 선택 UI 표시 */
@@ -3207,8 +3236,11 @@ function rAB(){const b=document.getElementById('aBody');switch(aTab){case'a-wait
    인증 방식: 학원 등록 시 자동 생성 암호구문 (영숫자 16자, 4-4-4-4)
    원장용/선생용 구문 별도 관리, 재발급 가능
    =========================================== */
-function gAcademies(){return lG('pa_academies',{});}
-function sAcademies(v){lS('pa_academies',v);}
+/* [0-4] 학원 원본(암호구문 포함)은 관리자만 — 다른 사람은 이름·지역만 담긴 pa_academy_names 사용 */
+function gAcademies(){const a=lG('pa_academies',null);if(a&&Object.keys(a).length)return a;const n=lG('pa_academy_names',{})||{};const o={};Object.keys(n).forEach(k=>{o[k]={name:String(n[k]&&n[k].name||''),region:String(n[k]&&n[k].region||''),createdAt:n[k]&&n[k].createdAt||''};});return o;}
+function paAcaNames(v){const o={};Object.keys(v||{}).forEach(k=>{const a=v[k]||{};o[k]={name:String(a.name||''),region:String(a.region||''),createdAt:String(a.createdAt||'')};});return o;}
+function sAcademies(v){lS('pa_academies',v);try{const n=paAcaNames(v);if(!paEq(n,lG('pa_academy_names',{})||{}))lS('pa_academy_names',n);}catch(e){console.warn('[PA] 학원 이름 공개본 저장 실패',e);}}
+function paSyncAcademyNames(){if(paRole()!=='super_admin'||!_fsLoaded.has('pa_academies')||!_fsLoaded.has('pa_academy_names'))return;const n=paAcaNames(lG('pa_academies',{})||{});if(!paEq(n,lG('pa_academy_names',{})||{})){lS('pa_academy_names',n);console.log('[PA] 학원 이름 공개본 갱신');}}
 function gAcademyMembers(){return lG('pa_academy_members',{});}
 function sAcademyMembers(v){lS('pa_academy_members',v);}
 function getStuAcademy(code){const m=gAcademyMembers();return m[code]||null;}
@@ -6481,7 +6513,7 @@ async function markAttend(c,via){
  const now=Date.now(),pr=program(c),aca=acaOf(c);
  const b=db.batch();
  b.set(attRef,{date:d,code:c,name:s.name,aca:aca.id||'',at:now,via});
- b.set(COL('logs').doc(key),{date:d,code:c,pod:'',label:pr.label,btName:pr.btName,items:pr.items,cur:0,done:pr.items.map(()=>0),restUntil:0,ended:false,startedAt:now},{merge:true});
+ b.set(COL('logs').doc(key),{date:d,code:c,aca:aca.id||'',pod:'',label:pr.label,btName:pr.btName,items:pr.items,cur:0,done:pr.items.map(()=>0),restUntil:0,ended:false,startedAt:now},{merge:true});
  await b.commit();
  /* 기존 출석부(pa_attendance)에도 표시 — 트랜잭션으로 해당 칸만 추가 */
  try{if(typeof _v2!=='undefined'&&_v2){await db.collection('pa_stu').doc(c).set({code:c,pa_attendance:{[d]:'O'}},{merge:true});}else{const ref=db.collection('pa_data').doc('pa_attendance');
@@ -6496,7 +6528,36 @@ function close(){cleanup();const o=ov();o.classList.remove('on');o.innerHTML='';
  if(/^#(kiosk|coach|tv|myqr)/.test(location.hash))history.replaceState(null,'',location.pathname+location.search);}
 function top(title,sub,right){return `<div class="po-top"><div class="po-row" style="gap:14px;min-width:0"><div class="logo" style="font-size:22px">P.A</div><div style="min-width:0"><div class="po-ttl">${title}</div>${sub?`<div class="po-sub">${sub}</div>`:''}</div></div><div class="po-row">${right||''}<button class="po-x" onclick="PO.close()">닫기</button></div></div>`;}
 function needAdmin(what){
- open(top(what,'')+`<div class="po-wrap"><div class="po-card" style="text-align:center;padding:40px 20px"><div style="font-size:40px">🔒</div><div class="po-h2" style="margin-top:10px">관리자 로그인이 필요합니다</div><p class="po-note" style="margin-bottom:16px">관리자 카카오로 로그인한 뒤<br><b>관리자 → 🏟 센터 운영</b>에서 다시 열어 주세요.<br><span style="font-size:11px">(보안을 위해 새로고침하면 관리자 로그인이 풀립니다)</span></p><button class="po-btn" onclick="PO.close();go('admin');">관리자 페이지로</button></div></div>`);
+ const coach=what==='코치 모드';
+ open(top(what,'')+`<div class="po-wrap"><div class="po-card" style="text-align:center;padding:40px 20px"><div style="font-size:40px">🔒</div><div class="po-h2" style="margin-top:10px">${coach?'코치 또는 관리자 로그인이 필요합니다':'관리자 로그인이 필요합니다'}</div><p class="po-note" style="margin-bottom:16px">${coach?'코치 카카오로 로그인하면 코치 모드가 바로 열립니다.<br>처음이면 MY 페이지 → 카카오 로그인 → <b>P.A 코치 (초대 코드)</b>를 고르세요.':'관리자 카카오로 로그인한 뒤<br><b>관리자 → 🏟 센터 운영</b>에서 다시 열어 주세요.'}<br><span style="font-size:11px">(보안을 위해 탭을 닫으면 로그인이 풀립니다)</span></p><button class="po-btn" onclick="PO.close();${coach?'goMY();':"go('admin');"}">${coach?'로그인하러 가기':'관리자 페이지로'}</button></div></div>`);
+}
+/* [0-4] 서버 출석 처리 (키오스크 → 로그인 서버가 QR 확인 후 기록) */
+async function srvCheckin(ci){
+ const u=firebase.auth().currentUser;if(!u){const e=new Error('login');e.status=401;throw e;}
+ const t=await u.getIdToken();
+ const r=await fetch(PA_AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify({checkin:ci})});
+ let d={};try{d=await r.json();}catch(e){}
+ if(!r.ok){const e=new Error(d.error||('checkin '+r.status));e.status=r.status;throw e;}
+ return d;
+}
+/* [0-4] 키오스크 기기 등록 화면 */
+function kioskSetup(){
+ open(top('1층 출석 키오스크','이 기기를 키오스크로 등록')+`<div class="po-wrap"><div class="po-card" style="max-width:460px;margin:0 auto;text-align:center;padding:30px 20px"><div style="font-size:40px">📷</div><div class="po-h2" style="margin-top:10px">키오스크 기기 등록</div>
+ <p class="po-note" style="margin:8px 0 16px">관리자 → 🏟 센터 운영 → <b>키오스크 기기</b>에서 만든<br><b>기기 등록 코드</b>(8자리)를 입력하세요.<br>한 번 등록하면 이 기기는 껐다 켜도 키오스크로 유지됩니다.</p>
+ <input id="poDevCode" maxlength="12" autocomplete="off" spellcheck="false" placeholder="예: K7M2Q9XA" style="width:100%;padding:14px;border-radius:12px;background:var(--card2);color:#fff;border:1px solid var(--border);font-size:20px;text-align:center;letter-spacing:3px;text-transform:uppercase">
+ <div class="po-note" id="poDevMsg" style="color:var(--orange);min-height:18px;margin-top:8px"></div>
+ <button class="po-btn" id="poDevGo" style="width:100%;margin-top:8px">이 기기를 키오스크로 등록</button>
+ <p class="po-note" style="margin-top:14px;font-size:11px">관리자 카카오로 로그인한 탭에서는 등록 없이 바로 열립니다.<br>PC방·공용 컴퓨터는 등록하지 마세요 (테스트 후엔 꼭 <b>기기 해제</b>).</p></div></div>`);
+ const inp=document.getElementById('poDevCode'),btn=document.getElementById('poDevGo'),msg=document.getElementById('poDevMsg');
+ btn.onclick=async()=>{const v=inp.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');if(v.length<6){msg.textContent='등록 코드를 확인해 주세요';return;}
+  btn.disabled=true;msg.textContent='확인 중…';
+  try{try{localStorage.setItem('pa_kiosk_device','1');}catch(e){}
+   await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+   await paTokenSignIn({deviceCode:v});await paReloadData();toastP('이 기기가 키오스크로 등록되었습니다');viewKiosk();}
+  catch(e){console.warn(e);try{localStorage.removeItem('pa_kiosk_device');}catch(_){}try{await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);}catch(_){}
+   msg.textContent=e.status===429?'시도가 너무 많습니다. 10분 뒤 다시 시도하세요.':e.reason==='inactive'?'사용 중지된 기기 코드입니다. 관리자에게 문의하세요.':(e.status===404||e.status===400)?'등록 코드가 올바르지 않습니다.':'서버 연결 오류. 잠시 후 다시 시도하세요.';btn.disabled=false;}};
+ inp.onkeydown=e=>{if(e.key==='Enter')btn.onclick();};
+ setTimeout(()=>{try{inp.focus();}catch(e){}},100);
 }
 
 /* ================= 학생: 내 출석 QR ================= */
@@ -6510,7 +6571,7 @@ function viewMyQR(){
  let attended=false,nonce=null,issuedAt=0;const body=()=>document.getElementById('poStu');
  function renderDone(att,log){
   attended=true;const b=body();if(!b)return;
-  const items=(log&&log.items)||program(c).items;
+  const items=log&&Array.isArray(log.items)&&log.items.length?log.items:program(c).items;
   b.innerHTML=`<div class="po-card" style="padding:28px 18px"><div style="font-size:64px;line-height:1">✅</div><div class="po-h2" style="margin:12px 0 4px;font-size:22px">출석 완료</div><div class="po-sub">${att&&att.at?hm(att.at)+' 체크인':''}</div>
   <div class="po-card" style="margin-top:16px;background:var(--card2)"><div class="po-lbl">오늘 수업</div><div style="font-size:20px;font-weight:900">${rt?rt+' · ':''}${log&&log.pod?podFull(log.pod):'코치님이 POD를 안내해 드려요'}</div><div class="po-note" style="margin-top:6px">4층 탈의실에서 환복 후 운동층으로 올라가세요</div></div>
   ${items.length?`<div style="margin-top:16px;text-align:left"><div class="po-lbl">오늘 운동</div>${items.map(e=>`<div class="po-ex"><span>${E(e.n)}</span><span class="po-sub">${E(e.d)}</span></div>`).join('')}</div>`:''}</div>`;
@@ -6536,8 +6597,8 @@ function viewMyQR(){
 
 /* ================= 1층 키오스크 ================= */
 function viewKiosk(){
- cleanup();if(!aOK)return needAdmin('출석 키오스크');
- open(top('1층 출석 키오스크','QR을 카메라에 비춰 주세요',`<button class="po-x" id="poCamSw">카메라 전환</button>`)+`
+ cleanup();{const R=paRole();if(R!=='super_admin'&&R!=='kiosk')return kioskSetup();}
+ open(top('1층 출석 키오스크','QR을 카메라에 비춰 주세요',`<button class="po-x" id="poCamSw">카메라 전환</button>${paRole()==='kiosk'?'<button class="po-x" id="poDevOut">기기 해제</button>':''}`)+`
  <div class="po-kiosk"><div><div class="po-cam"><video id="poVid" playsinline muted autoplay></video><div class="fr"></div><div class="msg" id="poCamMsg">카메라 준비 전</div></div></div>
  <div class="po-grid" style="align-content:start">
   <div class="po-card"><div style="font-size:22px;font-weight:900;margin-bottom:6px">학생 휴대폰의 QR을<br>네모 칸에 맞춰 주세요</div><div class="po-note">QR은 30초마다 바뀝니다. 캡처한 QR이나 이미 사용한 QR은 출석되지 않습니다.</div>
@@ -6573,32 +6634,23 @@ function viewKiosk(){
   el.innerHTML=`<div style="font-size:clamp(60px,10vw,110px)">${icon}</div><div class="t1">${t1}</div><div class="t2">${t2||''}</div><div class="t3">${t3||''}</div>`;
   beep(kind==='good');busy=true;clearTimeout(show._t);show._t=setTimeout(()=>{el.className='po-res';busy=false;},ms||4200);
  }
- async function checkIn(c,n){
-  const s=stu(c);if(!s)return show('bad','⚠️','등록되지 않은 학생이에요','코치님께 문의해 주세요');
-  if(!isStuActive(c))return show('bad','⏸','휴회·퇴회 상태인 학생이에요','코치님께 문의해 주세요');
+ /* [0-4] 출석 확인·기록은 서버에서 (키오스크는 학생 정보를 직접 읽지 않음) */
+ const MSG={nocode:['🔢','코드를 찾을 수 없어요','학생 화면의 최신 코드를 확인해 주세요',''],badqr:['❓','P.A 출석 QR이 아니에요','학생 화면의 출석 QR을 보여주세요',''],nostudent:['⚠️','등록되지 않은 학생이에요','코치님께 문의해 주세요',''],inactive:['⏸','휴회·퇴회 상태인 학생이에요','코치님께 문의해 주세요',''],used:['🔁','이미 사용한 QR이에요','학생 화면을 새로 고쳐 주세요',''],expired:['⏱️','만료된 QR이에요','학생 화면의 새 QR을 다시 보여주세요','캡처한 QR은 사용할 수 없습니다']};
+ async function checkIn(ci){
   busy=true;
   try{
-   const q=await COL('qr').doc(c).get();const d=q.exists?q.data():null;
-   if(!d||d.n!==n)return show('bad','⏱️','만료된 QR이에요','학생 화면의 새 QR을 다시 보여주세요','캡처한 QR은 사용할 수 없습니다');
-   if(d.used)return show('bad','🔁','이미 사용한 QR이에요','학생 화면을 새로 고쳐 주세요');
-   if(Date.now()-d.at>QR_VALID*1000)return show('bad','⏱️','만료된 QR이에요','학생 화면의 새 QR을 다시 보여주세요');
-   await COL('qr').doc(c).update({used:true,usedAt:Date.now()});
-   const r=await markAttend(c,'kiosk');const rt=rsvToday(c);
-   if(r.already)return show('info','👋',`${E(s.name)} 학생은 이미 출석했어요`,rt?'오늘 '+rt:'',`${hm(r.att.at)} 출석`);
-   show('good','✅',`${E(s.name)} 학생, 출석 완료!`,rt?'오늘 '+rt+' 수업':'오늘 수업 출석','4층에서 환복 후 운동층으로 올라가세요 · 코치님이 POD를 안내해요');
-  }catch(e){fsErr(e);show('bad','📡','연결 오류','잠시 후 다시 시도해 주세요');}
+   const r=await srvCheckin(ci);const nm=E(r.name||'');
+   if(!r.ok){const m=MSG[r.reason]||['⚠️','출석할 수 없어요','코치님께 문의해 주세요',''];return show('bad',m[0],m[1],m[2],m[3]);}
+   if(r.already)return show('info','👋',`${nm} 학생은 이미 출석했어요`,r.rsv?'오늘 '+r.rsv:'',r.at?`${hm(r.at)} 출석`:'');
+   show('good','✅',`${nm} 학생, 출석 완료!`,r.rsv?'오늘 '+r.rsv+' 수업':'오늘 수업 출석','4층에서 환복 후 운동층으로 올라가세요 · 코치님이 POD를 안내해요');
+  }catch(e){console.warn('[PA 운영] 출석',e);if(e.status===401||e.status===403)return show('bad','🔒','키오스크 권한이 없어요','관리자에게 문의해 주세요 (기기 사용 중지 여부 확인)','',6000);show('bad','📡','연결 오류','잠시 후 다시 시도해 주세요');}
  }
  function handleScan(text){
   const m=/^PA1:([A-Za-z0-9_\-]{1,30}):(\d{6})$/.exec(String(text).trim());
   if(!m){show('bad','❓','P.A 출석 QR이 아니에요','학생 화면의 출석 QR을 보여주세요','',2500);return;}
-  checkIn(m[1],m[2]);
+  checkIn({code:m[1],n:m[2]});
  }
- async function byCode(code){
-  try{const snap=await COL('qr').where('n','==',code).get();
-   if(snap.empty)return show('bad','🔢','코드를 찾을 수 없어요','학생 화면의 최신 코드를 확인해 주세요');
-   let best=null;snap.forEach(d=>{if(!best||d.data().at>best.data().at)best=d;});checkIn(best.id,code);
-  }catch(e){fsErr(e);}
- }
+ function byCode(code){checkIn({code6:code});}
  function codeModal(){
   let v='';const m=document.createElement('div');m.className='po-modal';
   const draw=()=>{m.innerHTML=`<div class="po-card" style="text-align:center"><div class="po-h2">입장 코드 입력</div><div class="po-code" style="min-height:48px">${(v+'______').slice(0,6).replace(/(.{3})/,'$1 ')}</div><div class="po-pad" style="margin:12px auto">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-k="${n}">${n}</button>`).join('')}<button data-k="x" style="font-size:16px">취소</button><button data-k="0">0</button><button data-k="b" style="font-size:16px">지움</button></div></div>`;
@@ -6606,23 +6658,25 @@ function viewKiosk(){
   draw();ov().appendChild(m);
  }
  document.getElementById('poCodeBtn').onclick=codeModal;
+ {const dO=document.getElementById('poDevOut');if(dO)dO.onclick=async()=>{if(!confirm('이 기기의 키오스크 등록을 해제할까요?\n(다시 쓰려면 등록 코드를 다시 입력해야 합니다)'))return;try{localStorage.removeItem('pa_kiosk_device');}catch(e){}try{await firebase.auth().signOut();await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);}catch(e){}try{paClearLocal();}catch(e){}close();toastP('키오스크 등록을 해제했습니다');try{await paReloadData();}catch(e){}};}
  document.getElementById('poCamSw').onclick=()=>{facing=facing==='user'?'environment':'user';startCam();};
  document.getElementById('poStartBtn').onclick=()=>{document.getElementById('poStart').remove();keepAwake();beep(true);startCam();};
  onClean(COL('att').where('date','==',today()).onSnapshot(snap=>{
   const rows=[];snap.forEach(d=>rows.push(d.data()));rows.sort((a,b)=>b.at-a.at);
   const cn=document.getElementById('poAttCnt'),ls=document.getElementById('poAttList');if(!ls)return;
   cn.textContent=rows.length?`· ${rows.length}명`:'';
-  ls.innerHTML=rows.length?rows.slice(0,10).map(r=>`<div class="po-li">${avatar(r.code)}<div style="flex:1"><b>${E(stu(r.code)?stu(r.code).name:r.name)}</b> <span class="po-sub">${E(acaOf(r.code).name)}</span><div class="po-sub">${rsvToday(r.code)||'예약 시간 없음'}</div></div><span class="po-sub">${hm(r.at)}</span></div>`).join(''):'<div class="po-note">아직 출석한 학생이 없습니다</div>';
+  ls.innerHTML=rows.length?rows.slice(0,10).map(r=>`<div class="po-li">${avatar(r.code)}<div style="flex:1"><b>${E(mask(stu(r.code)?stu(r.code).name:r.name))}</b> <span class="po-sub">${E(acaOf(r.code).name||(gAcademies()[r.aca]||{}).name||'')}</span><div class="po-sub">${rsvToday(r.code)||(stu(r.code)?'예약 시간 없음':'')}</div></div><span class="po-sub">${hm(r.at)}</span></div>`).join(''):'<div class="po-note">아직 출석한 학생이 없습니다</div>';
  },fsErr));
 }
 
 /* ================= 코치 모드 ================= */
 function viewCoach(selArg){
- cleanup();if(!aOK)return needAdmin('코치 모드');
+ cleanup();const R0=paRole();if(R0!=='super_admin'&&R0!=='coach')return needAdmin('코치 모드');const IS_ADM=R0==='super_admin';
  let sel=selArg&&stu(selArg)?selArg:null,att={},logs={},claims={};
  /* 코치 구분 (0-4 코치 계정 전까지: 이 기기·탭 단위) */
- const COACH_ID=(()=>{try{let v=sessionStorage.getItem('po_coach_id');if(!v){v='c'+Math.random().toString(36).slice(2,10);sessionStorage.setItem('po_coach_id',v);}return v;}catch(e){return 'c'+Date.now();}})();
- let coachName=(()=>{try{return localStorage.getItem('po_coach_name')||'';}catch(e){return '';}})();
+ /* [0-4] 코치 계정이면 계정 기준, 관리자는 테스트용으로 탭마다 다른 코치 */
+ const COACH_ID=R0==='coach'?String(_paC.coachId||''):(()=>{try{let v=sessionStorage.getItem('po_coach_id');if(!v){v='c'+Math.random().toString(36).slice(2,10);sessionStorage.setItem('po_coach_id',v);}return v;}catch(e){return 'c'+Date.now();}})();
+ let coachName=R0==='coach'?String(_paC.nm||'코치'):(()=>{try{return localStorage.getItem('po_coach_name')||'';}catch(e){return '';}})();
  const askName=()=>{const v=prompt('코치 이름을 입력하세요 (POD 사용 표시에 쓰입니다)',coachName||'');if(v&&v.trim()){coachName=v.trim().slice(0,12);try{localStorage.setItem('po_coach_name',coachName);}catch(e){}const bt=document.getElementById('poCoachNm');if(bt)bt.textContent='코치: '+coachName;}};
  /* POD 중복 사용 방지: 학생이 남아 있는 POD는 처음 배정한 코치만 사용 */
  const POD_MAX=p=>/POD(3|6)$/.test(p)?12:3;
@@ -6656,7 +6710,7 @@ function viewCoach(selArg){
   const det=document.getElementById('poDet');if(!det)return;
   if(!sel){det.innerHTML=`<div class="po-card" style="text-align:center;padding:50px 20px"><div style="font-size:40px">👈</div><div class="po-h2" style="margin-top:10px">학생을 선택하세요</div><p class="po-note">출석하면 목록에 바로 초록색으로 표시됩니다.</p></div>`;return;}
   const c=sel,s=stu(c),l=logs[c],a=att[c],aca=acaOf(c),cd=gCondToday(c),ib=getInbody(c).slice(0,3);
-  const items=l&&Array.isArray(l.items)?l.items:program(c).items;
+  const items=l&&Array.isArray(l.items)&&l.items.length?l.items:program(c).items;
   const restLeft=l&&l.restUntil>Date.now()?Math.ceil((l.restUntil-Date.now())/1000):0;
   let ibDelta='';if(ib.length>=2){const z=ib[0],o=ib[ib.length-1];const dm=(+z.skeletalMuscle||0)-(+o.skeletalMuscle||0),df=(+z.bodyFatPct||0)-(+o.bodyFatPct||0);ibDelta=`<div class="po-note" style="margin-top:8px">최근 ${ib.length}회 변화: 골격근 <span class="po-up">${dm>=0?'+':''}${dm.toFixed(1)}kg</span> · 체지방률 <span class="po-dn">${df>=0?'+':''}${df.toFixed(1)}%p</span></div>`;}
   const live=!!a&&!(l&&l.ended);
@@ -6670,14 +6724,15 @@ function viewCoach(selArg){
   </div>
   <div class="po-card"><div class="po-lbl">POD 배정 ${a?'':'(출석 후 가능)'}</div><div class="po-pods">${Object.keys(PODS).map(p=>{const mine=!!(l&&l.pod===p),lk=lockedFor(p),n=activeOn(p,c).length,full=!mine&&n>=POD_MAX(p);
    return `<button data-p="${p}" class="${mine?'on':''}" ${!a||(!mine&&(lk||full))?'disabled':''}>${podLabel(p)}<br><span style="font-weight:500;font-size:11px;opacity:.85">${lk?E(lk.coachName||'다른')+' 코치 사용 중':full?'정원 마감':PODS[p].name}</span>${n?`<br><span style="font-weight:500;font-size:10.5px;opacity:.7">현재 ${n}명</span>`:''}</button>`;}).join('')}</div>
-   ${Object.keys(PODS).some(p=>lockedFor(p))?`<div class="po-note" style="margin-top:8px">다른 코치가 쓰는 POD는 선택할 수 없습니다. 그 코치의 학생이 모두 수업 종료되면 자동으로 풀립니다. ${Object.keys(PODS).filter(p=>lockedFor(p)).map(p=>`<button class="po-btn sm g" style="margin:4px 4px 0 0" data-unlock="${p}">${podLabel(p)} 잠금 강제 해제</button>`).join('')}</div>`:''}</div>
+   ${Object.keys(PODS).some(p=>lockedFor(p))?`<div class="po-note" style="margin-top:8px">다른 코치가 쓰는 POD는 선택할 수 없습니다. 그 코치의 학생이 모두 수업 종료되면 자동으로 풀립니다. ${IS_ADM?Object.keys(PODS).filter(p=>lockedFor(p)).map(p=>`<button class="po-btn sm g" style="margin:4px 4px 0 0" data-unlock="${p}">${podLabel(p)} 잠금 강제 해제</button>`).join(''):'급하면 관리자에게 잠금 해제를 요청하세요.'}</div>`:''}</div>
   <div class="po-card"><div class="po-row" style="justify-content:space-between;margin-bottom:10px;flex-wrap:wrap"><div class="po-lbl" style="margin:0">오늘 운동 · ${E((l&&l.btName)||program(c).btName||'')} ${E((l&&l.label)||'')}</div><div class="po-sub">진행 ${doneSets(l)}/${totalSets(l)||items.reduce((x,y)=>x+y.sets,0)}세트 ${restLeft?`· <b style="color:var(--orange)">휴식 ${fmtSec(restLeft)}</b>`:''}</div></div>
    ${items.length?items.map((e,i)=>{const dn=l&&l.done?l.done[i]||0:0,cur=live&&l&&l.cur===i;return `<div class="po-exr ${cur?'cur':''} ${dn>=e.sets?'done':''}"><div><div style="font-weight:900">${i+1}. ${E(e.n)}</div><div class="po-sub">${E(e.part)} · ${E(e.d)}</div>${live&&!cur&&dn<e.sets?`<button class="po-btn sm g" style="margin-top:6px" data-cur="${i}">이 운동으로 이동</button>`:''}</div>
     <div class="po-dots">${Array.from({length:e.sets},(_,k)=>`<div class="po-dot ${k<dn?'f':''}">${k+1}</div>`).join('')}${live?`<button class="po-btn sm" data-set="${i}" ${dn>=e.sets?'disabled':''}>세트 완료</button><button class="po-btn sm g" data-undo="${i}" ${dn?'':'disabled'}>−</button>`:''}</div></div>`;}).join(''):'<div class="po-note">오늘은 프로그램이 없는 날이에요 (휴식일). 코치가 직접 지도합니다.</div>'}
    ${a?`<div class="po-row" style="margin-top:10px;justify-content:flex-end;flex-wrap:wrap">${l&&l.ended?`<span class="po-chip" style="background:rgba(255,255,255,.12)">${hm(l.endedAt)} 수업 종료</span><button class="po-btn sm g" id="poReopen">종료 취소</button>`:`<button class="po-btn sm g" id="poRest">휴식 60초</button><button class="po-btn sm o" id="poEnd">수업 종료</button>`}</div>`:''}
   </div></div>`;
   const ref=COL('logs').doc(d+'_'+c);
-  const upd=o=>{const prev=logs[c]||{};const next=Object.assign({},prev,o);const nl=Object.assign({},logs,{[c]:next});return ref.set(o,{merge:true}).then(()=>pushDisplay([prev.pod,next.pod],nl)).catch(fsErr);};
+  /* 키오스크 출석(서버 기록)은 운동 목록이 비어 있음 → 코치가 처음 누를 때 오늘 프로그램을 채움 */
+  const upd=o=>{if(l&&!(Array.isArray(l.items)&&l.items.length)){const pr=program(c);if(pr.items.length)o=Object.assign({label:pr.label,btName:pr.btName,items:pr.items,done:pr.items.map(()=>0)},o);}const prev=logs[c]||{};const next=Object.assign({},prev,o);const nl=Object.assign({},logs,{[c]:next});return ref.set(o,{merge:true}).then(()=>pushDisplay([prev.pod,next.pod],nl)).catch(fsErr);};
   const ab=document.getElementById('poAttBtn');if(ab)ab.onclick=async()=>{ab.disabled=true;try{await markAttend(c,'coach');toastP(s.name+' 출석 처리 완료');}catch(e){fsErr(e);ab.disabled=false;}};
   det.querySelectorAll('[data-p]').forEach(b=>b.onclick=async()=>{const p=b.dataset.p,prevPod=l&&l.pod;if(prevPod===p)return;
    if(!coachName)askName();b.disabled=true;
@@ -6699,7 +6754,7 @@ function viewCoach(selArg){
  onClean(COL('att').where('date','==',d).onSnapshot(snap=>{att={};snap.forEach(x=>{const v=x.data();att[v.code]=v;});drawRoster();drawDetail();},fsErr));
  onClean(COL('logs').where('date','==',d).onSnapshot(snap=>{logs={};snap.forEach(x=>{const v=x.data();logs[v.code]=v;});drawRoster();drawDetail();},fsErr));
  onClean(COL('pods').where('date','==',d).onSnapshot(snap=>{claims={};snap.forEach(x=>{const v=x.data();claims[v.pod]=v;});drawDetail();},fsErr));
- {const nb=document.getElementById('poCoachNm');if(nb)nb.onclick=askName;if(!coachName)setTimeout(askName,300);}
+ if(IS_ADM){const nb=document.getElementById('poCoachNm');if(nb)nb.onclick=askName;if(!coachName)setTimeout(askName,300);}
  every(1000,()=>{if(sel&&logs[sel]&&logs[sel].restUntil>Date.now()-1500)drawDetail();});
  drawRoster();drawDetail();
 }
@@ -6745,12 +6800,47 @@ function viewTV(pod){
 function tabOps(){
  const links=[['kiosk','📷 1층 출석 키오스크','태블릿 · iPad'],['coach','🧑‍🏫 코치 모드','코치 iPad']];
  const b=document.getElementById('aBody');
- b.innerHTML=`<h3 style="font-size:14px;margin-bottom:6px;">🏟 센터 운영</h3><p class="po-note" style="margin-bottom:14px">키오스크와 코치 모드는 관리자 로그인한 기기에서 아래 버튼으로 엽니다. 포드 TV는 로그인 없이 주소만 열면 됩니다.</p>
+ b.innerHTML=`<h3 style="font-size:14px;margin-bottom:6px;">🏟 센터 운영</h3><p class="po-note" style="margin-bottom:14px">관리자는 아래 버튼으로 바로 열 수 있습니다. 코치는 <b>자기 카카오</b>로, 키오스크는 <b>기기 등록 코드</b>로 엽니다. 포드 TV는 로그인 없이 주소만 열면 됩니다.</p>
  <div class="po-grid po-g2">${links.map(([h,t,dv])=>`<div class="po-card"><div style="font-size:16px;font-weight:900">${t}</div><div class="po-sub" style="margin:4px 0 10px">${dv}</div><button class="po-btn sm" onclick="location.hash='#${h}'">열기</button></div>`).join('')}</div>
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">포드 TV 주소 (TV 브라우저에서 열기)</div><div class="po-grid po-g2">${Object.keys(PODS).map(p=>`<div class="po-row" style="align-items:flex-start"><div class="po-qr" style="width:96px;padding:6px;flex:none">${qrSvg(site()+'#tv='+p,'L')}</div><div><b>${podLabel(p)}</b> <span class="po-sub">${PODS[p].name}</span><div class="po-sub" style="word-break:break-all;margin:4px 0">${E(site()+'#tv='+p)}</div><button class="po-btn sm g" onclick="location.hash='#tv=${p}'">이 기기에서 보기</button></div></div>`).join('')}</div></div>
+ <div class="po-card" style="margin-top:12px"><div class="po-lbl">🧑‍🏫 코치 계정</div><div id="poCoachList"><div class="po-note">불러오는 중…</div></div>
+  <div class="po-row" style="margin-top:10px;flex-wrap:wrap"><input id="poNewCoach" maxlength="12" placeholder="코치 이름 (예: 김코치)" style="flex:1;min-width:160px;padding:10px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><button class="po-btn sm" id="poAddCoach">코치 추가</button></div>
+  <p class="po-note" style="margin-top:8px">추가하면 <b>초대 코드</b>(8자리)가 생깁니다. 코치가 MY 페이지 → 카카오 로그인 → <b>P.A 코치 (초대 코드)</b> → 코드 입력하면 연결됩니다. <b>사용 중지</b>하면 그 즉시 코치 모드·학생 정보가 막힙니다.</p></div>
+ <div class="po-card" style="margin-top:12px"><div class="po-lbl">📷 키오스크 기기</div><div id="poDevList"><div class="po-note">불러오는 중…</div></div>
+  <div class="po-row" style="margin-top:10px;flex-wrap:wrap"><input id="poNewDev" maxlength="20" placeholder="기기 이름 (예: 1층 iPad)" style="flex:1;min-width:160px;padding:10px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><button class="po-btn sm" id="poAddDev">기기 추가</button></div>
+  <p class="po-note" style="margin-top:8px">키오스크로 쓸 기기에서 <b>${E(site())}#kiosk</b> 를 열고 <b>등록 코드</b>를 입력하면 끝입니다. 기기를 잃어버리면 <b>사용 중지</b>를 누르세요. 키오스크는 출석만 할 수 있고 학생 정보는 볼 수 없습니다.</p></div>
  <div class="po-card" style="margin-top:12px" id="poV2"><div class="po-lbl">🗂 데이터 구조 (0-3 학생별 분리)</div><div class="po-note" id="poV2St">상태 확인 중…</div><div class="po-row" style="margin-top:10px;flex-wrap:wrap"><button class="po-btn sm" id="poV2Run">학생별 분리 실행</button><button class="po-btn sm g" id="poV2Back">되돌리기</button></div><pre id="poV2Log" style="white-space:pre-wrap;font-size:12px;color:var(--muted);margin-top:10px"></pre></div>
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">학생 출석 QR</div><p class="po-note">학생은 카카오 로그인 → <b>MY 페이지 맨 위 "출석 QR 열기"</b>를 누르면 됩니다. QR은 30초마다 바뀝니다.</p></div>`;
- v2Card();
+ v2Card();staffCards();
+}
+/* [0-4] 코치 계정 · 키오스크 기기 관리 (관리자만) */
+const RC='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function rcode(n){const a=new Uint32Array(n);crypto.getRandomValues(a);return Array.from(a,x=>RC[x%RC.length]).join('');}
+const newId=p=>p+Date.now().toString(36)+rcode(3).toLowerCase();
+function staffCards(){
+ const cl=document.getElementById('poCoachList'),dl=document.getElementById('poDevList');if(!cl||!dl)return;
+ const btn=(t,a)=>`<button class="po-btn sm g" style="margin:4px 4px 0 0" ${a}>${t}</button>`;
+ const on=a=>a?'<span class="po-chip" style="background:rgba(111,207,151,.18);color:var(--green)">사용 중</span>':'<span class="po-chip" style="background:rgba(232,98,42,.15);color:var(--orange)">사용 중지</span>';
+ const when=t=>{if(!t)return '';const d=new Date(t);return isNaN(d)?'':`${d.getMonth()+1}/${d.getDate()} ${hm(d.getTime())}`;};
+ const C=db.collection('pa_coaches'),D=db.collection('pa_devices');
+ TABCLEAN.push(C.onSnapshot(snap=>{const rows=[];snap.forEach(d=>rows.push(Object.assign({id:d.id},d.data())));rows.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  cl.innerHTML=rows.length?rows.map(r=>`<div class="po-li" style="flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${E(r.name)}</b> ${on(r.active)} <span class="po-sub">${r.kid?'카카오 연결됨 '+when(r.linkedAt):'카카오 연결 전'}</span><div class="po-sub" style="margin-top:4px">초대 코드 <b style="font-family:monospace;letter-spacing:2px;color:var(--text);font-size:15px">${E(r.invite)}</b></div></div><div>${btn(r.active?'사용 중지':'다시 사용',`data-ca="${E(r.id)}"`)}${btn('초대 코드 새로 만들기',`data-cr="${E(r.id)}"`)}${btn('삭제',`data-cd="${E(r.id)}"`)}</div></div>`).join(''):'<div class="po-note">등록된 코치가 없습니다.</div>';
+  const find=id=>rows.find(x=>x.id===id);
+  cl.querySelectorAll('[data-ca]').forEach(b=>b.onclick=()=>{const r=find(b.dataset.ca);if(r.active&&!confirm(`${r.name} 코치를 사용 중지할까요?\n바로 코치 모드와 학생 정보 보기가 막힙니다.`))return;C.doc(r.id).set({active:!r.active},{merge:true}).catch(fsErr);});
+  cl.querySelectorAll('[data-cr]').forEach(b=>b.onclick=()=>{const r=find(b.dataset.cr);if(!confirm(`${r.name} 코치의 초대 코드를 새로 만들까요?\n\n지금 연결된 카카오는 다음 로그인부터 코치가 아니게 되고, 새 코드로 다시 연결해야 합니다.\n(지금 열려 있는 화면까지 바로 막으려면 '사용 중지'를 누르세요)`))return;C.doc(r.id).set({invite:rcode(8),kid:firebase.firestore.FieldValue.delete(),linkedAt:firebase.firestore.FieldValue.delete()},{merge:true}).catch(fsErr);});
+  cl.querySelectorAll('[data-cd]').forEach(b=>b.onclick=()=>{const r=find(b.dataset.cd);if(!confirm(`${r.name} 코치 계정을 삭제할까요?`))return;C.doc(r.id).delete().catch(fsErr);});
+ },fsErr));
+ TABCLEAN.push(D.onSnapshot(snap=>{const rows=[];snap.forEach(d=>rows.push(Object.assign({id:d.id},d.data())));rows.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  dl.innerHTML=rows.length?rows.map(r=>`<div class="po-li" style="flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>${E(r.name)}</b> ${on(r.active)} <span class="po-sub">${r.lastLoginAt?'마지막 등록 '+when(r.lastLoginAt):'아직 등록 안 함'}</span><div class="po-sub" style="margin-top:4px">등록 코드 <b style="font-family:monospace;letter-spacing:2px;color:var(--text);font-size:15px">${E(r.code)}</b></div></div><div>${btn(r.active?'사용 중지':'다시 사용',`data-da="${E(r.id)}"`)}${btn('등록 코드 새로 만들기',`data-dr="${E(r.id)}"`)}${btn('삭제',`data-dd="${E(r.id)}"`)}</div></div>`).join(''):'<div class="po-note">등록된 기기가 없습니다.</div>';
+  const find=id=>rows.find(x=>x.id===id);
+  dl.querySelectorAll('[data-da]').forEach(b=>b.onclick=()=>{const r=find(b.dataset.da);if(r.active&&!confirm(`${r.name} 기기를 사용 중지할까요?\n그 기기에서는 바로 출석이 안 됩니다.`))return;D.doc(r.id).set({active:!r.active},{merge:true}).catch(fsErr);});
+  dl.querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{const r=find(b.dataset.dr);if(!confirm(`${r.name}의 등록 코드를 새로 만들까요?\n(이미 등록된 기기는 그대로 쓸 수 있습니다. 막으려면 '사용 중지')`))return;D.doc(r.id).set({code:rcode(8)},{merge:true}).catch(fsErr);});
+  dl.querySelectorAll('[data-dd]').forEach(b=>b.onclick=()=>{const r=find(b.dataset.dd);if(!confirm(`${r.name} 기기를 삭제할까요?\n그 기기에서는 바로 출석이 안 됩니다.`))return;D.doc(r.id).delete().catch(fsErr);});
+ },fsErr));
+ document.getElementById('poAddCoach').onclick=()=>{const i=document.getElementById('poNewCoach'),nm=i.value.trim().slice(0,12);if(!nm)return toastP('코치 이름을 입력하세요','err');
+  C.doc(newId('c')).set({name:nm,invite:rcode(8),active:true,createdAt:Date.now()}).then(()=>{i.value='';toastP(nm+' 코치 추가 · 초대 코드를 코치에게 전달하세요');}).catch(fsErr);};
+ document.getElementById('poAddDev').onclick=()=>{const i=document.getElementById('poNewDev'),nm=i.value.trim().slice(0,20);if(!nm)return toastP('기기 이름을 입력하세요','err');
+  D.doc(newId('d')).set({name:nm,code:rcode(8),active:true,createdAt:Date.now()}).then(()=>{i.value='';toastP(nm+' 추가 · 그 기기에서 등록 코드를 입력하세요');}).catch(fsErr);};
 }
 function v2Card(){
  const st=document.getElementById('poV2St'),lg=document.getElementById('poV2Log'),run=document.getElementById('poV2Run'),back=document.getElementById('poV2Back');if(!st)return;
@@ -6762,8 +6852,9 @@ function v2Card(){
 }
 function tabToday(){
  const b=document.getElementById('aBody');const ar=getUserAcademyRole();const isAca=ar.role==='academy_owner'||ar.role==='academy_teacher';
- const codes=getAccessibleStudents().filter(c=>stu(c));const acaName=isAca?(gAcademies()[ar.academyId]||{}).name||'':'';
+ const codes=(ar.role==='coach'?Object.keys(S):getAccessibleStudents()).filter(c=>stu(c));const acaName=isAca?(gAcademies()[ar.academyId]||{}).name||'':'';
  const d=today(),ym=d.slice(0,7);let att={},logs={};
+ const qA=q=>isAca&&ar.academyId?q.where('aca','==',String(ar.academyId)):q;
  b.innerHTML=`<div id="poToday"></div>`;
  function draw(){
   const el=document.getElementById('poToday');if(!el)return;
@@ -6783,8 +6874,8 @@ function tabToday(){
   ${isAca?'<p class="po-note" style="margin-top:12px">컨디션·통증 메모 등 건강 상세 정보는 원장님 화면에 표시하지 않습니다.</p>':''}`;
  }
  const set=new Set(codes);
- TABCLEAN.push(COL('att').where('date','==',d).onSnapshot(snap=>{att={};snap.forEach(x=>{const v=x.data();if(set.has(v.code))att[v.code]=v;});draw();},fsErr));
- TABCLEAN.push(COL('logs').where('date','==',d).onSnapshot(snap=>{logs={};snap.forEach(x=>{const v=x.data();if(set.has(v.code))logs[v.code]=v;});draw();},fsErr));
+ TABCLEAN.push(qA(COL('att').where('date','==',d)).onSnapshot(snap=>{att={};snap.forEach(x=>{const v=x.data();if(set.has(v.code))att[v.code]=v;});draw();},fsErr));
+ TABCLEAN.push(qA(COL('logs').where('date','==',d)).onSnapshot(snap=>{logs={};snap.forEach(x=>{const v=x.data();if(set.has(v.code))logs[v.code]=v;});draw();},fsErr));
  draw();
 }
 
@@ -6800,7 +6891,7 @@ function route(){
 window.addEventListener('hashchange',route);
 document.addEventListener('DOMContentLoaded',()=>{
  if(/^#tv/.test(location.hash)){route();return;}
- let t=0;const w=setInterval(()=>{t+=200;if((typeof _fsReady!=='undefined'&&_fsReady&&Object.keys(S).length)||t>8000){clearInterval(w);if(/^#(kiosk|coach|myqr)/.test(location.hash))route();}},200);});
+ let t=0;const w=setInterval(()=>{t+=200;if((typeof _fsReady!=='undefined'&&_fsReady&&(Object.keys(S).length||!['super_admin','coach'].includes(paRole())))||t>8000){clearInterval(w);if(/^#(kiosk|coach|myqr)/.test(location.hash))route();}},200);});
 
 /* ---------- 기존 화면에 연결 (기존 함수는 그대로 두고 뒤에 덧붙임) ---------- */
 const _rDB=rDB;
@@ -6809,6 +6900,9 @@ const _rAT=rAT;
 rAT=function(){
  tabCleanup();
  const ar=getUserAcademyRole();const extra=[];
+ if(ar.role==='coach'){aTab='po-today';const tb=document.getElementById('aTabs');
+  if(tb){tb.innerHTML='';const b2=document.createElement('button');b2.className='atb';b2.textContent='🧑‍🏫 코치 모드 열기';b2.onclick=()=>{location.hash='#coach';};const b1=document.createElement('button');b1.className='atb on';b1.textContent='✅ 오늘 출석';b1.onclick=()=>rAT();tb.appendChild(b2);tb.appendChild(b1);}
+  try{tabToday();}catch(e){console.warn('[PA 운영] 코치 탭',e);}return;}
  if(ar.role==='super_admin')extra.push({id:'po-ops',l:'🏟 센터 운영'},{id:'po-today',l:'✅ 오늘 출석'});
  else if(ar.role==='academy_owner'||ar.role==='academy_teacher')extra.push({id:'po-today',l:'✅ 오늘 출석'});
  const mineTab=extra.some(x=>x.id===aTab);
