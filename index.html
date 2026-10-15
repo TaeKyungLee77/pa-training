@@ -1006,6 +1006,18 @@ const S={};
 const _INIT_STUDENTS={};
 
 /* Firestore에서 학생 데이터 로드 - 안전 가드 포함, 시드 없음 */
+/* [v10] 코치 조정 단계 — 회복·기본·강화·집중 (코치가 바로 적용, 변경 기록 남김) */
+const ADJ_LV={recover:{nm:'회복',ic:'🔵',vol:0.7,kcal:0.7,rest:1.15,diet:1,d:'운동량 −30% · 휴식 길게 · 식단 그대로 (부상·컨디션 저하·대회 직후)'},
+ base:{nm:'기본',ic:'⚪',vol:1,kcal:1,rest:1,diet:1,d:'자동 계산 그대로'},
+ boost:{nm:'강화',ic:'🟠',vol:1.15,kcal:1.15,rest:0.9,diet:0.95,d:'운동량 +15% · 휴식 짧게 · 식단 −5% (감량 정체)'},
+ focus:{nm:'집중',ic:'🔴',vol:1.25,kcal:1.25,rest:0.8,diet:0.9,d:'운동량 +25% · 휴식 더 짧게 · 식단 −10% (콩쿠르·입시 집중 관리)'}};
+function adjRaw(c){return ((lG('pa_adjust',{})||{})[c])||null;}
+function adjOf(c){const a=adjRaw(c);const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+ if(!a||!ADJ_LV[a.lv]||a.lv==='base'||(a.until&&a.until<today))return Object.assign({},ADJ_LV.base,{lv:'base',expired:!!(a&&a.lv&&a.lv!=='base'&&a.until&&a.until<today)});
+ return Object.assign({},ADJ_LV[a.lv],{lv:a.lv,until:a.until||'',reason:a.reason||'',by:a.by||'',at:a.at||0});}
+/* 오늘 식단 목표 kcal: 코치 조정 반영 · 기초대사량 아래로 안 내림 · 18세 미만은 TDEE 85% 아래로 안 내림 */
+function tarOf(c){const s=S[c]||{};const base=+s.tar||1800;const a=adjOf(c);if(a.diet===1)return base;
+ let t=Math.round(base*a.diet);if(+s.bmr)t=Math.max(t,+s.bmr);if((+s.age||0)<18&&+s.tdee)t=Math.max(t,Math.round(s.tdee*0.85));return Math.min(base,t);}
 async function loadStudents(){
 const saved=lG('pa_students',null);
 if(saved&&Object.keys(saved).length>0){
@@ -1044,7 +1056,7 @@ function gDiet(c){const custom=lG('pa_custom_diets',{});if(custom[c])return cust
 /* ===== 다양한 식단 생성 엔진 ===== */
 function generateDiet(c){
 const s=S[c];if(!s)return [];
-const t=s.tar||1800;
+const t=tarOf(c);
 const sw=s.w||s.wts?.[s.wts.length-1]||60;
 /* 체중 기반 권장 수분 섭취량 (ml) */
 const water=Math.round(sw*33);
@@ -1296,7 +1308,7 @@ function paLinkErr(e,dflt){
   return '⚠️ 서버 연결 오류. 잠시 후 다시 시도하세요.';
 }
 const _cache={};let _fsReady=false;const _fsLoaded=new Set();
-const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions','pa_academy_names','pa_center_cfg','pa_curriculum','pa_exlib'];
+const FS_KEYS=['pa_kakao_users','pa_notices_c','pa_attendance','pa_schedules','pa_center_exercise','pa_codes_c','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_reservations','pa_schedule_slots','pa_waitlist','pa_custom_prods','pa_students','pa_admin_config','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_aicoach_config','pa_student_region','pa_user_profile','pa_condition_checks','pa_academies','pa_academy_members','pa_special_lecture_config','pa_custom_regions','pa_academy_names','pa_center_cfg','pa_curriculum','pa_exlib','pa_adjust'];
 /* [0-2] 로그인하지 않은 방문자도 볼 수 있는 공개 데이터 */
 const PA_PUBLIC_KEYS=['pa_notices_c','pa_custom_prods'];
 /* [0-4] 로그인한 사람(학생·학원·코치·키오스크)이 함께 보는 설정 — 나머지 공통 데이터는 관리자만 */
@@ -1315,7 +1327,7 @@ try{FS_KEYS.forEach(k=>{if(paPrivateKey(k))localStorage.removeItem(k);});}catch(
 /* [0-2] 문서 단위로 읽기 — 하나가 막혀도 나머지는 정상 */
 /* [0-3] 학생별 문서 분리 — 학생 관련 데이터는 pa_stu/{학생코드} 문서 하나에 모음.
    pa_data/_v2 표시가 있을 때만 새 구조를 씀 (없으면 기존 구조 그대로). */
-const PA_PER_KEYS=['pa_attendance','pa_schedules','pa_center_exercise','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_students','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_student_region','pa_user_profile','pa_condition_checks','pa_academy_members','pa_course','pa_screen','pa_consent'];
+const PA_PER_KEYS=['pa_attendance','pa_schedules','pa_center_exercise','pa_weights','pa_student_intake','pa_student_exercise','pa_custom_diets','pa_custom_students','pa_students','pa_body_types','pa_inbody','pa_body_analyses','pa_student_status','pa_student_region','pa_user_profile','pa_condition_checks','pa_academy_members','pa_course','pa_screen','pa_consent','pa_adjust'];
 const PA_ARR_KEYS={pa_reservations:'code'};
 let _v2=false;
 function paIsPer(k){return _v2&&(PA_PER_KEYS.includes(k)||Object.prototype.hasOwnProperty.call(PA_ARR_KEYS,k));}
@@ -2033,7 +2045,7 @@ const eL=(lG('pa_student_exercise',{})[c]||[]).filter(r=>r.date===td);
 const cL=(lG('pa_center_exercise',{})[c]||[]).filter(r=>r.date===td);
 const iT=iL.reduce((a,r)=>a+r.kcal,0);const eT=eL.reduce((a,r)=>a+r.kcal,0);const cT=cL.reduce((a,r)=>a+r.kcal,0);
 const db=document.getElementById('myDB');db.style.display='block';document.getElementById('loginBox').style.display='none';
-db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.name[0]}</span></div><div><div class="mname">${s.name}</div><div class="mmeta">${s.age}세 · ${s.h}cm · ${wts[wts.length-1]}kg · ${s.g}</div><span class="mgoal ${s.gc}">${s.goal}</span></div></div><div class="mst"><div class="ms"><div class="msl">BMR</div><div class="msv bl">${s.bmr.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">TDEE</div><div class="msv">${s.tdee.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">목표</div><div class="msv og">${s.tar.toLocaleString()}</div><div class="msu">kcal/일</div></div></div></div>
+db.innerHTML=`<div class="mprof"><div class="mpt"><div class="mav"><span>${s.name[0]}</span></div><div><div class="mname">${s.name}</div><div class="mmeta">${s.age}세 · ${s.h}cm · ${wts[wts.length-1]}kg · ${s.g}</div><span class="mgoal ${s.gc}">${s.goal}</span></div></div><div class="mst"><div class="ms"><div class="msl">BMR</div><div class="msv bl">${s.bmr.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">TDEE</div><div class="msv">${s.tdee.toLocaleString()}</div><div class="msu">kcal</div></div><div class="ms"><div class="msl">목표</div><div class="msv og">${tarOf(c).toLocaleString()}</div><div class="msu">kcal/일</div></div></div></div>
 <div class="cc" style="margin-bottom:12px;"><div class="ct">⚖ 몸무게 변화 (kg)</div><div class="cw"><svg class="wsvg" id="wsvg" viewBox="0 0 600 112" preserveAspectRatio="none"></svg></div><div class="xlbl"><span>1주</span><span>2주</span><span>3주</span><span>4주</span><span>5주</span><span>6주</span></div></div>
 <div class="my-tabs"><button class="my-tab on" onclick="myTab('today',this)">📌 TODAY</button><button class="my-tab" onclick="myTab('exercise',this)">💪 운동</button><button class="my-tab" onclick="myTab('diet',this)">🍽 식단</button><button class="my-tab" onclick="myTab('aicoach',this)">🤖 AI코치</button></div>
 <div class="my-panel on" id="pnl-today"><div id="todayWrap"></div></div>
@@ -2071,7 +2083,7 @@ ${cT>0?`<div class="cex" style="margin-top:8px;">🏋️ 센터 운동 소모: <
 </div>
 <div class="my-panel" id="pnl-aicoach"><div id="aiCoachWrap"></div></div>
 <button class="blo" onclick="doLogout()">로그아웃</button>`;
-rWSVG(wts);rCB(c,s.tar,diet);rMP(diet);rToday();}
+rWSVG(wts);rCB(c,tarOf(c),diet);rMP(diet);rToday();}
 
 /* ===== Capacitor 카메라 플러그인 분기 ===== */
 async function openCamera(targetId,handler){
@@ -2203,7 +2215,7 @@ ${JSON.stringify(r1)}
     /* 2차 성공시 2차 사용, 실패시 1차 사용 */
     const final=r2&&r2.kcal?r2:r1;
     /* 사용자 목표 기반 조언 추가 */
-    final.advice=final.advice||`목표: ${S[LC]?.goal||'체중감량'} (일일 ${S[LC]?.tar||1800}kcal). 이 식사는 목표의 약 ${Math.round((final.kcal/(S[LC]?.tar||1800))*100)}%입니다.`;
+    final.advice=final.advice||`목표: ${S[LC]?.goal||'체중감량'} (일일 ${tarOf(LC)}kcal). 이 식사는 목표의 약 ${Math.round((final.kcal/tarOf(LC))*100)}%입니다.`;
     final.verified=!!r2?.kcal;
     showFoodResult(final);
   }catch(e){
@@ -2302,7 +2314,7 @@ const dateStr=`${dt.getMonth()+1}/${dt.getDate()}`;
 const el=document.createElement('div');el.className='dd';el.innerHTML=`<div class="ddh" onclick="this.nextElementSibling.classList.toggle('on');this.querySelector('.chev').classList.toggle('on')"><div class="ddl"><div class="dpill">${d.d}<br><span style="font-size:8px;opacity:.6">${d.e}</span></div><div class="ddn">${dateStr}</div></div><div style="display:flex;align-items:center;gap:11px;"><div class="ddk">${d.k.toLocaleString()} kcal</div><div class="chev${i===0?' on':''}">▼</div></div></div><div class="ddb${i===0?' on':''}"><div class="mg2"><div><div class="mt">🌅 아침</div><div class="mk">${d.am.k} kcal</div><div class="mc">${d.am.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">☀️ 점심</div><div class="mk">${d.lu.k} kcal</div><div class="mc">${d.lu.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🍪 간식</div><div class="mk">${d.sn.k} kcal</div><div class="mc">${d.sn.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🌙 저녁</div><div class="mk">${d.di.k} kcal</div><div class="mc">${d.di.c.replace(/\n/g,'<br>')}</div></div></div><div style="margin-top:10px;padding:8px 10px;background:rgba(100,160,200,.05);border-radius:8px;font-size:10px;color:var(--accent);display:flex;align-items:center;gap:6px;">💧 수분 섭취 목표: ${(water/1000).toFixed(1)}L</div></div>`;dl.appendChild(el);});});}
 
 /* MY 탭 전환 */
-function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='today')rToday();if(id==='diet'){const diet=gDiet(LC);rMP(diet);rCB(LC,S[LC]?.tar,diet);}if(id==='exercise')rExProgram();if(id==='aicoach')initAICoach();}
+function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='today')rToday();if(id==='diet'){const diet=gDiet(LC);rMP(diet);rCB(LC,tarOf(LC),diet);}if(id==='exercise')rExProgram();if(id==='aicoach')initAICoach();}
 
 /* ===== TODAY 페이지 ===== */
 const DAY_SCHED={
@@ -2502,7 +2514,7 @@ let ctx=`\n\n[현재 대화 학생 정보 — 이 학생에 대해서만 답변�
 이름: ${s.name}
 나이/성별: ${s.age}세 / ${s.g}
 신체: ${s.h}cm / ${latestW}kg
-목표: ${s.goal} (일일 목표 ${s.tar}kcal)
+목표: ${s.goal} (일일 목표 ${tarOf(c)}kcal${adjOf(c).lv!=='base'?', 코치 조정 '+adjOf(c).nm:''})
 체형: ${btName}
 BMR: ${s.bmr}kcal / TDEE: ${s.tdee}kcal
 권장 유산소 BPM: ${bpmLow}~${bpmHigh} (Fatmax Zone)
@@ -2550,7 +2562,7 @@ if(iT>0||eT>0){
 ctx+=`\n\n[오늘 기록 (${td})]`;
 if(iT>0)ctx+=`\n섭취: ${iT}kcal (${iL.map(r=>`${r.label} ${r.kcal}`).join(', ')})`;
 if(eT>0)ctx+=`\n운동 소모: ${eT}kcal`;
-ctx+=`\n남은 칼로리: ${s.tar-iT+eT}kcal`;
+ctx+=`\n남은 칼로리: ${tarOf(c)-iT+eT}kcal`;
 }
 
 ctx+=`\n\n[중요] 위 정보는 현재 대화 중인 "${s.name}" 학생의 정보입니다. 다른 학생의 정보는 절대 제공하지 마세요.`;
@@ -4259,7 +4271,7 @@ function gradeOf(c){const s=S[c]||{};const b=/^(\d{4})-(\d{2})-(\d{2})$/.exec(St
 function lastAttOf(c){const a=(lG('pa_attendance',{})||{})[c]||{};const ds=Object.keys(a).filter(d=>a[d]==='O'&&/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();return ds[ds.length-1]||'';}
 function attnOf(c){const out=[];if(getStuStatusInfo(c).status!=='active')return out;
  try{if(window.PO&&PO._guard&&PO._guard(c))out.push('보호자 동의 대기');}catch(e){}
- try{if(window.PO&&PO._flags&&Object.keys(PO._flags(c,new Date())||{}).length)out.push('4주 체크 주의');}catch(e){}
+ try{if(window.PO&&PO._flags&&Object.keys(PO._flags(c,(()=>{const d=new Date();d.setHours(12,0,0,0);return d;})())||{}).length)out.push('4주 체크 주의');}catch(e){}
  const la=lastAttOf(c),today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
  if(!la)out.push('출석 기록 없음');else if((new Date(today)-new Date(la))/864e5>7)out.push('7일 넘게 결석');
  try{if(!getInbody(c).length)out.push('인바디 미측정');}catch(e){}
@@ -4322,7 +4334,7 @@ ${_isAdm?`<button class="ab" onclick="openStuTrash()">🗑 휴지통</button><bu
 <div class="sm-row"><b>⚠️</b>${chip(stuAttn,'확인 필요한 학생만 '+cnt('w',f=>f.attn.length>0),'stuAttn=!stuAttn','warn')}${(stuAca!=='all'||stuFilter!=='all'||stuCourseF!=='all'||stuGrade!=='all'||stuAttn||stuSearch)?chip(false,'✕ 조건 지우기',"stuAca='all';stuFilter='all';stuCourseF='all';stuGrade='all';stuAttn=false;stuSearch=''"):''}</div>
 <div style="overflow-x:auto;margin:6px 0 16px;border:1px solid var(--border);border-radius:10px;max-height:340px;overflow-y:auto">
 <table class="sm-tbl"><tr><th>이름</th><th>학원</th><th>학년</th><th>과정</th><th>상태</th><th>최근 출석</th><th>확인 필요</th></tr>
-${shown.map(f=>`<tr class="r${f.cd===c?' sel':''}" onclick="smStu='${f.cd}';rAB();"><td><b style="color:var(--text)">${esc(f.st.name||'')}</b> <span style="font-size:10px;color:var(--muted)">${f.cd}</span></td><td>${f.aca?esc((_acas[f.aca]||{}).name||f.aca):'<span style="color:var(--muted)">개인</span>'}</td><td>${f.gr.nm}</td><td>${f.crs==='contest'?'🏆 콩쿠르·입시':'일반'}</td><td style="color:${f.si==='active'?'var(--green)':f.si==='paused'?'var(--orange)':'var(--muted)'}">${stNm[f.si]||f.si}</td><td>${f.la?f.la.slice(5).replace('-','/'):'-'}</td><td>${f.attn.map(t=>`<span class="sm-tag">${t}</span>`).join('')||'<span style="color:var(--muted)">-</span>'}</td></tr>`).join('')||'<tr><td colspan="7" style="color:var(--muted);padding:14px">조건에 맞는 학생이 없어요</td></tr>'}
+${shown.map(f=>`<tr class="r${f.cd===c?' sel':''}" onclick="smStu='${f.cd}';rAB();"><td><b style="color:var(--text)">${esc(f.st.name||'')}</b>${adjOf(f.cd).lv!=='base'?' '+adjOf(f.cd).ic:''} <span style="font-size:10px;color:var(--muted)">${f.cd}</span></td><td>${f.aca?esc((_acas[f.aca]||{}).name||f.aca):'<span style="color:var(--muted)">개인</span>'}</td><td>${f.gr.nm}</td><td>${f.crs==='contest'?'🏆 콩쿠르·입시':'일반'}</td><td style="color:${f.si==='active'?'var(--green)':f.si==='paused'?'var(--orange)':'var(--muted)'}">${stNm[f.si]||f.si}</td><td>${f.la?f.la.slice(5).replace('-','/'):'-'}</td><td>${f.attn.map(t=>`<span class="sm-tag">${t}</span>`).join('')||'<span style="color:var(--muted)">-</span>'}</td></tr>`).join('')||'<tr><td colspan="7" style="color:var(--muted);padding:14px">조건에 맞는 학생이 없어요</td></tr>'}
 </table></div>
 
 <div id="addStuForm" style="display:none;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;background:rgba(100,160,200,.04);">
@@ -4371,6 +4383,8 @@ ${_ar.role==='super_admin'?`<button class="ab ab-r" style="font-size:9px;" oncli
 <input type="file" id="ibUpload_${c}" accept="image/*" style="display:none;" onchange="adminProcessInbody('${c}',this)">
 </div>
 
+${(function(){const A=adjOf(c),raw=adjRaw(c)||{},lg=(Array.isArray(raw.log)?raw.log:[]).slice().reverse(),R=(window.PO&&PO._adjRec)?PO._adjRec(c):null;
+return`<div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;background:rgba(255,255,255,.02)"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:12px">⚙️ 코치 조정: ${A.ic} ${A.nm}</b>${A.until?`<span style="font-size:10px;color:var(--muted)">~ ${A.until}</span>`:''}${A.lv!=='base'?`<span style="font-size:10px;color:var(--muted)">식단 ${s.tar||'-'} → ${tarOf(c)}kcal${A.reason?' · '+esc(A.reason):''}${A.by?' · '+esc(A.by):''}</span>`:''}<button class="ab ab-b" style="margin-left:auto;font-size:10px" data-adjopen="${c}">조정하기</button></div>${R?`<div style="font-size:10px;color:var(--muted);margin-top:6px">💡 권장: ${ADJ_LV[R.lv].ic} ${ADJ_LV[R.lv].nm} — ${esc(R.why)}</div>`:''}${lg.length?`<details style="margin-top:6px"><summary style="font-size:10px;color:var(--muted);cursor:pointer">변경 기록 ${lg.length}건</summary>${lg.map(x=>`<div style="font-size:10px;color:var(--muted);padding:3px 0">${new Date(x.at).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})} · ${esc(x.by||'')} · ${(ADJ_LV[x.lv]||{}).ic||''} ${(ADJ_LV[x.lv]||{}).nm||x.lv}${x.until?' (~'+x.until+')':''} · ${esc(x.reason||'')}</div>`).join('')}</details>`:''}</div>`;})()}
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
 <div style="text-align:center;padding:12px;background:rgba(100,160,200,.06);border-radius:10px;"><div style="font-size:9px;color:var(--muted);">BMR</div><div style="font-size:18px;font-weight:900;color:var(--accent);">${s.bmr}</div><div style="font-size:9px;color:var(--muted);">kcal</div></div>
 <div style="text-align:center;padding:12px;background:rgba(100,160,200,.06);border-radius:10px;"><div style="font-size:9px;color:var(--muted);">TDEE</div><div style="font-size:18px;font-weight:900;">${s.tdee}</div><div style="font-size:9px;color:var(--muted);">kcal</div></div>
@@ -6918,11 +6932,12 @@ function energyOf(c,o){o=o||{};const s=stu(c)||{};let ib=null;try{ib=(getInbody(
  const loss=goal.includes('감량'),gain=/근육|증량/.test(goal);
  const band=bmi<18.5?'low':bmi<23?'normal':bmi<25?'over':'obese';
  let p=loss?0.15:gain?0.08:0.11;if(band==='over')p+=0.03;if(band==='obese')p+=0.05;if(band==='low')p=Math.min(p,0.07);
- const restF=loss&&(band==='over'||band==='obese')?0.8:band==='low'?1.15:1;
- return{kg,h,age,bmi,band,bandNm:{low:'저체중',normal:'정상',over:'과체중',obese:'비만'}[band],minor:age<19,bmr,tdee,goal:goal||'유지',loss,gain,p:Math.round(p*100),target:Math.round(tdee*p/10)*10,restF};}
+ const AJ=adjOf(c);p*=AJ.kcal;
+ const restF=(loss&&(band==='over'||band==='obese')?0.8:band==='low'?1.15:1)*AJ.rest;
+ return{kg,h,age,bmi,band,bandNm:{low:'저체중',normal:'정상',over:'과체중',obese:'비만'}[band],minor:age<19,bmr,tdee,goal:goal||'유지',loss,gain,p:Math.round(p*100),target:Math.round(tdee*p/10)*10,restF,adj:AJ.lv,adjNm:AJ.nm};}
 function kcalOfItems(items,kg){return Math.round((items||[]).reduce((a,x)=>a+kcalMin(x.met||4,kg)*(+x.min||0),0));}
 function energyLine(en,cls,cardio){const tot=cls+cardio,ok=tot>=en.target*0.9;
- return `<div class="po-note" style="margin:-4px 0 10px;padding:8px 10px;border-radius:10px;background:rgba(232,98,42,.08)">🔥 오늘 예상 소모 <b>${tot} kcal</b> <span class="po-sub">(코치 수업 ${cls} + 셀프 유산소 ${cardio})</span> · 목표 <b style="color:${ok?'var(--green)':'var(--orange)'}">${en.target} kcal</b> <span class="po-sub">= TDEE ${en.tdee}의 ${en.p}% · ${E(en.goal)} · BMI ${en.bmi} ${en.bandNm}${en.minor?' (성장기 — 참고용)':''}${en.restF!==1?` · 휴식 ${en.restF<1?'짧게':'길게'}`:''}</span></div>`;}
+ return `<div class="po-note" style="margin:-4px 0 10px;padding:8px 10px;border-radius:10px;background:rgba(232,98,42,.08)">🔥 오늘 예상 소모 <b>${tot} kcal</b> <span class="po-sub">(코치 수업 ${cls} + 셀프 유산소 ${cardio})</span> · 목표 <b style="color:${ok?'var(--green)':'var(--orange)'}">${en.target} kcal</b> <span class="po-sub">= TDEE ${en.tdee}의 ${en.p}% · ${E(en.goal)} · BMI ${en.bmi} ${en.bandNm}${en.minor?' (성장기 — 참고용)':''}${en.restF!==1?` · 휴식 ${en.restF<1?'짧게':'길게'}`:''}${en.adj&&en.adj!=='base'?` · <b>⚙️ 코치 조정 ${E(en.adjNm)}</b>`:''}</span></div>`;}
 /* ===== [영상] 운동 동작 영상: ① 직접 넣은 링크(CloudFit·유튜브·mp4) ② MuscleWiki 해당 운동 ③ MuscleWiki 부위 목록 ===== */
 const MW_LIB={'고블릿 스쿼트 (3초 내려가기)':'dumbbell-goblet-squat','바벨 백스쿼트':'barbell-squat','불가리안 스플릿 스쿼트':'dumbbell-bulgarian-split-squat','리버스 런지':'dumbbell-reverse-lunge','박스 스텝업':'dumbbell-step-up','높은 박스 스텝업 (덤벨)':'dumbbell-step-up','스쿼트 점프':'jump-squats','박스 점프':'box-jump','월 싯':'wall-sit','버피 (낮은 강도)':'burpee','덤벨 루마니안 데드리프트':'dumbbell-romanian-deadlift','바벨 루마니안 데드리프트':'barbell-romanian-deadlift','스모 스쿼트 (덤벨)':'dumbbell-sumo-squat','글루트 브릿지':'glute-bridge','싱글레그 글루트 브릿지':'single-leg-glute-bridge','바벨 힙쓰러스트':'barbell-hip-thrust','덤벨 힙쓰러스트 (박스)':'barbell-hip-thrust','카프레이즈 (천천히)':'calf-raises','스텝 위 한발 카프레이즈':'calf-raises','덤벨 카프레이즈':'dumbbell-calf-raise','앉아서 카프레이즈 (덤벨)':'dumbbell-seated-calf-raise','바벨 벤트오버 로우':'barbell-bent-over-row','인버티드 로우 (랙)':'inverted-row','밴드 풀어파트':'band-pull-apart','바벨 오버헤드 프레스':'barbell-overhead-press','레터럴 레이즈':'dumbbell-lateral-raise','기대서 한팔 레터럴 레이즈':'dumbbell-lateral-raise','밴드 페이스풀':'band-face-pull','푸시업':'push-up','무릎 푸시업':'bodyweight-knee-push-ups','박스 짚고 푸시업 (인클라인)':'push-up','덤벨 플로어 프레스':'dumbbell-floor-press','덤벨 컬':'dumbbell-curl','해머 컬':'dumbbell-hammer-curl','박스 딥스':'bench-dips','덤벨 킥백 (삼두)':'dumbbell-tricep-kickback','오버헤드 덤벨 익스텐션':'dumbbell-overhead-tricep-extension','무릎 다이아몬드 푸시업':'diamond-push-ups','크런치':'crunches','리버스 크런치':'reverse-crunch','마운틴클라이머':'mountain-climber','사이드 플랭크':'elbow-side-plank','러시안 트위스트 (메디신볼)':'bodyweight-russian-twist','데드버그':'dead-bug','버드독':'bird-dog','플랭크':'forearm-plank','슈퍼맨':'supermans',
  '고블릿 스쿼트':'dumbbell-goblet-squat','바벨 스쿼트':'barbell-squat','힙쓰러스트':'barbell-hip-thrust','카프레이즈':'calf-raises'};
@@ -7031,16 +7046,52 @@ function phaseOf(c,at){
 function dayTypeOf(c,at){const att=(lG('pa_attendance',{})||{})[c]||{};const m=monday(at),t=ymd(at);let n=0;Object.keys(att).forEach(k=>{const d=parseYmd(k);if(d&&att[k]==='O'&&d>=m&&k<t)n++;});return n%2?'B':'A';}
 /* 두 번째 순환부터 횟수 +2 (시간 운동은 +5초), 측정 주·조정기는 세트 줄이기 */
 function bump(d,cyc){if(!cyc)return d;return String(d).replace(/(\d+)\s*×\s*(\d+)(\s*초)?/,(all,st,r,sec)=>`${st}×${sec?(+r+5*Math.min(cyc,2)):(+r+2*Math.min(cyc,2))}${sec||''}`);}
-function lessSets(d,vol){if(vol>=1)return d;return String(d).replace(/^(\d+)\s*×/,(a,st)=>`${Math.max(2,Math.round(+st*vol))}×`);}
+function lessSets(d,vol){if(!vol||vol===1)return d;return String(d).replace(/^(\d+)\s*×/,(a,st)=>`${vol>1?Math.min(6,+st+2,Math.ceil(+st*vol-0.2)):Math.max(2,Math.round(+st*vol))}×`);}
+/* [v10] 코치 조정 → 세트 배율 (대회 직전·회복기엔 늘리지 않음) */
+function adjPh(c,ph){const A=adjOf(c);if(A.vol===1)return ph;const v=(ph.taper||ph.light)&&A.vol>1?1:A.vol;return Object.assign({},ph,{vol:(ph.vol||1)*v});}
 function rot(a,k){if(!a.length)return[];k=((k%a.length)+a.length)%a.length;return a.slice(k).concat(a.slice(0,k));}
 function seqOf(w,n){const cur={},keys=Object.keys(w).filter(k=>w[k]>0),tot=keys.reduce((a,k)=>a+w[k],0),out=[];keys.forEach(k=>cur[k]=0);
  for(let i=0;i<n&&keys.length;i++){let best=null;keys.forEach(k=>{cur[k]+=w[k];if(best==null||cur[k]>cur[best])best=k;});cur[best]-=tot;out.push(best);}return out;}
+/* [v10] 코치 조정 카드 · 권장 가이드 */
+const adjPct=x=>x===1?'그대로':(x>1?'+':'−')+Math.round(Math.abs(x-1)*100)+'%';
+const adjNow=()=>{const d=new Date();d.setHours(12,0,0,0);return d;};
+function adjBlock(c){const fl=flagsOf(c,adjNow());if(Object.keys(fl).length)return '4주 체크 주의('+Object.keys(fl).map(k=>FLAG_NM[k]).join(', ')+')가 있어 집중은 고를 수 없어요';try{if(guardLocked(c))return '보호자 동의 전이라 집중은 고를 수 없어요';}catch(e){}return '';}
+function adjRec(c){const s=stu(c)||{},now=adjNow();const fl=flagsOf(c,now);let ph={};try{ph=phaseOf(c,now)||{};}catch(e){}
+ if(Object.keys(fl).length)return{lv:'recover',why:'4주 체크 주의: '+Object.keys(fl).map(k=>FLAG_NM[k]).join(', ')};
+ if(ph.track==='contest'){if(ph.taper||ph.light)return{lv:'base',why:'대회 직전·회복기라 자동으로 가볍게 진행 중 (늘리지 마세요)'};if(ph.phase==='강화기'||ph.phase==='특화기')return{lv:'focus',why:`콩쿠르·입시 ${ph.phase} · D-${ph.days}`};}
+ const w=((lG('pa_weights',{})||{})[c]||s.wts||[]).map(Number).filter(x=>x>0).slice(-4);
+ if(/감량/.test(String(s.goal||''))&&w.length>=3&&w[w.length-1]>=w[0])return{lv:'boost',why:`최근 체중 기록 ${w.length}번 동안 줄지 않음 (${w[0]}→${w[w.length-1]}kg)`};
+ return{lv:'base',why:'특별히 바꿀 신호가 없어요'};}
+function adjCard(c){const A=adjOf(c),R=adjRec(c),s=stu(c)||{};const t0=+s.tar||0,t1=tarOf(c);
+ return `<div class="po-card"><div class="po-row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div><div class="po-lbl" style="margin:0">⚙️ 코치 조정</div><div style="font-size:16px;font-weight:900;margin-top:4px">${A.ic} ${A.nm}${A.until?` <span class="po-sub">· ${E(A.until.slice(5).replace('-','/'))}까지</span>`:''}</div>
+ ${A.lv!=='base'?`<div class="po-sub" style="margin-top:3px">운동량 ${adjPct(A.vol)} · 소모 목표 ${adjPct(A.kcal)} · 식단 ${t1!==t0?t0+' → '+t1+'kcal':'그대로'+(A.diet<1?' (성장기·기초대사량 기준이라 더 못 내림)':'')}${A.reason?' · 사유: '+E(A.reason):''}${A.by?' · '+E(A.by):''}</div>`:''}${A.expired?'<div class="po-sub" style="margin-top:3px">이전 조정 기간이 끝나 기본으로 돌아왔어요</div>':''}</div>
+ <button class="po-btn sm" data-adjopen="${E(c)}">조정하기</button></div>
+ <div class="po-note" style="margin-top:8px">💡 권장: <b>${ADJ_LV[R.lv].ic} ${ADJ_LV[R.lv].nm}</b> — ${E(R.why)}</div></div>`;}
+function adjOpen(c){const s=stu(c)||{};if(!s.name&&!S[c])return;const A=adjOf(c),R=adjRec(c),blk=adjBlock(c),cs=courseOf(c);
+ const m=document.createElement('div');m.className='po-modal';
+ const opt=k=>{const L=ADJ_LV[k],dis=k==='focus'&&blk;return `<label style="display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1}"><input type="radio" name="adjLv" value="${k}" ${A.lv===k?'checked':''} ${dis?'disabled':''} style="margin-top:3px"><div><b>${L.ic} ${L.nm}</b>${R.lv===k?' <span class="po-chip" style="background:rgba(111,207,151,.18);color:var(--green)">권장</span>':''}<div class="po-sub">${L.d}</div></div></label>`;};
+ const until=n=>{const d=new Date(Date.now()+9*3600e3+n*864e5);return d.toISOString().slice(0,10);};
+ m.innerHTML=`<div class="po-card" style="max-width:520px;width:100%;max-height:88vh;overflow:auto;text-align:left"><div class="po-row" style="justify-content:space-between;margin-bottom:8px"><div class="po-h2">⚙️ ${E(s.name||c)} 코치 조정</div><button class="po-x" data-x>닫기</button></div>
+ <div class="po-note" style="margin-bottom:10px">💡 권장: <b>${ADJ_LV[R.lv].ic} ${ADJ_LV[R.lv].nm}</b> — ${E(R.why)}</div>
+ ${['recover','base','boost','focus'].map(opt).join('')}${blk?`<div class="po-note" style="color:var(--orange)">${E(blk)}</div>`:''}
+ <div class="po-lbl" style="margin-top:10px">기간</div><select id="adjUntil" style="width:100%;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><option value="${until(7)}">1주</option><option value="${until(14)}" selected>2주</option><option value="${until(28)}">4주</option>${cs.track==='contest'&&cs.dday?`<option value="${E(cs.dday)}">대회일(${E(cs.dday)})까지</option>`:''}<option value="">기간 없음 (직접 기본으로 돌릴 때까지)</option></select>
+ <div class="po-lbl" style="margin-top:10px">사유 (필수)</div><input id="adjWhy" maxlength="60" placeholder="예: 3주째 체중 정체, 콩쿠르 대비" value="${E(A.lv!=='base'?A.reason:'')}" style="width:100%;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)">
+ <div class="po-note" style="margin-top:8px">· 하루 식단 칼로리는 기초대사량 아래로, 18세 미만은 TDEE의 85% 아래로 내려가지 않아요.<br>· 대회 직전·회복기에는 운동량이 늘지 않아요.<br>· 오늘 이미 시작한 수업은 그대로이고, 다음 수업부터 적용돼요 (바로 바꾸려면 '다시 뽑기').<br>· 누가 언제 바꿨는지 기록이 남아요.</div>
+ <div class="po-row" style="justify-content:flex-end;margin-top:12px;gap:8px"><button class="po-btn sm g" data-x>취소</button><button class="po-btn sm" id="adjSave">적용</button></div></div>`;
+ document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m||e.target.closest('[data-x]'))m.remove();});
+ m.querySelector('#adjSave').onclick=()=>{const lv=(m.querySelector('input[name=adjLv]:checked')||{}).value||'base';const why=m.querySelector('#adjWhy').value.trim();
+  if(lv!=='base'&&!why)return toastP('사유를 적어 주세요','err');if(lv==='focus'&&blk)return toastP(blk,'err');
+  const by=paRole()==='super_admin'?'대표':String(_paC.nm||'코치');
+  const all=lG('pa_adjust',{})||{};const prev=all[c]||{};const log=(Array.isArray(prev.log)?prev.log:[]).slice(-19);
+  const rec={lv,until:lv==='base'?'':m.querySelector('#adjUntil').value,reason:lv==='base'?(why||'기본으로 되돌림'):why,by,at:Date.now()};log.push(rec);
+  all[c]=Object.assign({},rec,{log});lS('pa_adjust',all);m.remove();toastP(`${s.name||c} → ${ADJ_LV[lv].ic} ${ADJ_LV[lv].nm} 적용`);window.dispatchEvent(new Event('po-data'));try{if(typeof aTab!=='undefined'&&aTab==='a-stuMgr')rAB();}catch(e){}};}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-adjopen]');if(b){e.preventDefault();adjOpen(b.dataset.adjopen);}});
 function program(c,opts){
  opts=opts||{};const empty={label:'센터 수업',btName:'',items:[],extra:[],planMin:0,meta:{}};
  try{
   const C=cfg(),s=stu(c)||{};const at=opts.date?new Date(opts.date):new Date();at.setHours(12,0,0,0);
   const bt=opts.bt?{type:opts.bt}:getStudentBodyType(c),btKey=bt&&bt.type;const data=EX_DATA[BT_NAME_MAP[btKey]||'']||EX_DATA['직사각형']||{};
-  const L0=opts.lib||LIB(),EN=opts.en||energyOf(c);const ph=opts.ph||phaseOf(c,at),B=Object.assign({},L0.blocks[ph.block]),day=opts.day||dayTypeOf(c,at),fl=opts.noFlags?{}:flagsOf(c,at);
+  const L0=opts.lib||LIB(),EN=opts.en||energyOf(c);const ph=adjPh(c,opts.ph||phaseOf(c,at)),B=Object.assign({},L0.blocks[ph.block]),day=opts.day||dayTypeOf(c,at),fl=opts.noFlags?{}:flagsOf(c,at);
   B.rest=Math.round((+B.rest||45)*EN.restF);
   const [L,U,Co]=L0.ratio[btKey]||[4,3,3];const items=[],seen=new Set();
   const excl=it=>(fl.valgus&&/점프|홉/.test(it.n)&&!/착지/.test(it.n))||(fl.balance&&/홉|스케이터/.test(it.n))||(fl.back&&/데드리프트|슬램|슈퍼맨/.test(it.n))||(!!opts.skipBody&&it.b===opts.skipBody);
@@ -7058,7 +7109,7 @@ function program(c,opts){
   /* 2) 라이브러리 랜덤 구성 (관리자가 켰을 때) — 부위별 비율 · 근육 크기대로 세트 배정 */
   const X=opts.xl||XL();let libMeta=null;
   if(X.on&&!opts.blockMode&&X.items.length>=10){
-   const workMin=Math.round((C.main+C.finish-STRETCH.min)*(ph.light?0.3:ph.taper?0.6:ph.deload?0.7:1));
+   const workMin=Math.round((C.main+C.finish-STRETCH.min)*(ph.light?0.3:ph.taper?0.6:ph.deload?0.7:1)*(ph.vol>1?Math.min(1.2,ph.vol):ph.vol<1&&!ph.deload&&!ph.taper?ph.vol:1));
    const res=composeLib(c,{X,ph,B,day,btKey,at,excl,seen,recent:opts._noRecent?new Set():recentOf(c,at,X),reroll:opts.reroll||0,workMin,met:BLOCK_MET[ph.block]});
    res.items.filter(x=>x.part==='메인').forEach(x=>add(x,'메인',x.zone,x.met,x.rest));
    if(fl.plank)add({n:`사이드 플랭크 (${fl.plank} 1세트 더)`,d:'1×30초',b:'허리'},'마무리','core',3.8,30);
@@ -7369,6 +7420,7 @@ function viewCoach(selArg){
    <div class="po-card"><div class="po-lbl">인바디 최근 ${ib.length||''}회</div>${ib.length?`<table class="po-ib"><tr><th>측정일</th><th>체중</th><th>골격근</th><th>체지방률</th></tr>${ib.map(r=>`<tr><td>${E(r.date||'')}</td><td>${r.weight!=null?E(r.weight)+'kg':'-'}</td><td>${r.skeletalMuscle!=null?E(r.skeletalMuscle)+'kg':'-'}</td><td>${r.bodyFatPct!=null?E(r.bodyFatPct)+'%':'-'}</td></tr>`).join('')}</table>${ibDelta}`:'<div class="po-note">인바디 기록 없음</div>'}</div>
   </div>
   ${courseCard(c,l,a)}
+  ${adjCard(c)}
   <div class="po-card"><div class="po-lbl">구역 배정 ${a?'':'(출석 후 가능)'}</div><div class="po-pods">${Object.keys(PODS).map(p=>{const mine=!!(l&&l.pod===p),lk=lockedFor(p),n=activeOn(p,c).length,full=!mine&&n>=POD_MAX(p);
    return `<button data-p="${p}" class="${mine?'on':''}" ${!a||(!mine&&(lk||full))?'disabled':''}>${podLabel(p)}<br><span style="font-weight:500;font-size:11px;opacity:.85">${lk?E(lk.coachName||'다른')+' 코치 사용 중':full?'정원 마감':PODS[p].name}</span>${n?`<br><span style="font-weight:500;font-size:10.5px;opacity:.7">현재 ${n}명</span>`:''}</button>`;}).join('')}</div>
    ${Object.keys(PODS).some(p=>lockedFor(p))?`<div class="po-note" style="margin-top:8px">다른 코치가 쓰는 POD는 선택할 수 없습니다. 그 코치의 학생이 모두 수업 종료되면 자동으로 풀립니다. ${IS_ADM?Object.keys(PODS).filter(p=>lockedFor(p)).map(p=>`<button class="po-btn sm g" style="margin:4px 4px 0 0" data-unlock="${p}">${podLabel(p)} 잠금 강제 해제</button>`).join(''):'급하면 관리자에게 잠금 해제를 요청하세요.'}</div>`:''}</div>
@@ -8083,7 +8135,7 @@ rAT=function(){
  return r;
 };
 
-return{close,route,open:h=>{location.hash=h;},_program:program,_xl:XL,_tax:TAX,_energy:energyOf,_vid:vidOf,_course:courseOf,_flags:flagsOf,_guard:guardLocked};
+return{close,route,open:h=>{location.hash=h;},_program:program,_xl:XL,_tax:TAX,_energy:energyOf,_vid:vidOf,_course:courseOf,_flags:flagsOf,_guard:guardLocked,_adjRec:adjRec,_adjOpen:adjOpen};
 })();
 </script>
 <!-- ===== /P.A 센터 운영 모듈 ===== -->
