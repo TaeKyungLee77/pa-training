@@ -1862,7 +1862,7 @@ const consent=await paConsent('student',{under14:age<14});if(!consent)return err
 let d;
 try{d=await paLink({type:'self',profile:p,academyCode:g('sfAca').value.trim()},consent);}
 catch(e){const M={academy:'학원 가입 코드가 맞지 않습니다. 원장님께 받은 코드를 다시 확인해 주세요.',profile:'입력한 정보를 다시 확인해 주세요.',already:'이미 연결된 계정입니다. 새로고침 후 다시 로그인해 주세요.',consent:'필수 항목에 동의해 주세요.'};return err(M[e&&e.reason]||paLinkErr(e,'❌ 가입 신청에 실패했습니다.'));}
-if(d.role==='student'&&d.code&&S[d.code]){sessionStorage.removeItem('pa_kakao_pending');toast(S[d.code].name+'님, 학원 명단에서 확인되어 바로 연결됐어요!');logIn(d.code,pending.nn,pending.img);go('my');return;}
+if(d.role==='student'&&d.code&&S[d.code]){sessionStorage.removeItem('pa_kakao_pending');toast(d.auto?(S[d.code].name+'님, '+(d.academyName||'학원')+' 가입이 완료됐어요!'):(S[d.code].name+'님, 학원 명단에서 확인되어 바로 연결됐어요!'));logIn(d.code,pending.nn,pending.img);go('my');return;}
 showPending(d.signup||{},pending);
 }
 /* [v6] 가입 승인 대기 화면 */
@@ -3578,6 +3578,7 @@ return `<div style="background:var(--card);border:1px solid ${sel?'var(--accent)
 <div style="font-size:11px;color:var(--muted);margin-top:4px;">📍 ${esc(a.region||'미지정')} · 📞 ${esc(a.phone||'-')} · 학생 ${stuCount}명 · 선생 ${teachers.length}명</div>
 </div>
 <div style="display:flex;gap:6px;" onclick="event.stopPropagation();">
+<button onclick="acaToggleAuto('${id}')" title="학원 코드로 가입한 학생을 승인 없이 바로 등록" style="padding:6px 10px;background:${a.autoApprove!==false?'rgba(111,207,151,.15)':'transparent'};border:1px solid ${a.autoApprove!==false?'var(--green)':'var(--border)'};border-radius:6px;color:${a.autoApprove!==false?'var(--green)':'var(--muted)'};font-size:11px;font-weight:700;cursor:pointer;">${a.autoApprove!==false?'✅ 코드 가입 자동 승인':'⏸ 코드 가입 승인 필요'}</button>
 <button onclick="paPreviewStart('${id}','academy_owner')" style="padding:6px 10px;background:rgba(232,98,42,.9);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">👀 원장 화면</button>
 <button onclick="paPreviewStart('${id}','academy_teacher')" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;cursor:pointer;">선생 화면</button>
 <button onclick="acaEdit('${id}')" style="padding:6px 10px;background:rgba(100,160,200,.15);border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-size:11px;cursor:pointer;">수정</button>
@@ -3664,6 +3665,10 @@ function toggleSpecialLectureReAsk(){
   rAB();
 }
 
+/* [v12] 학원 코드 가입 자동 승인 켜기·끄기 (값이 없으면 켜짐) */
+function acaToggleAuto(id){const acas=gAcademies();const a=acas[id];if(!a)return;const on=a.autoApprove!==false;
+ if(on&&!confirm(a.name+' — 자동 승인을 끌까요?\n\n끄면 학원 코드로 들어온 학생도 원장님이나 대표님이 [가입 승인]을 눌러야 이용할 수 있어요.'))return;
+ a.autoApprove=!on;sAcademies(acas);toast(a.name+' 코드 가입: '+(a.autoApprove?'자동 승인':'승인 필요'));rAB();}
 function acaAdd(){
 const nm=document.getElementById('acaNm').value.trim();
 if(!nm){toast('학원명을 입력하세요','err');return;}
@@ -4290,6 +4295,7 @@ function attnOf(c){const out=[];if(getStuStatusInfo(c).status!=='active')return 
  const la=lastAttOf(c),today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
  if(!la)out.push('출석 기록 없음');else if((new Date(today)-new Date(la))/864e5>7)out.push('7일 넘게 결석');
  try{if(!getInbody(c).length)out.push('인바디 미측정');}catch(e){}
+ try{const s=S[c]||{};if(s.src==='auto'&&s.joinedAt&&Date.now()-s.joinedAt<14*864e5)out.unshift('🆕 코드 자동 가입');}catch(e){}
  return out;}
 function paPendCount(){if(paRole()!=='super_admin')return null;if(Date.now()-_paPend.at>60000){_paPend.at=Date.now();db.collection('pa_signups').where('status','==','pending').get().then(q=>{const n=q.size;if(n!==_paPend.n){_paPend.n=n;if(aTab==='a-stuMgr')rAB();}}).catch(()=>{});}return _paPend.n;}
 /* [v9] 휴지통 */
