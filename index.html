@@ -712,7 +712,7 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 <div class="ap-field"><label>이름 *</label><input id="apName" placeholder="이름을 입력하세요"></div>
 <div class="ap-row">
 <div class="ap-field"><label>나이 *</label><input type="number" id="apAge" placeholder="만 나이" min="10" max="60"></div>
-<div class="ap-field"><label>성별 *</label><select id="apGender"><option value="">선택</option><option value="여">여</option><option value="남">남</option></select></div>
+<div class="ap-field"><label>성별 *</label><select id="apGender"><option value="">선택</option><option value="남">남</option><option value="여">여</option></select></div>
 </div>
 <div class="ap-row">
 <div class="ap-field"><label>키 (cm) *</label><input type="number" id="apHeight" placeholder="160" step="0.1"></div>
@@ -1644,9 +1644,9 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 </div>
 <div id="linkStep2Self" style="display:none;text-align:left;">
 <div style="font-size:13px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">📋 기본 정보를 입력해 주세요</div>
-<label class="di">이름</label><input class="dc" id="sfName" placeholder="예: 김하늘" maxlength="20" autocomplete="name" style="margin-bottom:10px;">
+<label class="di">이름</label><input class="dc" id="sfName" placeholder="예: 홍길동" maxlength="20" autocomplete="name" style="margin-bottom:10px;">
 <label class="di">생년월일</label><input class="dc" id="sfBirth" type="date" min="1950-01-01" max="2023-12-31" style="margin-bottom:10px;">
-<label class="di">성별</label><div style="display:flex;gap:8px;margin-bottom:10px;" id="sfG" data-v=""><button type="button" class="my-tab" data-g="여" style="flex:1;padding:10px;font-weight:700;">여</button><button type="button" class="my-tab" data-g="남" style="flex:1;padding:10px;font-weight:700;">남</button></div>
+<label class="di">성별</label><div style="display:flex;gap:8px;margin-bottom:10px;" id="sfG" data-v=""><button type="button" class="my-tab" data-g="남" style="flex:1;padding:10px;font-weight:700;">남</button><button type="button" class="my-tab" data-g="여" style="flex:1;padding:10px;font-weight:700;">여</button></div>
 <div style="display:flex;gap:8px;"><div style="flex:1"><label class="di">키 (cm)</label><input class="dc" id="sfH" type="number" inputmode="decimal" placeholder="162" min="100" max="220" style="margin-bottom:10px;"></div><div style="flex:1"><label class="di">몸무게 (kg)</label><input class="dc" id="sfW" type="number" inputmode="decimal" placeholder="50" min="20" max="200" style="margin-bottom:10px;"></div></div>
 <label class="di">목표</label><select class="dc" id="sfGoal" style="margin-bottom:10px;"><option>체중감량</option><option>유지</option><option>근육증가</option><option selected>체형교정</option></select>
 <label class="di">학원 가입 코드 <span style="color:var(--muted);font-weight:400">(선택)</span></label><input class="dc" id="sfAca" placeholder="예: YEIN-2026 · 없으면 비워 두세요" maxlength="12" autocomplete="off" spellcheck="false" style="text-transform:uppercase;">
@@ -1677,7 +1677,7 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <div id="linkStep2O" style="display:none;">
 <div style="font-size:12px;color:var(--orange);margin-bottom:14px;text-align:center;font-weight:700;">👑 학원 원장 인증</div>
 <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6;">P.A 트레이닝 본사로부터 받은<br><strong style="color:var(--orange);">원장용 암호구문</strong>을 입력하세요</div>
-<label class="di" style="font-size:11px;">이름 (학원 내 표시용)</label><input class="dc" id="linkAcaNmO" placeholder="예: 김원장" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
+<label class="di" style="font-size:11px;">이름 (학원 내 표시용)</label><input class="dc" id="linkAcaNmO" placeholder="예: 홍길동" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
 <label class="di" style="font-size:11px;">암호구문 (16자, 4-4-4-4)</label><input class="dc" id="linkTokO" placeholder="예: K3xP-9mQR-vN7L-2sBy" maxlength="19" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:1px;">
 <div class="em" id="linkEmO"></div>
 <button class="dbe" onclick="doKakaoLinkAcademy('owner')" style="width:100%;background:var(--orange);color:#fff;border:none;margin-top:8px;">원장 인증하기</button>
@@ -1686,7 +1686,7 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <div id="linkStep2T" style="display:none;">
 <div style="font-size:12px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">🎓 학원 선생님 인증</div>
 <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6;">학원 원장님으로부터 받은<br><strong style="color:var(--accent);">선생용 암호구문</strong>을 입력하세요</div>
-<label class="di" style="font-size:11px;">이름 (학원 내 표시용)</label><input class="dc" id="linkAcaNmT" placeholder="예: 이코치" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
+<label class="di" style="font-size:11px;">이름 (학원 내 표시용)</label><input class="dc" id="linkAcaNmT" placeholder="예: 홍길동" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
 <label class="di" style="font-size:11px;">암호구문 (16자, 4-4-4-4)</label><input class="dc" id="linkTokT" placeholder="예: K3xP-9mQR-vN7L-2sBy" maxlength="19" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:1px;">
 <div class="em" id="linkEmT"></div>
 <button class="dbe" onclick="doKakaoLinkAcademy('teacher')" style="width:100%;background:var(--accent);color:#fff;border:none;margin-top:8px;">선생 인증하기</button>
@@ -4390,7 +4390,7 @@ ${shown.map(f=>`<tr class="r${f.cd===c?' sel':''}" onclick="smStu='${f.cd}';rAB(
 <div id="addStuForm" style="display:none;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;background:rgba(100,160,200,.04);">
 <div style="font-size:12px;font-weight:700;margin-bottom:10px;">➕ 학생 직접 추가</div>
 <div class="ar"><label>코드</label><input id="nsCode" placeholder="예: ABC012" style="width:100px" maxlength="10"><label>이름</label><input id="nsName" placeholder="이름"></div>
-<div class="ar"><label>나이</label><input type="number" id="nsAge" value="17" style="width:55px"><label>성별</label><select id="nsG" style="width:55px"><option value="여">여</option><option value="남">남</option></select><label>키</label><input type="number" id="nsH" placeholder="160" style="width:65px"><label>몸무게</label><input type="number" step="0.1" id="nsW" placeholder="55" style="width:65px"></div>
+<div class="ar"><label>나이</label><input type="number" id="nsAge" value="17" style="width:55px"><label>성별</label><select id="nsG" style="width:55px"><option value="남">남</option><option value="여">여</option></select><label>키</label><input type="number" id="nsH" placeholder="160" style="width:65px"><label>몸무게</label><input type="number" step="0.1" id="nsW" placeholder="55" style="width:65px"></div>
 <div class="ar"><label>소속 학원</label><select id="nsAca"><option value="">개인 회원</option>${Object.entries(gAcademies()).map(([k,a])=>`<option value="${k}">${esc(a.name||k)}</option>`).join('')}</select></div>
 <div class="ar"><label>목표</label><select id="nsGoal"><option value="체중감량">체중감량</option><option value="근육증가">근육증가</option><option value="증량+근육">증량+근육</option><option value="감량+근육">감량+근육</option></select><label>kcal</label><input type="number" id="nsTar" placeholder="자동" style="width:80px"><button class="ab ab-b" onclick="addStu()">추가</button></div>
 </div>
@@ -4922,7 +4922,7 @@ return`<h3 style="font-size:14px;margin-bottom:6px;">⏳ 대기 인원 관리</h
 
 <div style="border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;background:rgba(100,160,200,.04);">
 <div style="font-size:12px;font-weight:700;margin-bottom:10px;">➕ 대기자 직접 등록</div>
-<div class="ar"><label>이름</label><input id="wlName" placeholder="이름"><label>나이</label><input type="number" id="wlAge" value="17" style="width:55px"><label>성별</label><select id="wlG" style="width:55px;"><option value="여">여</option><option value="남">남</option></select></div>
+<div class="ar"><label>이름</label><input id="wlName" placeholder="이름"><label>나이</label><input type="number" id="wlAge" value="17" style="width:55px"><label>성별</label><select id="wlG" style="width:55px;"><option value="남">남</option><option value="여">여</option></select></div>
 <div class="ar"><label>키(cm)</label><input type="number" id="wlH" placeholder="160" style="width:70px"><label>몸무게</label><input type="number" step="0.1" id="wlW" placeholder="55" style="width:70px"><label>연락처</label><input id="wlP" placeholder="010-0000-0000" style="flex:2"></div>
 <div class="ar"><label>목표</label><select id="wlGoal"><option value="체중감량">체중감량</option><option value="근육증가">근육증가</option><option value="증량+근육">증량+근육</option><option value="체력향상">체력향상</option></select><label>목표kcal</label><input type="number" id="wlTar" placeholder="자동계산" style="width:80px"><label>메모</label><input id="wlMemo" placeholder="선택" style="flex:2"></div>
 <button class="ab ab-b" onclick="wlAddDirect()">대기 목록에 추가</button>
@@ -8043,7 +8043,7 @@ function tabOps(){
  <div class="po-grid po-g2">${links.map(([h,t,dv])=>`<div class="po-card"><div style="font-size:16px;font-weight:900">${t}</div><div class="po-sub" style="margin:4px 0 10px">${dv}</div><button class="po-btn sm" onclick="location.hash='#${h}'">열기</button></div>`).join('')}</div>
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">포드 TV 주소 (TV 브라우저에서 열기)</div><div class="po-grid po-g2">${Object.keys(PODS).map(p=>`<div class="po-row" style="align-items:flex-start"><div class="po-qr" style="width:96px;padding:6px;flex:none">${qrSvg(site()+'#tv='+p,'L')}</div><div><b>${podLabel(p)}</b> <span class="po-sub">${PODS[p].name}</span><div class="po-sub" style="word-break:break-all;margin:4px 0">${E(site()+'#tv='+p)}</div><button class="po-btn sm g" onclick="location.hash='#tv=${p}'">이 기기에서 보기</button></div></div>`).join('')}</div></div>
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">🧑‍🏫 코치 계정</div><div id="poCoachList"><div class="po-note">불러오는 중…</div></div>
-  <div class="po-row" style="margin-top:10px;flex-wrap:wrap"><input id="poNewCoach" maxlength="12" placeholder="코치 이름 (예: 김코치)" style="flex:1;min-width:160px;padding:10px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><button class="po-btn sm" id="poAddCoach">코치 추가</button></div>
+  <div class="po-row" style="margin-top:10px;flex-wrap:wrap"><input id="poNewCoach" maxlength="12" placeholder="코치 이름 (예: 홍길동)" style="flex:1;min-width:160px;padding:10px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><button class="po-btn sm" id="poAddCoach">코치 추가</button></div>
   <p class="po-note" style="margin-top:8px">추가하면 <b>초대 코드</b>(8자리)가 생깁니다. 코치가 MY 페이지 → 카카오 로그인 → <b>P.A 코치 (초대 코드)</b> → 코드 입력하면 연결됩니다. <b>사용 중지</b>하면 그 즉시 코치 모드·학생 정보가 막힙니다.</p></div>
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">📷 키오스크 기기</div><div id="poDevList"><div class="po-note">불러오는 중…</div></div>
   <div class="po-row" style="margin-top:10px;flex-wrap:wrap"><input id="poNewDev" maxlength="20" placeholder="기기 이름 (예: 1층 iPad)" style="flex:1;min-width:160px;padding:10px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><button class="po-btn sm" id="poAddDev">기기 추가</button></div>
