@@ -1247,9 +1247,19 @@ async function paReloadData(){await fsInit();await loadStudents();fsListen();}
 /* [0-4] 로그인 역할 (로그인 서버가 정해 준 값 — 화면 표시용. 실제 잠금은 Firestore 규칙이 함) */
 let _paC={};
 async function paLoadClaims(){_paC={};try{const u=firebase.auth().currentUser;if(u){const r=await u.getIdTokenResult();_paC=r.claims||{};}}catch(e){console.warn('[PA] 역할 확인 실패',e);}return _paC;}
-function paRole(){return paSignedIn()?String(_paC.role||''):'';}
+function paRole(){if(window._paPrev)return window._paPrev.role;return paSignedIn()?String(_paC.role||''):'';}
+/* [v11] 관리자: 원장·선생 화면 미리보기 (줌 시연용) — 대표 계정 그대로, 화면만 그 학원 원장·선생 기준으로 */
+function paAca(){return window._paPrev?String(window._paPrev.academyId):String(_paC.academyId||'');}
+function paPreviewStart(acaId,role){if(String(_paC.role||'')!=='super_admin')return;const a=(gAcademies()||{})[acaId];if(!a)return toast('학원을 찾을 수 없어요','err');
+ window._paPrevBak={aOK,acaMode:window._acaMode,aTab};
+ window._paPrev={role:role==='academy_teacher'?'academy_teacher':'academy_owner',academyId:acaId,name:String(a.name||'')+(role==='academy_teacher'?' 선생':' 원장')};
+ aOK=false;window._acaMode=true;aTab='a-stuMgr';smStu='';try{stuAca='all';stuFilter='all';stuCourseF='all';stuGrade='all';stuAttn=false;stuSearch='';}catch(e){}
+ go('admin');rAT();paPreviewBar();window.scrollTo(0,0);toast(window._paPrev.name+' 화면으로 보는 중');}
+function paPreviewEnd(){const b=window._paPrevBak||{};window._paPrev=null;aOK=b.aOK!==false;window._acaMode=!!b.acaMode;aTab='a-academy';smStu='';const bar=document.getElementById('paPrevBar');if(bar)bar.remove();rAT();toast('대표 화면으로 돌아왔어요');}
+function paPreviewBar(){let bar=document.getElementById('paPrevBar');if(!bar){bar=document.createElement('div');bar.id='paPrevBar';bar.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9500;background:#E8622A;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;font-size:13px;font-weight:700;box-shadow:0 -4px 16px rgba(0,0,0,.3)';document.body.appendChild(bar);}
+ bar.innerHTML=`<span>👀 ${esc(window._paPrev.name)} 화면 미리보기 중 · 여기서 바꾼 내용은 실제로 저장돼요</span><button onclick="paPreviewEnd()" style="background:#fff;color:#E8622A;border:none;border-radius:8px;padding:6px 14px;font-weight:900;cursor:pointer;font-family:inherit">대표 화면으로 돌아가기</button>`;}
 const PA_STU_ROLES=['student','father','mother','parent','student_code'];
-function paAcaWriter(){const r=paRole();return (r==='academy_owner'||r==='academy_teacher')&&_paC.academyId?String(_paC.academyId):null;}
+function paAcaWriter(){const r=paRole();return (r==='academy_owner'||r==='academy_teacher')&&paAca()?String(paAca()):null;}
 /* [0-4] 계정 연결 (학생·학부모·학원·코치) — 서버에서 확인 후 새 로그인 */
 async function paLink(link,consent){
   const kt=(window.Kakao&&Kakao.Auth&&Kakao.Auth.getAccessToken)?Kakao.Auth.getAccessToken():null;
@@ -1317,7 +1327,7 @@ function paKeys(){if(!paSignedIn())return PA_PUBLIC_KEYS;if(paRole()==='super_ad
 /* [0-4] 역할별로 읽을 학생 문서: 관리자·코치 전체 / 학원 자기 학원 / 학생·학부모 본인 / 키오스크·미연결 없음 */
 function paStuSrc(){const r=paRole();
   if(r==='super_admin'||r==='coach')return{q:PA_STU()};
-  if((r==='academy_owner'||r==='academy_teacher')&&_paC.academyId)return{q:PA_STU().where('aca','==',String(_paC.academyId))};
+  if((r==='academy_owner'||r==='academy_teacher')&&paAca())return{q:PA_STU().where('aca','==',String(paAca()))};
   if(PA_STU_ROLES.includes(r)&&_paC.code)return{d:PA_STU().doc(String(_paC.code))};
   return null;}
 async function paStuGet(){const src=paStuSrc();if(!src)return null;if(src.q){const snap=await src.q.get();return snap.docs;}const d=await src.d.get();return d.exists?[d]:[];}
@@ -1959,7 +1969,7 @@ go('my');
 document.addEventListener('DOMContentLoaded',async()=>{await paAuthReady();await fsInit();await loadStudents();fsListen();const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();processKakaoAuth();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
 function setN(n,img){const prof=document.getElementById('navProf');if(prof)prof.classList.add('show');const nm=document.getElementById('navNm');if(nm)nm.textContent=n;const av=document.getElementById('navAv');if(av){if(img)av.innerHTML=`<img src="${img}" alt="">`;else av.innerHTML=`<span id="navAvT">${n?n[0]:'😊'}</span>`;}}
-function doLogout(){paClearLocal();paFirebaseSignOut();LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
+function doLogout(){window._paPrev=null;try{const _pb=document.getElementById('paPrevBar');if(_pb)_pb.remove();}catch(e){}paClearLocal();paFirebaseSignOut();LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
 document.getElementById('loginBox').innerHTML=`<div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오·애플 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><button class="apple-btn" onclick="appleLogin(this)"><svg viewBox="0 0 24 24" fill="#000" width="20" height="20" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z"/></svg>Apple로 계속하기</button><div class="dtog pa-tst" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 테스트 코드로 입장 (테스트 모드)</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">관리자가 발급한 테스트 코드를 입력하세요</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">ltk6154@gmail.com</div></div>`;
 document.getElementById('loginBox').style.display='block';document.getElementById('myDB').style.display='none';document.getElementById('navProf').classList.remove('show');
 const inp=document.getElementById('dcI');if(inp){inp.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});inp.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}
@@ -3452,6 +3462,7 @@ function genAcaToken(){
 
 /* 현재 로그인 사용자의 학원 권한 정보 가져오기 */
 function getUserAcademyRole(){
+  if(window._paPrev)return{role:window._paPrev.role,academyId:window._paPrev.academyId,name:window._paPrev.name};
   if(aOK)return{role:'super_admin'};
   const sv=sessionStorage.getItem('pa_login');
   if(!sv)return{role:'student'};
@@ -3566,6 +3577,8 @@ return `<div style="background:var(--card);border:1px solid ${sel?'var(--accent)
 <div style="font-size:11px;color:var(--muted);margin-top:4px;">📍 ${esc(a.region||'미지정')} · 📞 ${esc(a.phone||'-')} · 학생 ${stuCount}명 · 선생 ${teachers.length}명</div>
 </div>
 <div style="display:flex;gap:6px;" onclick="event.stopPropagation();">
+<button onclick="paPreviewStart('${id}','academy_owner')" style="padding:6px 10px;background:rgba(232,98,42,.9);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">👀 원장 화면</button>
+<button onclick="paPreviewStart('${id}','academy_teacher')" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;cursor:pointer;">선생 화면</button>
 <button onclick="acaEdit('${id}')" style="padding:6px 10px;background:rgba(100,160,200,.15);border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-size:11px;cursor:pointer;">수정</button>
 <button onclick="acaDel('${id}')" style="padding:6px 10px;background:rgba(232,98,42,.15);border:1px solid var(--orange);border-radius:6px;color:var(--orange);font-size:11px;cursor:pointer;">삭제</button>
 </div>
@@ -7941,7 +7954,7 @@ function adminNav(){const tb=document.getElementById('aTabs');if(!tb)return;let 
 
 /* ================= [v6] 관리자·원장: 가입 승인 · 학원 가입 코드 · 연결 풀기 ================= */
 async function tabSignup(){
- const b=document.getElementById('aBody');if(!b)return;const isAdm=paRole()==='super_admin',myAca=String(_paC.academyId||'');
+ const b=document.getElementById('aBody');if(!b)return;const isAdm=paRole()==='super_admin',myAca=String(paAca()||'');
  const acas=isAdm?(gAcademies()||{}):{};
  b.innerHTML=`<h3 style="font-size:14px;margin-bottom:6px;">🙋 가입 승인</h3>
  <p class="po-note" style="margin-bottom:12px">학생이 카카오(또는 애플)로 로그인하고 <b>[본인]</b>을 눌러 정보를 입력하면 여기에 신청이 올라와요. <b>승인</b>하면 학생이 자동으로 만들어지고 그 계정에 연결돼요. 학원 명단에 이미 있는 학생이면 <b>기존 학생에 연결</b>을 고르세요.</p>
@@ -7954,7 +7967,7 @@ async function tabSignup(){
   <div class="po-row" style="gap:8px;flex-wrap:wrap"><select id="sgUnStu" style="flex:1;min-width:180px;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)">${Object.keys(S).filter(c=>isAdm||String((stuDocAca(c))||'')===myAca).map(c=>`<option value="${E(c)}">${E(S[c].name)} (${E(c)})</option>`).join('')}</select>
   <button class="po-btn sm g" id="sgUnSelf">본인 계정 연결 풀기</button><button class="po-btn sm g" id="sgUnG">보호자 연결 모두 풀기</button></div>
   <p class="po-note" style="margin-top:6px">연결을 풀면 학생 기록은 그대로 남고, 학생이 새 계정으로 다시 가입 신청하거나 입장 코드로 연결하면 돼요.</p></div>`;
- const acaSel=()=>isAdm?(document.getElementById('sgAca')||{}).value:'';
+ const acaSel=()=>isAdm?(document.getElementById('sgAca')||{}).value:paAca();
  const jc=async rotate=>{try{const r=await paSrv({joinCode:{academyId:acaSel(),rotate}});document.getElementById('sgCode').textContent=r.joinCode;}catch(e){toastP('가입 코드를 불러오지 못했습니다','err');}};
  document.getElementById('sgShow').onclick=()=>jc(false);
  document.getElementById('sgRot').onclick=()=>{if(confirm('새 가입 코드를 만들까요?\n예전 코드는 더 이상 쓸 수 없습니다.'))jc(true);};
