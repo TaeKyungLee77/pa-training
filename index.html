@@ -4703,10 +4703,13 @@ if(_ar.role!=='super_admin'){
   toast('학생 삭제는 본사 관리자만 가능합니다','err');
   return;
 }
-if(!confirm(`${S[c]?.name} 삭제?`))return;delete S[c];delete CODES[c];const cs=lG('pa_custom_students',null)||{};delete cs[c];lS('pa_custom_students',cs);const allS=lG('pa_students',{});delete allS[c];lS('pa_students',allS);const st=lG('pa_student_status',{});delete st[c];lS('pa_student_status',st);
+if(!confirm(`${S[c]?.name} 학생을 완전히 삭제할까요?\n\n출석·체형·컨디션 기록, 카카오 연결, 보호자 연결까지 모두 지워지고 되돌릴 수 없습니다.`))return;
+/* [v8] 서버에서 기록·연결까지 완전 삭제 */
+paSrv({adminDelete:{students:[c]}}).then(async()=>{try{delete S[c];delete CODES[c];await paReloadData();}catch(e){}toast('삭제 완료');rAB();}).catch(e=>{console.warn('[PA] 학생 삭제 실패',e);toast('삭제 실패: '+(e.status===403?'관리자만 가능합니다':'잠시 후 다시 시도해 주세요'),'err');});
+}
+function delStuLocal(c){delete S[c];delete CODES[c];const cs=lG('pa_custom_students',null)||{};delete cs[c];lS('pa_custom_students',cs);const allS=lG('pa_students',{});delete allS[c];lS('pa_students',allS);const st=lG('pa_student_status',{});delete st[c];lS('pa_student_status',st);
 /* 학원 멤버 매핑도 정리 */
 const m=gAcademyMembers();if(m[c]){delete m[c];sAcademyMembers(m);}
-toast('삭제 완료');rAB();
 }
 
 /* ===== 관리자: 추천제품 관리 ===== */
