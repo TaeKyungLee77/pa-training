@@ -111,6 +111,7 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .kakao-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:16px;border-radius:12px;background:var(--yellow);color:#191919;font-size:15px;font-weight:900;transition:all .2s;margin-bottom:14px;}
 .apple-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;border-radius:12px;background:#fff;color:#000;font-size:15px;font-weight:900;border:none;cursor:pointer;margin:-4px 0 14px;}
 .apple-btn:disabled{opacity:.6;cursor:wait}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:15px;border-radius:12px;background:#fff;color:#1f1f1f;font-size:15px;font-weight:900;border:1px solid #dadce0;cursor:pointer;margin:-4px 0 10px;}.google-btn:disabled{opacity:.6;cursor:wait}
 .pa-tst{display:none!important}html.pa-test .pa-tst{display:block!important}
 .kakao-btn:hover{background:#e6cf00;transform:translateY(-1px);}
 .kakao-btn svg{width:22px;height:22px;}
@@ -642,7 +643,7 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 
 <div class="pg" id="pg-notice"><div class="sec" style="padding-top:48px;"><div class="sec-top"><div><div class="sey">NOTICE</div><h2 class="st">공지사항</h2></div></div><div class="ng" id="allN"></div></div></div>
 
-<div class="pg" id="pg-my"><div class="my-wrap"><div id="loginBox"><div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오·애플 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><button class="apple-btn" onclick="appleLogin(this)"><svg viewBox="0 0 24 24" fill="#000" width="20" height="20" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z"/></svg>Apple로 계속하기</button><div class="dtog pa-tst" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 테스트 코드로 입장 (테스트 모드)</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">관리자가 발급한 테스트 코드를 입력하세요</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">ltk6154@gmail.com</div></div></div><div id="myDB" style="display:none;"></div></div></div>
+<div class="pg" id="pg-my"><div class="my-wrap"><div id="loginBox"><div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오·구글·애플 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><button class="google-btn" onclick="googleLogin(this)"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Google로 계속하기</button><button class="apple-btn" onclick="appleLogin(this)"><svg viewBox="0 0 24 24" fill="#000" width="20" height="20" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z"/></svg>Apple로 계속하기</button><div class="dtog pa-tst" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 테스트 코드로 입장 (테스트 모드)</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">관리자가 발급한 테스트 코드를 입력하세요</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">ltk6154@gmail.com</div></div></div><div id="myDB" style="display:none;"></div></div></div>
 
 <div class="pg" id="pg-body">
 <div class="bt-wrap">
@@ -1239,7 +1240,7 @@ async function paFirebaseSignIn(){
     if(kt)return await paTokenSignIn({kakaoAccessToken:kt});
     /* [v7] 애플 로그인·새로고침 후: 지금 로그인 토큰으로 역할 다시 받기 */
     const u=firebase.auth().currentUser;
-    if(u&&/^(kakao|apple):/.test(String(u.uid||''))){const t=await u.getIdToken();return await paTokenSignIn({},{Authorization:'Bearer '+t});}
+    if(u&&/^(kakao|apple|google):/.test(String(u.uid||''))){const t=await u.getIdToken();return await paTokenSignIn({},{Authorization:'Bearer '+t});}
     console.warn('[PA] 로그인 토큰 없음 — Firebase 로그인 불가');return null;
   }catch(e){console.warn('[PA] Firebase 로그인 실패:',e);return null;}
 }
@@ -1273,7 +1274,7 @@ async function paLink(link,consent){
   if(kt){const d=await paTokenSignIn({kakaoAccessToken:kt,link,consent});await paReloadData();return d;}
   /* [v7] 애플 로그인이거나 새로고침으로 카카오 토큰이 사라진 경우 → 로그인 토큰으로 본인 확인 */
   const u=(()=>{try{return firebase.auth().currentUser;}catch(e){return null;}})();
-  if(!u||!/^(kakao|apple):/.test(String(u.uid||''))){const e=new Error('nokakao');e.reason='nokakao';throw e;}
+  if(!u||!/^(kakao|apple|google):/.test(String(u.uid||''))){const e=new Error('nokakao');e.reason='nokakao';throw e;}
   const t=await u.getIdToken();
   const d=await paTokenSignIn({link,consent},{Authorization:'Bearer '+t});await paReloadData();return d;
 }
@@ -1298,10 +1299,10 @@ function paConsent(who,opt){opt=opt||{};return new Promise(res=>{
   <p style="color:#9fb0c3;margin-bottom:12px">${g?'자녀의 운동·체성분 기록을 확인하려면 동의가 필요합니다. 만 14세 미만 자녀는 이 동의가 법정대리인 동의가 됩니다.':'P.A 트레이닝 이용을 위해 아래 내용에 동의해 주세요.'}${opt.under14?'<br><b style="color:#E8622A">만 14세 미만이라 보호자 동의도 따로 필요합니다. 연결 후 MY 페이지의 [보호자 초대]로 보호자에게 코드를 보내 주세요.</b>':''}</p>
   ${(g?[['privacy',true,'[필수] 자녀 개인정보 수집·이용 (법정대리인 동의)','자녀의 이름, 학년·나이, 키·몸무게, 출석·예약·운동 기록 — 운동 프로그램 제공과 수업 관리. 자녀나 보호자가 탈퇴하면 바로 삭제'],
      ['sensitive',true,'[필수] 자녀 건강 관련 정보 처리','자녀의 체성분(인바디), 체형 측정, 컨디션·통증 기록 — 맞춤 운동과 부상 예방에만 사용'],
-     ['guardianInfo',true,'[필수] 보호자 정보 수집·이용','보호자의 카카오 회원번호, 자녀와의 관계 — 보호자 확인과 "내 아이 확인하기" 제공. 연결 해제 시 삭제'],
+     ['guardianInfo',true,'[필수] 보호자 정보 수집·이용','보호자의 로그인 계정(카카오·구글·애플) 회원번호, 자녀와의 관계 — 보호자 확인과 "내 아이 확인하기" 제공. 연결 해제 시 삭제'],
      ['academy',false,'[선택] 자녀 정보 소속 학원 제공','출석·운동 진행·체성분 변화 요약을 소속 학원 원장님에게 제공 (컨디션·통증은 제공 안 함)'],
      ['photo',false,'[선택] 자녀 체형 사진 촬영','4주마다 정면·측면 사진으로 라인 변화 확인']]
-   :[['privacy',true,'[필수] 개인정보 수집·이용','이름, 학년·나이, 키·몸무게, 출석·예약·운동 기록, 카카오 회원번호 — 운동 프로그램 제공과 수업 관리. 탈퇴하면 바로 삭제'],
+   :[['privacy',true,'[필수] 개인정보 수집·이용','이름, 학년·나이, 키·몸무게, 출석·예약·운동 기록, 로그인 계정(카카오·구글·애플) 회원번호 — 운동 프로그램 제공과 수업 관리. 탈퇴하면 바로 삭제'],
      ['sensitive',true,'[필수] 건강 관련 정보 처리','체성분(인바디), 체형 측정, 컨디션·통증 기록 — 맞춤 운동과 부상 예방에만 사용'],
      ['academy',false,'[선택] 소속 학원에 제공','출석·운동 진행·체성분 변화 요약을 소속 학원 원장님에게 제공 (컨디션·통증은 제공 안 함)'],
      ['photo',false,'[선택] 체형 사진 촬영','4주마다 정면·측면 사진으로 라인 변화 확인']]).map(([k,req,t,d])=>`<label style="display:flex;gap:10px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;margin-bottom:8px;cursor:pointer"><input type="checkbox" data-c="${k}" ${req?'data-req="1"':''} style="margin-top:3px;flex:none"><span><b>${t}</b><br><span style="color:#9fb0c3;font-size:12px">${d}</span></span></label>`).join('')}
@@ -1552,6 +1553,24 @@ async function appleLogin(btn){
     /* 애플은 이름을 처음 한 번만 알려줌 → 이 기기에 기억 */
     try{if(nm)localStorage.setItem('pa_apple_nm:'+uid,nm);else nm=localStorage.getItem('pa_apple_nm:'+uid)||'';}catch(e){}
     await handleKakaoUser({id:uid,kakao_account:{profile:{nickname:nm||'사용자'}}},d);
+  }finally{if(btn)btn.disabled=false;}
+}
+/* [patch29] 구글 로그인 — 웹: Firebase 구글 팝업 → 로그인 서버가 확인 → google:구글ID 계정으로 로그인 */
+async function googleLogin(btn){
+  if(isL){toast('로컬 환경 — 구글 로그인은 실제 주소에서만 됩니다','err');return;}
+  if(isApp){toast('앱에서 구글 로그인은 다음 업데이트에서 지원돼요. 카카오로 시작해 주세요.','err');return;}
+  if(btn)btn.disabled=true;
+  try{
+    let cr;
+    try{const pv=new firebase.auth.GoogleAuthProvider();pv.setCustomParameters({prompt:'select_account'});cr=await firebase.auth().signInWithPopup(pv);}
+    catch(e){const c=String((e&&e.code)||'');if(/popup-closed|cancelled-popup/.test(c))return;if(/popup-blocked/.test(c)){toast('팝업이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.','err');return;}console.warn('[PA] Google:',e);toast('구글 로그인에 실패했어요. 잠시 후 다시 시도해 주세요.','err');return;}
+    const gu=cr&&cr.user;if(!gu){toast('구글 로그인 정보를 받지 못했어요','err');return;}
+    const nm=gu.displayName||'',img=gu.photoURL||'';
+    let d;
+    try{d=await paTokenSignIn({googleFbToken:await gu.getIdToken()});}
+    catch(e){console.warn('[PA] Google 서버:',e);try{await firebase.auth().signOut();}catch(x){}toast(e.status===401?'구글 로그인은 준비 중이에요. 카카오로 시작해 주세요.':'로그인 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.','err');return;}
+    const uid=String((firebase.auth().currentUser||{}).uid||'');
+    await handleKakaoUser({id:uid,kakao_account:{profile:{nickname:nm||'사용자',profile_image_url:img}}},d);
   }finally{if(btn)btn.disabled=false;}
 }
 /* 카카오·애플 유저 처리 (공용) */
@@ -1978,7 +1997,7 @@ document.addEventListener('DOMContentLoaded',async()=>{await paAuthReady();await
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
 function setN(n,img){const prof=document.getElementById('navProf');if(prof)prof.classList.add('show');const nm=document.getElementById('navNm');if(nm)nm.textContent=n;const av=document.getElementById('navAv');if(av){if(img)av.innerHTML=`<img src="${img}" alt="">`;else av.innerHTML=`<span id="navAvT">${n?n[0]:'😊'}</span>`;}}
 function doLogout(){window._paPrev=null;try{const _pb=document.getElementById('paPrevBar');if(_pb)_pb.remove();}catch(e){}paClearLocal();paFirebaseSignOut();LC=null;sessionStorage.removeItem('pa_login');sessionStorage.removeItem('pa_kakao_pending');
-document.getElementById('loginBox').innerHTML=`<div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오·애플 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><button class="apple-btn" onclick="appleLogin(this)"><svg viewBox="0 0 24 24" fill="#000" width="20" height="20" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z"/></svg>Apple로 계속하기</button><div class="dtog pa-tst" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 테스트 코드로 입장 (테스트 모드)</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">관리자가 발급한 테스트 코드를 입력하세요</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">ltk6154@gmail.com</div></div>`;
+document.getElementById('loginBox').innerHTML=`<div class="kcard fu"><div class="kcard-ico">🏋️</div><div class="kcard-h">MY 페이지</div><p class="kcard-p">카카오·구글·애플 로그인 후 본인의<br><strong style="color:var(--text)">식단표 · 몸무게 변화 · 운동기록</strong>을 확인하세요.</p><button class="kakao-btn" onclick="kakaoLogin()"><svg viewBox="0 0 24 24" fill="#191919"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.733 1.657 5.134 4.148 6.573L5.1 21l5.03-2.69c.613.09 1.24.136 1.87.136 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>카카오로 시작하기</button><button class="google-btn" onclick="googleLogin(this)"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>Google로 계속하기</button><button class="apple-btn" onclick="appleLogin(this)"><svg viewBox="0 0 24 24" fill="#000" width="20" height="20" aria-hidden="true"><path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.01-.06-.04-.22-.04-.39 0-1.15.572-2.27 1.206-2.98.804-.94 2.142-1.64 3.248-1.68.03.13.05.28.05.43zm4.565 15.71c-.03.07-.463 1.58-1.518 3.12-.945 1.34-1.94 2.71-3.43 2.71-1.517 0-1.9-.88-3.63-.88-1.698 0-2.302.91-3.67.91-1.377 0-2.332-1.26-3.428-2.8-1.287-1.82-2.323-4.63-2.323-7.28 0-4.28 2.797-6.55 5.552-6.55 1.448 0 2.675.95 3.6.95.865 0 2.222-1.01 3.902-1.01.613 0 2.886.06 4.374 2.19-.13.09-2.383 1.37-2.383 4.19 0 3.26 2.854 4.42 2.955 4.45z"/></svg>Apple로 계속하기</button><div class="dtog pa-tst" onclick="document.getElementById('dbox').classList.toggle('on')">🔑 테스트 코드로 입장 (테스트 모드)</div><div class="dbox" id="dbox"><label class="di">입장 코드</label><input class="dc" id="dcI" placeholder="예: PAT001" maxlength="15" autocomplete="off" spellcheck="false"><div class="em" id="em"></div><button class="dbe" onclick="doCode()">코드로 입장</button><p style="font-size:10px;color:rgba(255,255,255,.2);margin-top:9px;line-height:1.6;">관리자가 발급한 테스트 코드를 입력하세요</p></div><div style="font-size:11px;color:rgba(255,255,255,.2);margin-top:16px;line-height:1.7;">ltk6154@gmail.com</div></div>`;
 document.getElementById('loginBox').style.display='block';document.getElementById('myDB').style.display='none';document.getElementById('navProf').classList.remove('show');
 const inp=document.getElementById('dcI');if(inp){inp.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});inp.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}
 if(!isL&&window.Kakao)try{Kakao.Auth.setAccessToken(null);}catch(e){}toast('로그아웃 완료');}
@@ -7665,7 +7684,7 @@ function viewPrivacy(){
  open(top('개인정보 처리방침','시행일 2026년 10월 15일 (초안)')+`<div class="po-wrap" style="max-width:760px;margin:0 auto;font-size:13.5px;line-height:1.75">
  <p>P.A 트레이닝(이하 "센터")은 「개인정보 보호법」에 따라 회원의 개인정보를 보호하고 관련 고충을 신속하게 처리하기 위해 다음과 같이 처리방침을 둡니다.</p>
  ${H('1. 처리 목적')}<p>회원 확인과 로그인, 맞춤 운동 프로그램·식단 제공, 출석·예약·수업 관리, 체성분·체형 변화 리포트 제공, 부상 예방, 보호자·소속 학원 안내, 문의 응대.</p>
- ${H('2. 처리 항목')}<p><b>필수:</b> 이름, 나이(학년), 성별, 키, 몸무게, 학생 코드, 카카오 회원번호, 출석·예약·운동 기록<br><b>건강 관련(별도 동의):</b> 체성분(인바디), 체형 측정값, 컨디션·통증 기록<br><b>보호자:</b> 카카오 회원번호, 자녀와의 관계<br><b>선택:</b> 체형 사진, 소속 학원 제공 동의 여부<br><b>문의·이용 신청:</b> 이름, 연락처, 문의 내용</p>
+ ${H('2. 처리 항목')}<p><b>필수:</b> 이름, 나이(학년), 성별, 키, 몸무게, 학생 코드, 로그인 계정(카카오·구글·애플) 회원번호, 출석·예약·운동 기록<br><b>건강 관련(별도 동의):</b> 체성분(인바디), 체형 측정값, 컨디션·통증 기록<br><b>보호자:</b> 로그인 계정(카카오·구글·애플) 회원번호, 자녀와의 관계<br><b>선택:</b> 체형 사진, 소속 학원 제공 동의 여부<br><b>문의·이용 신청:</b> 이름, 연락처, 문의 내용</p>
  ${H('3. 보유 기간과 파기')}<p>회원 탈퇴 시 즉시 삭제합니다. 다만 관계 법령에 따라 보관해야 하는 정보(예: 대금 결제·계약 기록 5년, 소비자 불만 처리 기록 3년 — 전자상거래법)는 해당 기간 동안 분리 보관 후 삭제합니다. 시스템 장애 대비 백업본은 최대 7일 보관 후 자동 삭제됩니다. 전자 파일은 복구할 수 없는 방법으로 삭제합니다.</p>
  ${H('4. 만 14세 미만 아동')}<p>만 14세 미만 아동의 개인정보는 법정대리인(보호자)의 동의를 받아 처리합니다. 보호자는 보호자 초대 코드로 자녀 계정에 연결할 때 동의하며, 언제든 열람·정정·삭제를 요청할 수 있습니다.</p>
  ${H('5. 제3자 제공')}<p>회원이 동의한 경우에 한해 소속 무용학원에 출석·운동 진행·체성분 변화 요약을 제공합니다. 컨디션·통증 정보는 제공하지 않습니다.</p>
