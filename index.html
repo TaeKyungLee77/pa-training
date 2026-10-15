@@ -7965,11 +7965,11 @@ async function tabSignup(){
  const b=document.getElementById('aBody');if(!b)return;const isAdm=paRole()==='super_admin',myAca=String(paAca()||'');
  const acas=isAdm?(gAcademies()||{}):{};
  b.innerHTML=`<h3 style="font-size:14px;margin-bottom:6px;">🙋 가입 승인</h3>
- <p class="po-note" style="margin-bottom:12px">학생이 카카오(또는 애플)로 로그인하고 <b>[본인]</b>을 눌러 정보를 입력하면 여기에 신청이 올라와요. <b>승인</b>하면 학생이 자동으로 만들어지고 그 계정에 연결돼요. 학원 명단에 이미 있는 학생이면 <b>기존 학생에 연결</b>을 고르세요.</p>
+ <p class="po-note" style="margin-bottom:12px">학생이 카카오(또는 애플)로 로그인해 <b>[본인]</b>을 누르고 <b>학원 가입 코드</b>를 넣으면 <b>승인 없이 바로 등록</b>돼요. 코드 없이 신청했거나 자동 승인을 끈 학원의 신청만 여기에 올라오고, <b>승인</b>하면 학생이 만들어져 그 계정에 연결돼요. 학원 명단에 이미 있는 학생이면 <b>기존 학생에 연결</b>을 고르세요.</p>
  <div class="po-card"><div class="po-lbl">🏷 학원 가입 코드 ${isAdm?'':'· 단체방에 이 코드 하나만 올려 주세요'}</div>
   <div class="po-row" style="gap:8px;flex-wrap:wrap">${isAdm?`<select id="sgAca" style="padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)">${Object.entries(acas).map(([k,a])=>`<option value="${E(k)}">${E(a.name||k)}</option>`).join('')}</select>`:''}
   <span id="sgCode" style="font-size:22px;font-weight:900;letter-spacing:2px;font-family:monospace">—</span><button class="po-btn sm g" id="sgShow">코드 보기</button><button class="po-btn sm g" id="sgRot">새 코드로 바꾸기</button></div>
-  <p class="po-note" style="margin-top:6px">코드가 밖으로 퍼졌으면 <b>새 코드로 바꾸기</b>를 누르세요. 예전 코드는 바로 못 써요. 코드를 알아도 승인 전에는 아무것도 볼 수 없어요.</p></div>
+  <p class="po-note" style="margin-top:6px">코드가 밖으로 퍼졌으면 <b>새 코드로 바꾸기</b>를 누르세요. 예전 코드는 바로 못 써요.</p></div>
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">기다리는 신청</div><div id="sgList"><div class="po-note">불러오는 중…</div></div></div>
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">🔓 연결 풀기 (폰·카카오 계정을 바꾼 학생)</div>
   <div class="po-row" style="gap:8px;flex-wrap:wrap"><select id="sgUnStu" style="flex:1;min-width:180px;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)">${Object.keys(S).filter(c=>isAdm||String((stuDocAca(c))||'')===myAca).map(c=>`<option value="${E(c)}">${E(S[c].name)} (${E(c)})</option>`).join('')}</select>
