@@ -2582,6 +2582,8 @@ ctx+=`\n\n[중요] 위 정보는 현재 대화 중인 "${s.name}" 학생의 정�
 return ctx;
 }
 
+/* [patch27] 이름 부르기: 받침 있으면 '아', 없으면 '야' (예슬아 · 희태야), 한글 이름 아니면 이름 없이 */
+function aicHi(n){n=String(n||'').trim();if(!/^[가-힣]{2,4}$/.test(n))return '';const f=n.length>=3?n.slice(1):n;const c=f.charCodeAt(f.length-1)-0xAC00;return f+((c%28)?'아':'야')+' ';}
 function initAICoach(){
 const w=document.getElementById('aiCoachWrap');if(!w)return;
 if(aicInited){scrollAIC();return;}
@@ -2592,7 +2594,7 @@ w.innerHTML=`<div class="aic-wrap">
 <div><div style="font-size:15px;font-weight:900;">P.A 코치</div><div style="font-size:10px;color:var(--muted);">운동 · 부상 · 테이핑 · 식단 무엇이든 질문하세요</div></div>
 </div>
 <div class="aic-msgs" id="aicMsgs">
-<div class="aic-msg bot"><div class="aic-name">🤖 P.A 코치</div>${(S[LC]?.name||'').slice(1)||(S[LC]?.name||'')}아 안녕! 👋 운동, 부상, 테이핑, 식단 뭐든 물어봐! 네 체형이랑 목표에 맞춰서 알려줄게 💪</div>
+<div class="aic-msg bot"><div class="aic-name">🤖 P.A 코치</div>${aicHi(S[LC]?.name)}안녕! 👋 운동, 부상, 테이핑, 식단 뭐든 물어봐! 네 체형이랑 목표에 맞춰서 알려줄게 💪</div>
 <div class="aic-chips" id="aicChips">${AIC_CHIPS.map(c=>`<button class="aic-chip" onclick="aicSend('${c}')">${c}</button>`).join('')}</div>
 </div>
 <div class="aic-input-wrap">
@@ -2838,7 +2840,7 @@ const emojisHTML=COND_EMOJIS.map((e,i)=>`<div class="cond-emoji${condDraft.score
 <div class="cond-emoji-face">${e}</div>
 <div class="cond-emoji-lbl">${COND_LABELS[i]}</div>
 </div>`).join('');
-const tagsHTML=COND_TAGS.map(t=>`<div class="cond-tag${condDraft.tags.includes(t)?' on':''}" onclick="condToggleTag('${t}')">${t}</div>`).join('');
+const tagsHTML=COND_TAGS.filter(t=>t!=='생리중'||String((S[LC]||{}).g||'')!=='남').map(t=>`<div class="cond-tag${condDraft.tags.includes(t)?' on':''}" onclick="condToggleTag('${t}')">${t}</div>`).join('');
 wrap.innerHTML=`<div class="cond-card">
 <div class="cond-card-h">
 <div class="cond-card-t">💚 오늘의 컨디션 체크</div>
