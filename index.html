@@ -6518,7 +6518,7 @@ function pushDisplay(pods,logsMap){
  const d=today();
  [...new Set(pods.filter(p=>PODS[p]))].forEach(pod=>{
   const rows=Object.values(logsMap).filter(l=>l&&l.date===d&&l.pod===pod).map(l=>{const b=btOf(l.code);const s=stu(l.code);
-   return{disp:mask(s?s.name:''),col:b?b.color:'#64A0C8',btName:l.btName||'',label:l.label||'',items:l.items||[],cur:l.cur||0,done:l.done||[],restUntil:l.restUntil||0,ended:!!l.ended,startedAt:l.startedAt||0};});
+   return{disp:mask(s?s.name:''),col:b?b.color:'#64A0C8',btName:l.btName||'',label:l.label||'',items:l.items||[],cur:l.cur||0,done:l.done||[],restUntil:l.restUntil||0,ended:!!l.ended,startedAt:l.startedAt||0,classStartAt:l.classStartAt||0};});
   db.collection('pa_display').doc(d+'_'+pod).set({date:d,pod,rows,at:Date.now()}).catch(fsErr);
  });
 }
@@ -6822,6 +6822,36 @@ function openVid(url,name,page){const yt=/(?:youtube\.com\/watch\?v=|youtu\.be\/
   m.querySelector('[data-x]').onclick=()=>m.remove();m.addEventListener('click',e=>{if(e.target===m)m.remove();});document.body.appendChild(m);return;}
  const w=window.open(url,'_blank','noopener');if(!w)location.href=url;}
 document.addEventListener('click',e=>{const b=e.target&&e.target.closest?e.target.closest('[data-vid]'):null;if(!b)return;e.preventDefault();e.stopPropagation();openVid(b.dataset.vid,b.dataset.vn,b.dataset.vp);},true);
+
+/* ===== [4단계] 수업 진행: 출석 = 셀프 운동 시작 → 코치 '수업 시작' → 50분 타이머 → 수업 종료 (시간 기록) ===== */
+const mmss=ms=>{ms=Math.max(0,ms);const s=Math.floor(ms/1000);return `${Math.floor(s/60)}:${p2(s%60)}`;};
+function clsPhase(min){const C=cfg();if(min<C.warm)return['워밍업',C.warm-min];if(min<C.warm+C.main)return['메인 근력',C.warm+C.main-min];if(min<C.total)return['마무리',C.total-min];return['시간 초과',0];}
+function clsTimeline(a,l){const ev=[];if(a&&a.at)ev.push([a.at,`출석 · 셀프 운동 시작 (${a.via==='kiosk'?'QR':'수동'})`]);
+ if(l&&l.classStartAt)ev.push([l.classStartAt,`코치 수업 시작${l.classCoach?' · '+l.classCoach+(/코치$/.test(l.classCoach)?'':' 코치'):''}`]);
+ if(l&&l.ended&&l.endedAt)ev.push([l.endedAt,'수업 종료']);
+ const selfMin=a&&a.at&&l&&l.classStartAt?Math.max(0,Math.round((l.classStartAt-a.at)/60000)):null,clsMin=l&&l.classStartAt&&l.ended&&l.endedAt?Math.max(0,Math.round((l.endedAt-l.classStartAt)/60000)):null;
+ return `<div class="po-sub" style="margin-top:8px;line-height:1.9">${ev.map(([t,m])=>`<b>${hm(t)}</b> ${E(m)}`).join(' → ')}</div>${selfMin!=null||clsMin!=null?`<div class="po-sub">${selfMin!=null?`셀프 운동 <b>${selfMin}분</b>`:''}${selfMin!=null&&clsMin!=null?' · ':''}${clsMin!=null?`코치 수업 <b>${clsMin}분</b>`:''}${l&&l.selfDone?' · 셀프 유산소 ✅':''}</div>`:''}`;}
+function clsCard(c,a,l){const C=cfg();
+ if(l&&l.ended)return `<div class="po-card"><div class="po-lbl">수업 진행</div><div style="font-size:18px;font-weight:900">✅ 수업 완료</div>${clsTimeline(a,l)}</div>`;
+ if(l&&l.classStartAt){const min=(Date.now()-l.classStartAt)/60000,[ph,left]=clsPhase(min);
+  return `<div class="po-card" style="border-color:var(--accent)"><div class="po-row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div><div class="po-lbl">코치 수업 중 · ${C.total}분 (워밍업 ${C.warm} · 메인 ${C.main} · 마무리 ${C.finish})</div>
+   <div style="font-size:30px;font-weight:900;font-variant-numeric:tabular-nums" id="poClsT" data-st="${l.classStartAt}">${mmss(Date.now()-l.classStartAt)}</div><div class="po-sub" id="poClsP">${E(ph)}${left?` · ${Math.ceil(left)}분 남음`:''}</div></div>
+   <div class="po-row" style="gap:6px;flex-wrap:wrap">${!doneSets(l)?'<button class="po-btn sm g" id="poClsUndo">수업 시작 취소</button>':''}</div></div>
+   <div class="po-bar" style="margin-top:10px"><i id="poClsB" style="width:${Math.min(100,min/C.total*100)}%"></i></div>${clsTimeline(a,l)}</div>`;}
+ const ex=(l&&Array.isArray(l.extra)?l.extra:program(c).extra)||[];
+ return `<div class="po-card" style="border-color:var(--green)"><div class="po-row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><div><div class="po-lbl">셀프 운동 중 (코치 수업 전)</div>
+  <div style="font-size:24px;font-weight:900;font-variant-numeric:tabular-nums" id="poSelfT" data-st="${a.at}">${mmss(Date.now()-a.at)}</div>
+  <div class="po-sub">추천: ${ex.length?ex.map(x=>`<b>${E(x.n)}</b> ${E(x.d)} (${E(ZONE_NM.cardio)})`).join(' · '):'유산소 존 가볍게'} · 시간 남으면 코어 존 플랭크·데드버그</div>
+  <label class="po-sub" style="display:inline-flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" id="poSelfDone"${l&&l.selfDone?' checked':''}> 셀프 유산소 했음</label></div>
+  <button class="po-btn" id="poClsStart">▶ 수업 시작</button></div>${clsTimeline(a,l)}</div>`;}
+function clsTick(){const t=document.getElementById('poClsT');if(t){const st=+t.dataset.st,min=(Date.now()-st)/60000,C=cfg();t.textContent=mmss(Date.now()-st);t.style.color=min>C.total?'var(--orange)':'';const [ph,left]=clsPhase(min);const p=document.getElementById('poClsP');if(p)p.textContent=ph+(left?` · ${Math.ceil(left)}분 남음`:` · ${Math.floor(min-C.total)}분 지남`);const bb=document.getElementById('poClsB');if(bb)bb.style.width=Math.min(100,min/C.total*100)+'%';}
+ const s=document.getElementById('poSelfT');if(s)s.textContent=mmss(Date.now()-(+s.dataset.st));}
+/* 코치: 운동 바꾸기 후보 (같은 소분류 → 같은 중분류 → 같은 대분류) */
+function swapCands(c,e,items){const X=XL(),have=new Set(items.map(x=>keyOf(x.n)));const lib=X.items.filter(x=>!have.has(keyOf(x.n)));
+ const me=X.items.find(x=>x.n===e.n)||{};const s=e.s||me.s;const S=s&&SUBS[s];
+ const cat=S?S.cat:(e.part==='마무리'?'core':(/어깨|가슴|등|팔/.test(e.b||'')||e.b==='어깨')?'upper':'lower');
+ const g1=S?lib.filter(x=>x.s===s):[],g2=S?lib.filter(x=>x.s!==s&&SUBS[x.s].mid===S.mid):[],g3=lib.filter(x=>SUBS[x.s].cat===cat&&!g1.includes(x)&&!g2.includes(x));
+ return [[S?`같은 부위 (${S.nm})`:'',g1],[S?`비슷한 부위 (${S.midNm})`:'',g2],[`${(TAX.find(t=>t.k===cat)||{}).nm||''} 전체`,g3]].filter(([n,a])=>n&&a.length);}
 function composeLib(c,o){
  const X=o.X,ph=o.ph,blk=ph.block,tag=BLOCK_TAG[blk]||'',maxLv=ph.light?1:(BLOCK_LV[blk]||2);
  const r=rngOf([c,ymd(o.at),o.reroll||0,blk,ph.w,o.day].join('|'));
@@ -7058,7 +7088,7 @@ function viewMyQR(){
   attended=true;const b=body();if(!b)return;
   const items=log&&Array.isArray(log.items)&&log.items.length?log.items:program(c).items;
   b.innerHTML=`<div class="po-card" style="padding:28px 18px"><div style="font-size:64px;line-height:1">✅</div><div class="po-h2" style="margin:12px 0 4px;font-size:22px">출석 완료</div><div class="po-sub">${att&&att.at?hm(att.at)+' 체크인':''}</div>
-  <div class="po-card" style="margin-top:16px;background:var(--card2)"><div class="po-lbl">오늘 수업</div><div style="font-size:20px;font-weight:900">${rt?rt+' · ':''}${log&&log.pod?podFull(log.pod):'코치님이 POD를 안내해 드려요'}</div><div class="po-note" style="margin-top:6px">4층 탈의실에서 환복 후 운동층으로 올라가세요</div></div>
+  ${log&&log.ended?`<div class="po-card" style="margin-top:16px;background:rgba(111,207,151,.12)"><div style="font-weight:900">👏 오늘 수업 완료${log.classStartAt&&log.endedAt?` · 코치 수업 ${Math.round((log.endedAt-log.classStartAt)/60000)}분`:''}</div></div>`:log&&log.classStartAt?`<div class="po-card" style="margin-top:16px;background:rgba(100,160,200,.14)"><div style="font-weight:900">🏋️ 코치 수업 중 · ${hm(log.classStartAt)} 시작</div><div class="po-sub">${cfg().total}분 수업 · 끝나면 마무리 유산소</div></div>`:`<div class="po-card" style="margin-top:16px;background:rgba(111,207,151,.12)"><div style="font-weight:900">🏃 셀프 운동 시간</div><div class="po-sub">코치님이 수업을 시작할 때까지 ${E(ZONE_NM.cardio)}에서 아래 유산소부터 먼저 시작하세요</div></div>`}<div class="po-card" style="margin-top:16px;background:var(--card2)"><div class="po-lbl">오늘 수업</div><div style="font-size:20px;font-weight:900">${rt?rt+' · ':''}${log&&log.pod?podFull(log.pod):'코치님이 POD를 안내해 드려요'}</div><div class="po-note" style="margin-top:6px">4층 탈의실에서 환복 후 운동층으로 올라가세요</div></div>
   ${(()=>{const ex=log&&Array.isArray(log.extra)?log.extra:program(c).extra;return ex.length?`<div class="po-card" style="margin-top:12px;background:rgba(100,160,200,.1);text-align:left"><div class="po-lbl">🏃 수업 전·후 셀프 유산소 (${ZONE_NM.cardio})</div>${ex.map(x=>`<div style="font-weight:900">${E(x.n)} <span class="po-sub">${E(x.d)}</span></div>`).join('')}</div>`:'';})()}
   ${items.length?`<div style="margin-top:16px;text-align:left"><div class="po-lbl">오늘 코치 수업 · ${E(program(c).label)}</div>${(()=>{try{const en=energyOf(c),ex=log&&Array.isArray(log.extra)?log.extra:program(c).extra;const cl=kcalOfItems(items,en.kg),ck=ex.reduce((a,x)=>a+(+x.kcal||Math.round(kcalMin(x.met||6,en.kg)*(+x.min||0))),0);return `<div class="po-sub" style="margin:4px 0 8px">🔥 오늘 목표 소모 <b>${en.target} kcal</b> · 예상 ${cl+ck} kcal (수업 ${cl} + 유산소 ${ck})</div>`;}catch(e){return '';}})()}${items.map(e=>`<div class="po-ex" style="align-items:center"><span>${E(e.n)}</span><span class="po-sub" style="text-align:right">${E(e.d)}${vidBtn(e,'margin-left:6px;padding:4px 8px;font-size:11px')}</span></div>`).join('')}</div>`:''}</div>`;
  }
@@ -7183,7 +7213,7 @@ function viewCoach(selArg){
   try{(lG('pa_reservations',[])||[]).forEach(r=>{if(r.date===d&&r.status!=='rejected'&&stu(r.code))set.add(r.code);});}catch(e){}
   return [...set].filter(c=>stu(c)).sort((a,b)=>(att[a]?0:1)-(att[b]?0:1)||(att[a]&&att[b]?att[a].at-att[b].at:0));
  }
- const status=c=>{const l=logs[c];if(!att[c])return['미출석','rgba(255,255,255,.08)','var(--muted)'];if(l&&l.ended)return['완료','rgba(255,255,255,.14)','#fff'];if(l&&doneSets(l)>0)return['운동 중','rgba(100,160,200,.2)','var(--accent)'];return['출석','rgba(111,207,151,.18)','var(--green)'];};
+ const status=c=>{const l=logs[c];if(!att[c])return['미출석','rgba(255,255,255,.08)','var(--muted)'];if(l&&l.ended)return['완료','rgba(255,255,255,.14)','#fff'];if(l&&l.classStartAt)return['수업 중','rgba(100,160,200,.2)','var(--accent)'];if(l&&doneSets(l)>0)return['운동 중','rgba(100,160,200,.2)','var(--accent)'];return['출석','rgba(111,207,151,.18)','var(--green)'];};
  function drawRoster(){
   const el=document.getElementById('poRost');if(!el)return;const list=roster();
   el.innerHTML=list.length?list.map(c=>{const s=stu(c),[st,bg,fg]=status(c),l=logs[c],cd=gCondToday(c);const warn=cd&&(cd.score<=2||(cd.tags||[]).includes('근육통'))?'<span style="color:var(--orange)">●</span>':'';
@@ -7220,12 +7250,13 @@ function viewCoach(selArg){
   <div class="po-card"><div class="po-lbl">구역 배정 ${a?'':'(출석 후 가능)'}</div><div class="po-pods">${Object.keys(PODS).map(p=>{const mine=!!(l&&l.pod===p),lk=lockedFor(p),n=activeOn(p,c).length,full=!mine&&n>=POD_MAX(p);
    return `<button data-p="${p}" class="${mine?'on':''}" ${!a||(!mine&&(lk||full))?'disabled':''}>${podLabel(p)}<br><span style="font-weight:500;font-size:11px;opacity:.85">${lk?E(lk.coachName||'다른')+' 코치 사용 중':full?'정원 마감':PODS[p].name}</span>${n?`<br><span style="font-weight:500;font-size:10.5px;opacity:.7">현재 ${n}명</span>`:''}</button>`;}).join('')}</div>
    ${Object.keys(PODS).some(p=>lockedFor(p))?`<div class="po-note" style="margin-top:8px">다른 코치가 쓰는 POD는 선택할 수 없습니다. 그 코치의 학생이 모두 수업 종료되면 자동으로 풀립니다. ${IS_ADM?Object.keys(PODS).filter(p=>lockedFor(p)).map(p=>`<button class="po-btn sm g" style="margin:4px 4px 0 0" data-unlock="${p}">${podLabel(p)} 잠금 강제 해제</button>`).join(''):'급하면 관리자에게 잠금 해제를 요청하세요.'}</div>`:''}</div>
+  ${a?clsCard(c,a,l):''}
   <div class="po-card"><div class="po-row" style="justify-content:space-between;margin-bottom:10px;flex-wrap:wrap"><div class="po-lbl" style="margin:0">오늘 운동 · ${E((l&&l.btName)||program(c).btName||'')} ${E((l&&l.label)||program(c).label||'')}</div><div class="po-sub">코치 수업 예상 <b style="color:${planOf(items)>cfg().total+5?'var(--orange)':'var(--text)'}">${planOf(items)}분</b> / ${cfg().total}분 · 진행 ${doneSets(l)}/${totalSets(l)||items.reduce((x,y)=>x+y.sets,0)}세트 ${restLeft?`· <b style="color:var(--orange)">휴식 ${fmtSec(restLeft)}</b>`:''}${live&&!doneSets(l)&&XL().on?' <button class="po-btn sm g" id="poReroll" style="margin-left:6px">🎲 다시 뽑기</button>':''}</div></div>
    ${(()=>{try{const en=energyOf(c),xs=extraOf(l,c);return energyLine(en,kcalOfItems(items,en.kg),xs.reduce((a,x)=>a+(+x.kcal||Math.round(kcalMin(x.met||6,en.kg)*(+x.min||0))),0));}catch(e){return '';}})()}
    ${extraOf(l,c).length?`<div class="po-note" style="margin:-4px 0 10px;padding:8px 10px;border-radius:10px;background:rgba(100,160,200,.1)">🏃 추천 셀프 유산소 (수업 전·후, ${ZONE_NM.cardio}): ${extraOf(l,c).map(x=>`<b>${E(x.n)}</b> ${E(x.d)}`).join(' · ')}</div>`:''}
-   ${items.length?items.map((e,i)=>{const dn=l&&l.done?l.done[i]||0:0,cur=live&&l&&l.cur===i;const hd=(i===0||items[i-1].part!==e.part)?`<div class="po-lbl" style="margin:${i?'14px':'0'} 0 6px">${E(e.part)} ${secMin(items,e.part)?`<span class="po-sub">· 약 ${secMin(items,e.part)}분</span>`:''}</div>`:'';return `${hd}<div class="po-exr ${cur?'cur':''} ${dn>=e.sets?'done':''}"><div><div style="font-weight:900">${i+1}. ${E(e.n)}</div><div class="po-sub">${E(e.d)}${e.rest?` · 휴식 ${e.rest}초`:''}${e.cf?` · 🎬 ${E(e.cf)}`:''}${e.zone&&e.zone!=='any'?` · 📍 ${ZONE_NM[e.zone]||''}`:''}</div>${live&&!cur&&dn<e.sets?`<button class="po-btn sm g" style="margin-top:6px" data-cur="${i}">이 운동으로 이동</button>`:''}${live&&!dn?`<button class="po-btn sm g" style="margin:6px 0 0 4px" data-rm="${i}">빼기</button>`:''}${vidBtn(e)}</div>
+   ${items.length?items.map((e,i)=>{const dn=l&&l.done?l.done[i]||0:0,cur=live&&l&&l.cur===i;const hd=(i===0||items[i-1].part!==e.part)?`<div class="po-lbl" style="margin:${i?'14px':'0'} 0 6px">${E(e.part)} ${secMin(items,e.part)?`<span class="po-sub">· 약 ${secMin(items,e.part)}분</span>`:''}</div>`:'';return `${hd}<div class="po-exr ${cur?'cur':''} ${dn>=e.sets?'done':''}"><div><div style="font-weight:900">${i+1}. ${E(e.n)}</div><div class="po-sub">${E(e.d)}${e.rest?` · 휴식 ${e.rest}초`:''}${e.cf?` · 🎬 ${E(e.cf)}`:''}${e.zone&&e.zone!=='any'?` · 📍 ${ZONE_NM[e.zone]||''}`:''}</div>${live&&!cur&&dn<e.sets?`<button class="po-btn sm g" style="margin-top:6px" data-cur="${i}">이 운동으로 이동</button>`:''}${live?`<button class="po-btn sm g" style="margin:6px 0 0 4px" data-rm="${i}">빼기</button>`:''}${live&&!dn&&e.part!=='워밍업'?`<button class="po-btn sm g" style="margin:6px 0 0 4px" data-swap="${i}">🔄 바꾸기</button>`:''}${live&&/^\d+\s*×/.test(e.d||'')?`<button class="po-btn sm g" style="margin:6px 0 0 4px" data-sm="${i}" ${e.sets<=Math.max(1,dn)?'disabled':''}>세트 −</button><button class="po-btn sm g" style="margin:6px 0 0 4px" data-sp="${i}" ${e.sets>=8?'disabled':''}>세트 +</button>`:''}${vidBtn(e)}</div>
     <div class="po-dots">${Array.from({length:e.sets},(_,k)=>`<div class="po-dot ${k<dn?'f':''}">${k+1}</div>`).join('')}${live?`<button class="po-btn sm" data-set="${i}" ${dn>=e.sets?'disabled':''}>세트 완료</button><button class="po-btn sm g" data-undo="${i}" ${dn?'':'disabled'}>−</button>`:''}</div></div>`;}).join(''):'<div class="po-note">오늘 프로그램이 없습니다. 아래에서 운동을 추가하세요.</div>'}
-   ${live?`<div class="po-row" style="margin-top:10px;flex-wrap:wrap"><select id="poAddEx" style="flex:1;min-width:200px;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><option value="">+ 운동 추가 (오늘 체형 운동 목록)</option>${(()=>{const P=addPool(c);return [...new Set(P.map(x=>x.grp))].map(g=>`<optgroup label="${E(g)}">${P.map((x,j)=>x.grp===g?`<option value="${j}">${E(x.n)} · ${E(x.d)}</option>`:'').join('')}</optgroup>`).join('');})()}</select><button class="po-btn sm" id="poAddExBtn">추가</button></div>`:''}
+   ${live?`<div class="po-row" style="margin-top:10px;flex-wrap:wrap"><input id="poAddQ" placeholder="🔎 운동 검색 (예: 스쿼트, 어깨)" style="flex:1;min-width:160px;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><select id="poAddEx" style="flex:1;min-width:200px;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"><option value="">+ 운동 추가 (오늘 체형 운동 목록)</option>${(()=>{const P=addPool(c);return [...new Set(P.map(x=>x.grp))].map(g=>`<optgroup label="${E(g)}">${P.map((x,j)=>x.grp===g?`<option value="${j}">${E(x.n)} · ${E(x.d)}</option>`:'').join('')}</optgroup>`).join('');})()}</select><button class="po-btn sm" id="poAddExBtn">추가</button></div>`:''}
    ${a?`<div class="po-row" style="margin-top:10px;justify-content:flex-end;flex-wrap:wrap">${l&&l.ended?`<span class="po-chip" style="background:rgba(255,255,255,.12)">${hm(l.endedAt)} 수업 종료</span><button class="po-btn sm g" id="poReopen">종료 취소</button>`:`<button class="po-btn sm g" id="poRest">휴식 60초</button><button class="po-btn sm o" id="poEnd">수업 종료</button>`}</div>`:''}
   </div></div>`;
   const ref=COL('logs').doc(d+'_'+c);
@@ -7242,7 +7273,7 @@ function viewCoach(selArg){
   det.querySelectorAll('[data-cur]').forEach(b=>b.onclick=()=>upd({cur:+b.dataset.cur,restUntil:0}));
   det.querySelectorAll('[data-set]').forEach(b=>b.onclick=()=>{if(!l)return;const i=+b.dataset.set,e=items[i];const done=(Array.isArray(l.done)?l.done:items.map(()=>0)).slice();done[i]=Math.min(e.sets,(done[i]||0)+1);
    let cur=i;if(done[i]>=e.sets){const nx=items.findIndex((x,j)=>j>i&&(done[j]||0)<x.sets),any=items.findIndex((x,j)=>(done[j]||0)<x.sets);cur=nx>=0?nx:(any>=0?any:i);}
-   const all=items.every((x,j)=>(done[j]||0)>=x.sets);upd({done,cur,restUntil:all||!(e.rest>0||e.rest==null)?0:Date.now()+(e.rest||60)*1000});});
+   const all=items.every((x,j)=>(done[j]||0)>=x.sets);upd(Object.assign({done,cur,restUntil:all||!(e.rest>0||e.rest==null)?0:Date.now()+(e.rest||60)*1000},l.classStartAt?{}:{classStartAt:Date.now(),classCoach:coachName||''}));});
   /* 운동 빼기 · 추가 (코치 재량) */
   {const bc=document.getElementById('poCourse');if(bc)bc.onclick=()=>courseModal(c);const bs=document.getElementById('poScreen');if(bs)bs.onclick=()=>screenModal(c);
    const br=document.getElementById('poReport');if(br)br.onclick=()=>{const m=document.createElement('div');m.className='po-modal';m.innerHTML=`<div class="po-card" style="max-width:720px;width:100%;max-height:88vh;overflow:auto;text-align:left"><div class="po-row" style="justify-content:space-between;margin-bottom:10px"><div class="po-h2">${E(s.name)} · 4주 리포트</div><button class="po-x" data-x>닫기</button></div>${reportHtml(c)}</div>`;m.querySelector('[data-x]').onclick=()=>m.remove();ov().appendChild(m);};
@@ -7250,9 +7281,30 @@ function viewCoach(selArg){
     if(sc>=4&&sc<=6){const od=(l&&Array.isArray(l.done)?l.done:[]);const keep=items.map((x,j)=>({x,j})).filter(o=>o.x.b!==part||(od[o.j]||0)>0);const ni=keep.map(o=>o.x),nd=keep.map(o=>od[o.j]||0);
      upd({pain,items:ni,done:nd,cur:Math.min(l&&l.cur||0,Math.max(0,ni.length-1))});toastP(`${part} 운동 ${items.length-ni.length}개를 뺐습니다`);}
     else{upd({pain});if(sc>=7)toastP('통증 7점 이상: 수업을 멈추고 보호자에게 연락해 주세요','err');}};}
-  det.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const i=+b.dataset.rm,e=items[i];if(!confirm(`'${e.n}'을(를) 오늘 운동에서 뺄까요?`))return;
+  det.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const i=+b.dataset.rm,e=items[i],od0=(l&&Array.isArray(l.done)?l.done:[])[i]||0;if(!confirm(`'${e.n}'을(를) 오늘 운동에서 뺄까요?${od0?`\n(이미 한 ${od0}세트 기록도 함께 빠집니다)`:''}`))return;
    const ni=items.filter((_,j)=>j!==i),od=(l&&Array.isArray(l.done)?l.done:[]),nd=items.map((_,j)=>od[j]||0).filter((_,j)=>j!==i);let cur=l&&l.cur||0;if(cur>i)cur--;cur=Math.min(cur,Math.max(0,ni.length-1));
    upd({items:ni,done:nd,cur});});
+  {const cs=document.getElementById('poClsStart');if(cs)cs.onclick=()=>{if(!coachName)askName();upd({classStartAt:Date.now(),classCoach:coachName||'',restUntil:0});toastP(s.name+' 수업 시작 · '+cfg().total+'분');};
+   const cu=document.getElementById('poClsUndo');if(cu)cu.onclick=()=>{if(!confirm('수업 시작을 취소할까요? (셀프 운동 중으로 돌아갑니다)'))return;upd({classStartAt:null,classCoach:null});};
+   const sd=document.getElementById('poSelfDone');if(sd)sd.onchange=()=>upd({selfDone:sd.checked});
+   const aq=document.getElementById('poAddQ'),ae=document.getElementById('poAddEx');if(aq&&ae)aq.oninput=()=>{const q=aq.value.trim();let first=null;ae.querySelectorAll('option').forEach(o=>{if(!o.value)return;const ok=!q||o.textContent.includes(q);o.hidden=!ok;o.disabled=!ok;if(ok&&!first)first=o;});ae.querySelectorAll('optgroup').forEach(g=>{g.hidden=![...g.children].some(o=>!o.hidden);});ae.value=first&&q?first.value:'';};
+   const setD=(e,n)=>String(e.d).replace(/^(\d+)\s*×/,n+'×');
+   det.querySelectorAll('[data-sp],[data-sm]').forEach(b=>b.onclick=()=>{const i=+(b.dataset.sp||b.dataset.sm),e=items[i],n=Math.max(1,Math.min(8,e.sets+(b.dataset.sp!=null?1:-1)));const od=(l&&Array.isArray(l.done)?l.done:[]);if(n<(od[i]||0))return;
+    const d2=setD(e,n),est=estimate({d:d2},e.rest);const ni=items.map((x,j)=>j===i?Object.assign({},x,{d:d2,sets:n,min:est.min}):x);upd({items:ni,done:items.map((_,j)=>od[j]||0)});});
+   det.querySelectorAll('[data-swap]').forEach(b=>b.onclick=()=>{const i=+b.dataset.swap,e=items[i],groups=swapCands(c,e,items),ph=phaseOf(c,new Date());
+    if(!groups.length)return toastP('바꿀 수 있는 운동이 라이브러리에 없습니다','err');
+    const m=document.createElement('div');m.className='po-modal';
+    m.innerHTML=`<div class="po-card" style="max-width:640px;width:100%;max-height:86vh;overflow:auto;text-align:left"><div class="po-row" style="justify-content:space-between;margin-bottom:8px"><div class="po-h2" style="font-size:16px">🔄 ${E(e.n)} → 바꿀 운동</div><button class="po-x" data-x>닫기</button></div>
+     <div class="po-row" style="gap:6px;margin-bottom:10px;flex-wrap:wrap"><button class="po-btn sm" data-rand>🎲 같은 부위에서 아무거나</button><input data-q placeholder="🔎 검색" style="flex:1;min-width:140px;padding:8px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"></div>
+     ${groups.map(([nm,arr])=>`<div class="po-lbl" style="margin-top:8px">${E(nm)}</div>${arr.map(x=>`<div class="po-ex" data-row="${E(x.n)}" style="align-items:center"><span>${E(x.n)} <span class="po-sub">· ${E(SUBS[x.s].nm)} · 난이도 ${x.lv}</span></span><span><button class="po-btn sm g" data-pick="${E(x.n)}">선택</button></span></div>`).join('')}`).join('')}</div>`;
+    const pick=nm=>{const x=XL().items.find(y=>y.n===nm);if(!x)return;const S=SUBS[x.s],core=S.cat==='core';const d2=bump(dFor(x,ph.block,e.sets),ph.cyc||0);const rest=e.rest||(core?30:60);const est=estimate({d:d2},rest);
+     const it=Object.assign({},e,{n:x.n,d:d2,sets:est.sets,min:est.min,rest,b:x.b||'',s:x.s,cf:x.cf||'',zone:e.zone});const ni=items.map((y,j)=>j===i?it:y);const od=(l&&Array.isArray(l.done)?l.done:[]);
+     upd({items:ni,done:items.map((_,j)=>j===i?0:(od[j]||0))});m.remove();toastP(`${e.n} → ${x.n}`);};
+    m.querySelector('[data-x]').onclick=()=>m.remove();m.addEventListener('click',ev=>{if(ev.target===m)m.remove();});
+    m.querySelectorAll('[data-pick]').forEach(p=>p.onclick=()=>pick(p.dataset.pick));
+    m.querySelector('[data-rand]').onclick=()=>{const g=groups[0][1];pick(g[Math.floor(Math.random()*g.length)].n);};
+    m.querySelector('[data-q]').oninput=ev=>{const q=ev.target.value.trim();m.querySelectorAll('[data-row]').forEach(r=>{r.style.display=!q||r.dataset.row.includes(q)?'':'none';});};
+    document.body.appendChild(m);});}
   {const ab2=document.getElementById('poAddExBtn');if(ab2)ab2.onclick=()=>{const v=document.getElementById('poAddEx').value;if(v==='')return toastP('추가할 운동을 고르세요','err');const x=addPool(c)[+v];const est=estimate(x,x.zone==='core'?30:null);
    const it={n:x.n,d:x.d,sets:est.sets,part:x.part,zone:x.zone,rest:est.rest,met:x.met,min:est.min,b:x.b||''};if(x.s)it.s=x.s;if(x.cf)it.cf=x.cf;
    const od=(l&&Array.isArray(l.done)?l.done:[]),nd=items.map((_,j)=>od[j]||0);
@@ -7263,7 +7315,7 @@ function viewCoach(selArg){
   det.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>{if(!l)return;const i=+b.dataset.undo;const done=l.done.slice();done[i]=Math.max(0,(done[i]||0)-1);upd({done,cur:i,restUntil:0});});
   const rr=document.getElementById('poReroll');if(rr)rr.onclick=()=>{const n=((l&&l.rr)||0)+1;const pr=program(c,{reroll:n});if(!pr.items.length)return;upd({rr:n,label:pr.label,btName:pr.btName,items:pr.items,extra:pr.extra,done:pr.items.map(()=>0),cur:0,restUntil:0});toastP('운동을 다시 뽑았습니다');};
   const rs=document.getElementById('poRest');if(rs)rs.onclick=()=>upd({restUntil:Date.now()+60000});
-  const en=document.getElementById('poEnd');if(en)en.onclick=async()=>{if(!confirm(s.name+' 학생 수업을 종료할까요?'))return;await upd({ended:true,endedAt:Date.now(),restUntil:0});releaseIfEmpty(l&&l.pod,c);};
+  const en=document.getElementById('poEnd');if(en)en.onclick=async()=>{if(!confirm(s.name+' 학생 수업을 종료할까요?'))return;await upd(Object.assign({ended:true,endedAt:Date.now(),restUntil:0},l&&l.classStartAt?{}:{classStartAt:(l&&l.startedAt)||Date.now()}));releaseIfEmpty(l&&l.pod,c);};
   const ro=document.getElementById('poReopen');if(ro)ro.onclick=async()=>{if(l&&l.pod&&PODS[l.pod]){try{await claimPod(l.pod,c);}catch(e){const m=String(e&&e.message||e);return toastP(m.startsWith('LOCK:')?`${m.slice(5)} 코치가 그 POD를 쓰고 있어 다시 열 수 없습니다. POD를 먼저 바꿔 주세요`:'다시 열기 실패: '+m,'err');}}upd({ended:false});};
  }
  document.getElementById('poManBtn').onclick=async()=>{const v=document.getElementById('poManSel').value;if(!v)return toastP('학생을 선택하세요','err');try{const r=await markAttend(v,'coach');toastP(r.already?S[v].name+' 학생은 이미 출석했어요':S[v].name+' 출석 처리 완료');sel=v;drawRoster();drawDetail();}catch(e){fsErr(e);}};
@@ -7271,7 +7323,7 @@ function viewCoach(selArg){
  onClean(COL('logs').where('date','==',d).onSnapshot(snap=>{logs={};snap.forEach(x=>{const v=x.data();logs[v.code]=v;});drawRoster();drawDetail();},fsErr));
  onClean(COL('pods').where('date','==',d).onSnapshot(snap=>{claims={};snap.forEach(x=>{const v=x.data();claims[v.pod]=v;});drawDetail();},fsErr));
  if(IS_ADM){const nb=document.getElementById('poCoachNm');if(nb)nb.onclick=askName;if(!coachName)setTimeout(askName,300);}
- every(1000,()=>{if(sel&&logs[sel]&&logs[sel].restUntil>Date.now()-1500)drawDetail();});
+ every(1000,()=>{if(sel&&logs[sel]&&logs[sel].restUntil>Date.now()-1500)drawDetail();else clsTick();});
  {const rd=()=>{drawRoster();drawDetail();};window.addEventListener('po-data',rd);onClean(()=>window.removeEventListener('po-data',rd));}
  drawRoster();drawDetail();
 }
