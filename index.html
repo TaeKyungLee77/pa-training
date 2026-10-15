@@ -3154,7 +3154,7 @@ function getWeightLossCardioPrescription(stu){
     return `<div style="margin-top:10px;padding:12px;background:rgba(232,98,42,.06);border:1px solid rgba(232,98,42,.2);border-radius:8px;">
 <div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:8px;">🔥 ${esc(stu.name)} 맞춤 처방 (남·체중감량)</div>
 <div style="font-size:10px;color:var(--muted);line-height:1.7;">
-<div style="margin-bottom:6px;"><strong style="color:var(--text);">🅰️ 메인 옵션 1:</strong> 구독적 유산소 60분 (BPM ${lo}~${hi}) — Fatmax Zone</div>
+<div style="margin-bottom:6px;"><strong style="color:var(--text);">🅰️ 메인 옵션 1:</strong> 지속적 유산소 60분 (BPM ${lo}~${hi}) — Fatmax Zone</div>
 <div style="margin-bottom:6px;"><strong style="color:var(--text);">🅱️ 메인 옵션 2:</strong> 고강도 인터벌 (HIIT) 20~30분 + <strong style="color:var(--green);">필수 마무리 저강도 유산소 15~20분 (BPM ${recoveryLo}~${recoveryHi})</strong></div>
 <div style="padding:6px 8px;background:rgba(111,207,151,.08);border-radius:5px;color:var(--green);font-weight:600;margin-top:6px;">
 💚 인터벌 후 회복 유산소 = 젖산 제거 + 근비대 방지 (라인 유지)
@@ -3162,11 +3162,11 @@ function getWeightLossCardioPrescription(stu){
 </div>
 </div>`;
   }else{
-    /* 여학생: 라인 잡기 — 구독적 유산소 + 보조 운동 */
+    /* 여학생: 라인 잡기 — 지속적 유산소 + 보조 운동 */
     return `<div style="margin-top:10px;padding:12px;background:rgba(232,98,42,.06);border:1px solid rgba(232,98,42,.2);border-radius:8px;">
 <div style="font-size:11px;font-weight:700;color:var(--orange);margin-bottom:8px;">🌸 ${esc(stu.name)} 맞춤 처방 (여·체중감량 / 라인 잡기)</div>
 <div style="font-size:10px;color:var(--muted);line-height:1.7;">
-<div style="margin-bottom:6px;"><strong style="color:var(--text);">메인:</strong> 구독적 유산소 60분 (BPM ${lo}~${hi}) — Fatmax Zone</div>
+<div style="margin-bottom:6px;"><strong style="color:var(--text);">메인:</strong> 지속적 유산소 60분 (BPM ${lo}~${hi}) — Fatmax Zone</div>
 <div style="margin-bottom:6px;"><strong style="color:var(--text);">추천 종목:</strong> 조깅 / 자전거 / 일립티컬 / 인클라인 워킹</div>
 <div style="margin-bottom:6px;"><strong style="color:var(--text);">+ 보조 (15~20분):</strong> 코어 / 필라테스 / 한다리 운동 (라인 강조)</div>
 <div style="padding:6px 8px;background:rgba(232,98,42,.08);border-radius:5px;color:var(--orange);font-weight:600;margin-top:6px;">
