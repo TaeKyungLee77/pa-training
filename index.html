@@ -234,6 +234,16 @@ body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;back
 .admin-panel{display:none;}
 .admin-panel.on{display:block;}
 .atabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:14px;}
+.sm-chip{padding:5px 10px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit}
+.sm-chip.on{border-color:var(--accent);background:rgba(100,160,200,.15);color:var(--accent)}
+.sm-chip.warn.on{border-color:var(--orange);background:rgba(232,98,42,.15);color:var(--orange)}
+.sm-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:7px}
+.sm-row>b{font-size:10px;color:var(--muted);min-width:40px}
+.sm-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.sm-tbl th{font-size:10px;color:var(--muted);font-weight:700;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.sm-tbl td{padding:8px;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap}
+.sm-tbl tr.r{cursor:pointer}.sm-tbl tr.r:hover td{background:rgba(255,255,255,.03)}.sm-tbl tr.sel td{background:rgba(100,160,200,.12)}
+.sm-tag{font-size:10px;padding:2px 6px;border-radius:5px;background:rgba(232,98,42,.14);color:var(--orange);margin-right:3px}
 .atb{padding:8px 14px;border-radius:8px;font-size:11px;font-weight:700;color:var(--muted);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);transition:all .2s;}
 .atb:hover{color:var(--text);}.atb.on{background:rgba(100,160,200,.15);color:var(--accent);border-color:rgba(100,160,200,.3);}
 .asec{display:none;}.asec.on{display:block;}
@@ -4239,6 +4249,36 @@ function setStuRegion(c,region){const r=lG('pa_student_region',{});r[c]=region;l
 let stuRegion='all';
 let stuSearch='';
 let stuType='all';/* all / personal / academy */
+/* [v9] 학생 분류: 소속 학원 · 상태 · 과정 · 학년 · 확인 필요 */
+let stuAca='all',stuCourseF='all',stuGrade='all',stuAttn=false,_paPend={n:null,at:0};
+function setStuAcademy(c,id){const m=gAcademyMembers();if(id)m[c]=id;else delete m[c];sAcademyMembers(m);}
+function gradeOf(c){const s=S[c]||{};const b=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s.birth||''));const now=new Date(Date.now()+9*3600e3);
+ if(b){const sy=now.getUTCMonth()+1>=3?now.getUTCFullYear():now.getUTCFullYear()-1;const g=sy-(+b[1]+7)+1;
+  if(g>=1&&g<=6)return{lv:'초',nm:'초'+g};if(g>=7&&g<=9)return{lv:'중',nm:'중'+(g-6)};if(g>=10&&g<=12)return{lv:'고',nm:'고'+(g-9)};return g>12?{lv:'성인',nm:'성인'}:{lv:'초',nm:'미취학'};}
+ const a=+s.age;if(!a)return{lv:'?',nm:'-'};if(a<=12)return{lv:'초',nm:'초등'};if(a<=15)return{lv:'중',nm:'중등'};if(a<=18)return{lv:'고',nm:'고등'};return{lv:'성인',nm:'성인'};}
+function lastAttOf(c){const a=(lG('pa_attendance',{})||{})[c]||{};const ds=Object.keys(a).filter(d=>a[d]==='O'&&/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();return ds[ds.length-1]||'';}
+function attnOf(c){const out=[];if(getStuStatusInfo(c).status!=='active')return out;
+ try{if(window.PO&&PO._guard&&PO._guard(c))out.push('보호자 동의 대기');}catch(e){}
+ try{if(window.PO&&PO._flags&&Object.keys(PO._flags(c,new Date())||{}).length)out.push('4주 체크 주의');}catch(e){}
+ const la=lastAttOf(c),today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+ if(!la)out.push('출석 기록 없음');else if((new Date(today)-new Date(la))/864e5>7)out.push('7일 넘게 결석');
+ try{if(!getInbody(c).length)out.push('인바디 미측정');}catch(e){}
+ return out;}
+function paPendCount(){if(paRole()!=='super_admin')return null;if(Date.now()-_paPend.at>60000){_paPend.at=Date.now();db.collection('pa_signups').where('status','==','pending').get().then(q=>{const n=q.size;if(n!==_paPend.n){_paPend.n=n;if(aTab==='a-stuMgr')rAB();}}).catch(()=>{});}return _paPend.n;}
+/* [v9] 휴지통 */
+async function openStuTrash(){
+ const old=document.getElementById('stuTrashM');if(old)old.remove();
+ const m=document.createElement('div');m.id='stuTrashM';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+ m.innerHTML='<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;width:100%;max-width:520px;max-height:80vh;overflow:auto"><div style="display:flex;align-items:center;margin-bottom:8px"><b style="font-size:15px;flex:1">🗑 휴지통</b><button class="ab" data-x>닫기</button></div><p style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:12px">지운 학생은 30일 동안 여기 보관돼요. <b>되살리기</b>를 누르면 출석·체형·카카오 연결까지 그대로 돌아와요. 30일이 지나면 자동으로 완전히 지워져요.</p><div id="stuTrashL" style="font-size:12px;color:var(--muted)">불러오는 중…</div></div>';
+ document.body.appendChild(m);m.onclick=e=>{if(e.target===m||e.target.dataset.x!==undefined)m.remove();};
+ const load=async()=>{const L=document.getElementById('stuTrashL');if(!L)return;
+  try{const r=await paSrv({trash:{action:'list'}});const it=r.items||[];
+   if(!it.length){L.innerHTML='휴지통이 비어 있어요.';return;}
+   L.innerHTML=it.map(x=>{const left=Math.max(0,Math.ceil((x.expiresAt-Date.now())/864e5));return`<div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap"><div style="flex:1;min-width:160px"><b style="color:var(--text)">${esc(x.name||'(이름 없음)')}</b> <span>${esc(x.code)}</span><div style="font-size:10px;margin-top:2px">${new Date(x.at).toLocaleDateString('ko-KR')} 삭제 · ${left}일 뒤 완전 삭제</div></div><button class="ab ab-b" data-rs="${esc(x.id)}">되살리기</button><button class="ab ab-r" data-pg="${esc(x.id)}">완전 삭제</button></div>`;}).join('');
+   L.querySelectorAll('[data-rs]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{const r2=await paSrv({trash:{action:'restore',id:b.dataset.rs}});await paReloadData();toast((r2.name||r2.code)+' 학생을 되살렸어요'+(r2.skipped?' (일부 카카오 연결은 다른 계정이 쓰고 있어 빠졌어요)':''));if(aTab==='a-stuMgr')rAB();load();}catch(e){b.disabled=false;toast(e.reason==='exists'?'같은 코드의 학생이 이미 있어서 되살릴 수 없어요':'되살리기 실패: 잠시 후 다시 시도해 주세요','err');}});
+   L.querySelectorAll('[data-pg]').forEach(b=>b.onclick=async()=>{if(!confirm('완전히 삭제할까요? 다시는 되살릴 수 없어요.'))return;b.disabled=true;try{await paSrv({trash:{action:'purge',id:b.dataset.pg}});load();}catch(e){b.disabled=false;toast('삭제 실패','err');}});
+  }catch(e){L.innerHTML='휴지통을 불러오지 못했어요 (관리자만 볼 수 있어요)';}};
+ load();}
 
 function aStuMgr(){
 const wData=lG('pa_weights',{});
@@ -4258,65 +4298,38 @@ const m=bt?.measurements||{};
 const ibList=getInbody(c);
 const ib=ibList[0]||null;
 
-const regionCounts={};gRegions().forEach(r=>regionCounts[r]=0);
-sList.forEach(([cd])=>{const rg=getStuRegion(cd);regionCounts[rg]=(regionCounts[rg]||0)+1;});
-const filtered=sList.filter(([cd,st])=>{
-const si=getStuStatusInfo(cd).status;
-const rg=getStuRegion(cd);
-const acaIdOfStu=getStuAcademy(cd);
-const matchStatus=stuFilter==='all'||si===stuFilter;
-const matchRegion=stuRegion==='all'||rg===stuRegion;
-const matchSearch=!stuSearch||st.name.includes(stuSearch)||cd.toLowerCase().includes(stuSearch.toLowerCase());
-const matchType=stuType==='all'||(stuType==='personal'&&!acaIdOfStu)||(stuType==='academy'&&acaIdOfStu);
-return matchStatus&&matchRegion&&matchSearch&&matchType;
-});
-
+const _acas=gAcademies();const _isAdm=_ar.role==='super_admin';
+const facts=sList.map(([cd,st])=>({cd,st,si:getStuStatusInfo(cd).status,aca:getStuAcademy(cd)||'',crs:(window.PO&&PO._course?PO._course(cd).track:'general'),gr:gradeOf(cd),la:lastAttOf(cd),attn:attnOf(cd)}));
+const _q=String(stuSearch||'').toLowerCase();
+const pass=(f,skip)=>(skip==='s'||stuFilter==='all'||f.si===stuFilter)&&(skip==='a'||stuAca==='all'||(stuAca==='none'?!f.aca:f.aca===stuAca))&&(skip==='c'||stuCourseF==='all'||f.crs===stuCourseF)&&(skip==='g'||stuGrade==='all'||f.gr.lv===stuGrade)&&(skip==='w'||!stuAttn||f.attn.length>0)&&(!_q||String(f.st.name||'').toLowerCase().includes(_q)||f.cd.toLowerCase().includes(_q));
+const shown=facts.filter(f=>pass(f));
+const cnt=(k,fn)=>facts.filter(f=>pass(f,k)&&fn(f)).length;
+const chip=(on,label,js,cls)=>`<button class="sm-chip${cls?' '+cls:''}${on?' on':''}" onclick="${js};rAB();">${label}</button>`;
+const pend=_isAdm?paPendCount():null;
+const acaKeys=Object.keys(_acas).filter(k=>facts.some(f=>f.aca===k)||_isAdm);
+const stNm={active:'이용 중',paused:'휴회',quit:'퇴회'};
 return`<h3 style="font-size:14px;margin-bottom:8px;">👥 학생 관리 <span style="font-size:11px;color:var(--muted);font-weight:500;">(${sList.length}명)</span></h3>
 
-<!-- 📊 분류 탭: 전체/개인/학원 -->
-<div style="display:flex;gap:6px;margin-bottom:10px;">
-<button onclick="stuType='all';rAB();" style="flex:1;padding:8px 10px;background:${stuType==='all'?'var(--accent)':'rgba(255,255,255,.05)'};color:${stuType==='all'?'#000':'var(--text)'};border:1px solid ${stuType==='all'?'var(--accent)':'var(--border)'};border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">📋 전체 ${sList.length}</button>
-<button onclick="stuType='personal';rAB();" style="flex:1;padding:8px 10px;background:${stuType==='personal'?'var(--accent)':'rgba(255,255,255,.05)'};color:${stuType==='personal'?'#000':'var(--text)'};border:1px solid ${stuType==='personal'?'var(--accent)':'var(--border)'};border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">👤 개인 ${sList.filter(([c])=>!getStuAcademy(c)).length}</button>
-<button onclick="stuType='academy';rAB();" style="flex:1;padding:8px 10px;background:${stuType==='academy'?'var(--orange)':'rgba(255,255,255,.05)'};color:${stuType==='academy'?'#fff':'var(--text)'};border:1px solid ${stuType==='academy'?'var(--orange)':'var(--border)'};border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">🏢 학원 ${sList.filter(([c])=>getStuAcademy(c)).length}</button>
+<!-- [v9] 학생 분류 -->
+<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+<input type="text" placeholder="🔍 이름 또는 코드로 검색..." value="${esc(stuSearch).replace(/"/g,'&quot;')}" onchange="stuSearch=this.value;rAB();" style="flex:1;min-width:180px;padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;">
+${_isAdm?`<button class="ab" onclick="openStuTrash()">🗑 휴지통</button><button class="ab ab-b" onclick="document.getElementById('addStuForm').style.display=document.getElementById('addStuForm').style.display==='none'?'block':'none'">+ 학생 추가</button>`:''}
 </div>
-
-<div style="margin-bottom:10px;">
-<input type="text" placeholder="🔍 이름 또는 코드로 검색..." value="${stuSearch}" oninput="stuSearch=this.value;rAB();" style="width:100%;padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;">
-</div>
-
-<div style="display:flex;gap:4px;margin-bottom:8px;font-size:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;align-items:center;">
-<button onclick="stuRegion='all';rAB();" style="padding:4px 10px;border-radius:6px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border:1px solid ${stuRegion==='all'?'var(--accent)':'var(--border)'};background:${stuRegion==='all'?'rgba(100,160,200,.15)':'transparent'};color:${stuRegion==='all'?'var(--accent)':'var(--muted)'};">전체 ${sList.length}</button>
-${gRegions().filter(r=>regionCounts[r]>0||r==='미배정').map(r=>`<button onclick="stuRegion='${r}';rAB();" style="padding:4px 10px;border-radius:6px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border:1px solid ${stuRegion===r?'var(--accent)':'var(--border)'};background:${stuRegion===r?'rgba(100,160,200,.15)':'transparent'};color:${stuRegion===r?'var(--accent)':'var(--muted)'};">📍${r} ${regionCounts[r]}</button>`).join('')}
-${_ar.role==='super_admin'?`<button onclick="openRegionManager()" style="padding:4px 10px;border-radius:6px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;border:1px dashed var(--orange);background:rgba(232,98,42,.08);color:var(--orange);">⚙️ 지역 관리</button>`:''}
-</div>
-
-<div style="display:flex;gap:4px;margin-bottom:10px;font-size:10px;">
-<button onclick="stuFilter='all';rAB();" style="padding:3px 8px;border-radius:5px;font-weight:700;cursor:pointer;border:1px solid ${stuFilter==='all'?'var(--accent)':'var(--border)'};background:${stuFilter==='all'?'rgba(100,160,200,.1)':'transparent'};color:${stuFilter==='all'?'var(--accent)':'var(--muted)'};">전체</button>
-<button onclick="stuFilter='active';rAB();" style="padding:3px 8px;border-radius:5px;font-weight:700;cursor:pointer;border:1px solid ${stuFilter==='active'?'var(--green)':'var(--border)'};background:${stuFilter==='active'?'rgba(111,207,151,.1)':'transparent'};color:${stuFilter==='active'?'var(--green)':'var(--muted)'};">활성</button>
-<button onclick="stuFilter='paused';rAB();" style="padding:3px 8px;border-radius:5px;font-weight:700;cursor:pointer;border:1px solid ${stuFilter==='paused'?'var(--orange)':'var(--border)'};background:${stuFilter==='paused'?'rgba(232,98,42,.1)':'transparent'};color:${stuFilter==='paused'?'var(--orange)':'var(--muted)'};">휴회</button>
-<button onclick="stuFilter='quit';rAB();" style="padding:3px 8px;border-radius:5px;font-weight:700;cursor:pointer;border:1px solid ${stuFilter==='quit'?'rgba(255,255,255,.2)':'var(--border)'};background:${stuFilter==='quit'?'rgba(255,255,255,.04)':'transparent'};color:${stuFilter==='quit'?'rgba(255,255,255,.4)':'var(--muted)'};">퇴회</button>
-</div>
-
-<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;max-height:200px;overflow-y:auto;padding:4px 0;">
-${filtered.map(([cd,st])=>{
-const si=getStuStatusInfo(cd);const rg=getStuRegion(cd);
-const acaIdOfStu=getStuAcademy(cd);
-const acaName=acaIdOfStu?(gAcademies()[acaIdOfStu]?.name||''):'';
-const stBg=si.status==='paused'?'rgba(232,98,42,.08)':si.status==='quit'?'rgba(255,255,255,.03)':'transparent';
-const stBorder=cd===c?'var(--accent)':si.status==='paused'?'rgba(232,98,42,.3)':si.status==='quit'?'rgba(255,255,255,.1)':'var(--border)';
-const stColor=cd===c?'var(--accent)':si.status==='quit'?'rgba(255,255,255,.3)':'var(--muted)';
-const stIcon=si.status==='paused'?'⏸ ':si.status==='quit'?'⛔ ':'';
-const acaBadge=acaIdOfStu?`<span style="font-size:9px;color:var(--orange);background:rgba(232,98,42,.15);padding:1px 5px;border-radius:4px;margin-left:4px;">🏢${acaName.slice(0,4)}</span>`:'';
-return`<button onclick="smStu='${cd}';rAB();" style="padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;border:1px solid ${stBorder};background:${cd===c?'rgba(100,160,200,.15)':stBg};color:${stColor};${si.status==='quit'?'text-decoration:line-through;':''}">${stIcon}${st.name}${acaBadge}</button>`;}).join('')}
-${filtered.length===0?'<div style="font-size:12px;color:var(--muted);padding:12px;">검색 결과 없음</div>':''}
-<button onclick="document.getElementById('addStuForm').style.display=document.getElementById('addStuForm').style.display==='none'?'block':'none'" style="padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px dashed var(--border);background:transparent;color:var(--muted);${_ar.role!=='super_admin'?'display:none;':''}">+ 추가</button>
-</div>
+<div class="sm-row"><b>🏢 학원</b>${chip(stuAca==='all','전체 '+cnt('a',()=>1),"stuAca='all'")}${acaKeys.map(k=>chip(stuAca===k,esc(_acas[k].name||k)+' '+cnt('a',f=>f.aca===k),"stuAca='"+k+"'")).join('')}${chip(stuAca==='none','개인 회원 '+cnt('a',f=>!f.aca),"stuAca='none'")}</div>
+<div class="sm-row"><b>📌 상태</b>${chip(stuFilter==='all','전체',"stuFilter='all'")}${['active','paused','quit'].map(v=>chip(stuFilter===v,stNm[v]+' '+cnt('s',f=>f.si===v),"stuFilter='"+v+"'")).join('')}${pend?`<button class="sm-chip warn on" onclick="aTab='po-signup';rAT();">🙋 가입 대기 ${pend}</button>`:''}</div>
+<div class="sm-row"><b>🎯 과정</b>${chip(stuCourseF==='all','전체',"stuCourseF='all'")}${chip(stuCourseF==='general','일반 '+cnt('c',f=>f.crs==='general'),"stuCourseF='general'")}${chip(stuCourseF==='contest','콩쿠르·입시 '+cnt('c',f=>f.crs==='contest'),"stuCourseF='contest'")}</div>
+<div class="sm-row"><b>🎒 학년</b>${chip(stuGrade==='all','전체',"stuGrade='all'")}${['초','중','고','성인'].map(v=>chip(stuGrade===v,(v==='성인'?'성인':v+'등')+' '+cnt('g',f=>f.gr.lv===v),"stuGrade='"+v+"'")).join('')}</div>
+<div class="sm-row"><b>⚠️</b>${chip(stuAttn,'확인 필요한 학생만 '+cnt('w',f=>f.attn.length>0),'stuAttn=!stuAttn','warn')}${(stuAca!=='all'||stuFilter!=='all'||stuCourseF!=='all'||stuGrade!=='all'||stuAttn||stuSearch)?chip(false,'✕ 조건 지우기',"stuAca='all';stuFilter='all';stuCourseF='all';stuGrade='all';stuAttn=false;stuSearch=''"):''}</div>
+<div style="overflow-x:auto;margin:6px 0 16px;border:1px solid var(--border);border-radius:10px;max-height:340px;overflow-y:auto">
+<table class="sm-tbl"><tr><th>이름</th><th>학원</th><th>학년</th><th>과정</th><th>상태</th><th>최근 출석</th><th>확인 필요</th></tr>
+${shown.map(f=>`<tr class="r${f.cd===c?' sel':''}" onclick="smStu='${f.cd}';rAB();"><td><b style="color:var(--text)">${esc(f.st.name||'')}</b> <span style="font-size:10px;color:var(--muted)">${f.cd}</span></td><td>${f.aca?esc((_acas[f.aca]||{}).name||f.aca):'<span style="color:var(--muted)">개인</span>'}</td><td>${f.gr.nm}</td><td>${f.crs==='contest'?'🏆 콩쿠르·입시':'일반'}</td><td style="color:${f.si==='active'?'var(--green)':f.si==='paused'?'var(--orange)':'var(--muted)'}">${stNm[f.si]||f.si}</td><td>${f.la?f.la.slice(5).replace('-','/'):'-'}</td><td>${f.attn.map(t=>`<span class="sm-tag">${t}</span>`).join('')||'<span style="color:var(--muted)">-</span>'}</td></tr>`).join('')||'<tr><td colspan="7" style="color:var(--muted);padding:14px">조건에 맞는 학생이 없어요</td></tr>'}
+</table></div>
 
 <div id="addStuForm" style="display:none;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;background:rgba(100,160,200,.04);">
 <div style="font-size:12px;font-weight:700;margin-bottom:10px;">➕ 학생 직접 추가</div>
 <div class="ar"><label>코드</label><input id="nsCode" placeholder="예: ABC012" style="width:100px" maxlength="10"><label>이름</label><input id="nsName" placeholder="이름"></div>
 <div class="ar"><label>나이</label><input type="number" id="nsAge" value="17" style="width:55px"><label>성별</label><select id="nsG" style="width:55px"><option value="여">여</option><option value="남">남</option></select><label>키</label><input type="number" id="nsH" placeholder="160" style="width:65px"><label>몸무게</label><input type="number" step="0.1" id="nsW" placeholder="55" style="width:65px"></div>
-<div class="ar"><label>지역</label><select id="nsRegion">${gRegions().map(r=>`<option value="${r}">${r}</option>`).join('')}</select></div>
+<div class="ar"><label>소속 학원</label><select id="nsAca"><option value="">개인 회원</option>${Object.entries(gAcademies()).map(([k,a])=>`<option value="${k}">${esc(a.name||k)}</option>`).join('')}</select></div>
 <div class="ar"><label>목표</label><select id="nsGoal"><option value="체중감량">체중감량</option><option value="근육증가">근육증가</option><option value="증량+근육">증량+근육</option><option value="감량+근육">감량+근육</option></select><label>kcal</label><input type="number" id="nsTar" placeholder="자동" style="width:80px"><button class="ab ab-b" onclick="addStu()">추가</button></div>
 </div>
 
@@ -4348,9 +4361,9 @@ ${si.reason?`<span style="font-size:9px;color:var(--muted);">· ${si.reason}</sp
 ${_ar.role==='super_admin'?`<button class="ab ab-r" style="font-size:9px;" onclick="delStu('${c}')">🗑 삭제</button>`:''}</div></div>`;})()}
 
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-<span style="font-size:10px;color:var(--muted);font-weight:700;">📍 지역:</span>
-<select onchange="setStuRegion('${c}',this.value);rAB();" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:11px;font-family:inherit;">
-${gRegions().map(r=>`<option value="${r}"${getStuRegion(c)===r?' selected':''}>${r}</option>`).join('')}
+<span style="font-size:10px;color:var(--muted);font-weight:700;">🏢 소속 학원:</span>
+<select ${_ar.role==='super_admin'?'':'disabled'} onchange="setStuAcademy('${c}',this.value);rAB();" style="background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:11px;font-family:inherit;">
+<option value="">개인 회원</option>${Object.entries(gAcademies()).map(([k,a])=>`<option value="${k}"${getStuAcademy(c)===k?' selected':''}>${esc(a.name||k)}</option>`).join('')}
 </select>
 <button class="ab" style="font-size:9px;color:var(--accent);border:1px solid rgba(100,160,200,.25);" onclick="adminUploadInbody('${c}')">📊 인바디 업로드</button>
 <button class="ab" style="font-size:9px;color:var(--orange);border:1px solid rgba(232,98,42,.3);background:rgba(232,98,42,.06);" onclick="quickStudentReport('${c}')">📄 PDF 리포트</button>
@@ -4647,9 +4660,9 @@ S[code]={name,age,h,w,g,goal,gc,bmr,tdee,tar,wts:[w]};
 CODES[code]={n:name,e:mkE(365)};
 const cs=lG('pa_custom_students',null)||{};cs[code]=S[code];lS('pa_custom_students',cs);
 const allS=lG('pa_students',{});allS[code]=S[code];lS('pa_students',allS);
-/* 지역 저장 */
-const region=document.getElementById('nsRegion')?.value||'미배정';
-setStuRegion(code,region);
+/* 소속 학원 저장 */
+const _naca=document.getElementById('nsAca')?.value||'';
+if(_naca)setStuAcademy(code,_naca);
 toast(`${name} (${code}) 추가 완료`);rAB();}
 
 /* ===== 관리자: 인바디 사진 업로드 → AI 분석 → 저장 ===== */
@@ -4703,9 +4716,9 @@ if(_ar.role!=='super_admin'){
   toast('학생 삭제는 본사 관리자만 가능합니다','err');
   return;
 }
-if(!confirm(`${S[c]?.name} 학생을 완전히 삭제할까요?\n\n출석·체형·컨디션 기록, 카카오 연결, 보호자 연결까지 모두 지워지고 되돌릴 수 없습니다.`))return;
+if(!confirm(`${S[c]?.name} 학생을 휴지통으로 옮길까요?\n\n30일 동안 보관되고, 그 안에는 [🗑 휴지통]에서 기록·연결까지 그대로 되살릴 수 있어요.`))return;
 /* [v8] 서버에서 기록·연결까지 완전 삭제 */
-paSrv({adminDelete:{students:[c]}}).then(async()=>{try{delete S[c];delete CODES[c];await paReloadData();}catch(e){}toast('삭제 완료');rAB();}).catch(e=>{console.warn('[PA] 학생 삭제 실패',e);toast('삭제 실패: '+(e.status===403?'관리자만 가능합니다':'잠시 후 다시 시도해 주세요'),'err');});
+paSrv({adminDelete:{students:[c],trash:true}}).then(async()=>{try{delete S[c];delete CODES[c];await paReloadData();}catch(e){}if(smStu===c)smStu=Object.keys(S)[0]||'';toast('휴지통으로 옮겼어요 (30일 안에 되살리기 가능)');rAB();}).catch(e=>{console.warn('[PA] 학생 삭제 실패',e);toast('삭제 실패: '+(e.status===403?'관리자만 가능합니다':'잠시 후 다시 시도해 주세요'),'err');});
 }
 function delStuLocal(c){delete S[c];delete CODES[c];const cs=lG('pa_custom_students',null)||{};delete cs[c];lS('pa_custom_students',cs);const allS=lG('pa_students',{});delete allS[c];lS('pa_students',allS);const st=lG('pa_student_status',{});delete st[c];lS('pa_student_status',st);
 /* 학원 멤버 매핑도 정리 */
@@ -8070,7 +8083,7 @@ rAT=function(){
  return r;
 };
 
-return{close,route,open:h=>{location.hash=h;},_program:program,_xl:XL,_tax:TAX,_energy:energyOf,_vid:vidOf};
+return{close,route,open:h=>{location.hash=h;},_program:program,_xl:XL,_tax:TAX,_energy:energyOf,_vid:vidOf,_course:courseOf,_flags:flagsOf,_guard:guardLocked};
 })();
 </script>
 <!-- ===== /P.A 센터 운영 모듈 ===== -->
