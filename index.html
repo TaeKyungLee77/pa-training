@@ -1021,6 +1021,9 @@ function adjOf(c){const a=adjRaw(c);const today=new Date(Date.now()+9*3600e3).to
 /* 오늘 식단 목표 kcal: 코치 조정 반영 · 기초대사량 아래로 안 내림 · 18세 미만은 TDEE 85% 아래로 안 내림 */
 function tarOf(c){const s=S[c]||{};const base=+s.tar||1800;const a=adjOf(c);if(a.diet===1)return base;
  let t=Math.round(base*a.diet);if(+s.bmr)t=Math.max(t,+s.bmr);if((+s.age||0)<18&&+s.tdee)t=Math.max(t,Math.round(s.tdee*0.85));return Math.min(base,t);}
+/* [patch28] 기초대사량은 미플린 공식 하나로 통일 (참고문헌 [11]) — 목표 칼로리는 지금 비율 유지, 18세 미만은 TDEE 85%·기초대사량 아래로 안 내려감 */
+function paBmr(g,w,h,age){w=+w;h=+h;age=+age;if(!(w>0&&h>0&&age>0))return 0;return Math.round(10*w+6.25*h-5*age+(String(g)==='남'?5:-161));}
+function paNormBmr(x){if(!x)return false;const b=paBmr(x.g,x.w,x.h,x.age);if(!b||b===x.bmr)return false;const r=x.tar&&x.tdee?x.tar/x.tdee:1;x.bmr=b;x.tdee=Math.round(b*PA_ACT);let t=Math.round(x.tdee*r);if((+x.age||0)<18)t=Math.max(t,Math.round(x.tdee*0.85));x.tar=Math.max(t,b);return true;}
 async function loadStudents(){
 const saved=lG('pa_students',null);
 if(saved&&Object.keys(saved).length>0){
@@ -1037,6 +1040,7 @@ lS('pa_students',custom);
    학생은 관리자가 직접 등록 (가짜 데이터 시드 금지) */
 }
 /* CODES 동기화 */
+Object.keys(S).forEach(c=>{try{paNormBmr(S[c]);}catch(e){}});
 Object.keys(S).forEach(c=>{if(!CODES[c])CODES[c]={n:S[c].name,e:mkE(365)};});
 }
 
@@ -1159,7 +1163,7 @@ return Math.round(s.w*33);
 /* BMR/TDEE/목표kcal 재계산 (키/몸무게 변경 시) */
 function recalcStudent(c){
 const s=S[c];if(!s)return;
-s.bmr=s.g==='남'?Math.round(88.362+13.397*s.w+4.799*s.h-5.677*s.age):Math.round(447.593+9.247*s.w+3.098*s.h-4.33*s.age);
+s.bmr=paBmr(s.g,s.w,s.h,s.age);
 s.tdee=Math.round(s.bmr*PA_ACT);
 /* 목표 칼로리 재계산 */
 if(s.goal==='체중감량')s.tar=Math.round(s.tdee*0.85);
@@ -1623,7 +1627,7 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <div style="font-size:13px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">📋 기본 정보를 입력해 주세요</div>
 <label class="di">이름</label><input class="dc" id="sfName" placeholder="예: 김하늘" maxlength="20" autocomplete="name" style="margin-bottom:10px;">
 <label class="di">생년월일</label><input class="dc" id="sfBirth" type="date" min="1950-01-01" max="2023-12-31" style="margin-bottom:10px;">
-<label class="di">성별</label><div style="display:flex;gap:8px;margin-bottom:10px;" id="sfG" data-v="여"><button type="button" class="my-tab on" data-g="여" style="flex:1;padding:10px;font-weight:700;">여</button><button type="button" class="my-tab" data-g="남" style="flex:1;padding:10px;font-weight:700;">남</button></div>
+<label class="di">성별</label><div style="display:flex;gap:8px;margin-bottom:10px;" id="sfG" data-v=""><button type="button" class="my-tab" data-g="여" style="flex:1;padding:10px;font-weight:700;">여</button><button type="button" class="my-tab" data-g="남" style="flex:1;padding:10px;font-weight:700;">남</button></div>
 <div style="display:flex;gap:8px;"><div style="flex:1"><label class="di">키 (cm)</label><input class="dc" id="sfH" type="number" inputmode="decimal" placeholder="162" min="100" max="220" style="margin-bottom:10px;"></div><div style="flex:1"><label class="di">몸무게 (kg)</label><input class="dc" id="sfW" type="number" inputmode="decimal" placeholder="50" min="20" max="200" style="margin-bottom:10px;"></div></div>
 <label class="di">목표</label><select class="dc" id="sfGoal" style="margin-bottom:10px;"><option>체중감량</option><option>유지</option><option>근육증가</option><option selected>체형교정</option></select>
 <label class="di">학원 가입 코드 <span style="color:var(--muted);font-weight:400">(선택)</span></label><input class="dc" id="sfAca" placeholder="예: YEIN-2026 · 없으면 비워 두세요" maxlength="12" autocomplete="off" spellcheck="false" style="text-transform:uppercase;">
@@ -1853,8 +1857,9 @@ function paAgeFrom(b){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(b||'');if(!m)retu
 /* [v6] 본인 가입 신청 */
 async function doSelfSignup(){
 const g=id=>document.getElementById(id),em=g('linkEmSelf');const err=m=>{em.textContent=m;em.classList.add('on');};
-const p={name:g('sfName').value.trim(),birth:g('sfBirth').value,g:(g('sfG').dataset.v||'여'),h:+g('sfH').value,w:+g('sfW').value,goal:g('sfGoal').value};
+const p={name:g('sfName').value.trim(),birth:g('sfBirth').value,g:(g('sfG').dataset.v||''),h:+g('sfH').value,w:+g('sfW').value,goal:g('sfGoal').value};
 if(p.name.length<2)return err('이름을 입력하세요');
+if(p.g!=='여'&&p.g!=='남')return err('성별을 골라 주세요 (칼로리·운동 계산에 쓰여요)');
 const age=paAgeFrom(p.birth);if(age==null||age<3||age>99)return err('생년월일을 입력하세요');
 if(!(p.h>=100&&p.h<=220))return err('키를 cm로 입력하세요 (예: 162)');
 if(!(p.w>=20&&p.w<=200))return err('몸무게를 kg으로 입력하세요 (예: 50)');
@@ -2164,7 +2169,7 @@ async function analyzeFoodPhoto(dataUrl){
     if(loadText)loadText.textContent='AI가 음식을 분석하고 있어요...';
     const resp1=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
+      body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1000,messages:[{role:'user',content:[
         imgBlock,
         {type:'text',text:`당신은 한국 영양사(10년 경력)입니다. 이 음식 사진을 정밀 분석해주세요.
 
@@ -2204,7 +2209,7 @@ async function analyzeFoodPhoto(dataUrl){
     if(loadText)loadText.textContent='교차 검증 중...';
     const resp2=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:[
+      body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:800,messages:[{role:'user',content:[
         imgBlock,
         {type:'text',text:`동일한 음식 사진입니다. 이전 영양사의 분석 결과를 검증해주세요.
 
@@ -2629,7 +2634,7 @@ const sysPrompt=getAICPrompt()+getAICContext();
 const apiMsgs=aicHistory.slice(-10).map(m=>({role:m.role,content:m.content}));
 const resp=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
 method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:sysPrompt,messages:apiMsgs})
+body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:800,system:sysPrompt,messages:apiMsgs})
 },1);
 const data=await resp.json();
 const reply=data.content?.map(c=>c.text||'').join('')||'죄송해, 다시 한번 물어봐줄래?';
@@ -2715,7 +2720,7 @@ Claude 대화에서 이렇게 요청하세요:<br>
 <div style="font-size:10px;color:var(--muted);line-height:1.6;white-space:pre-wrap;max-height:200px;overflow-y:auto;background:rgba(255,255,255,.02);padding:10px;border-radius:8px;">${esc(prompt)}
 
 [학생 정보는 로그인한 학생에 따라 자동 생성됩니다]
-예시: 김예슬 / 23세 / 여 / 164cm / 59kg / 체중감량 / 하트형 / BMR 1402 / TDEE 1928</div>
+예시: 학생 1 / 23세 / 여 / 164cm / 59kg / 체중감량 / 하트형 / BMR 1402 / TDEE 1928</div>
 </div>
 
 <div id="aicTestResult" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:12px;">
@@ -2734,7 +2739,7 @@ body.innerHTML='<span style="color:var(--muted);font-style:italic;">AI 응답 �
 try{
 const resp=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
 method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:prompt2+'\n\n[테스트 학생]\n김예슬 / 23세 / 여 / 164cm / 59kg / 체중감량 / 하트형',messages:[{role:'user',content:q}]})
+body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:800,system:prompt2+'\n\n[테스트 학생]\n테스트 학생 / 23세 / 여 / 164cm / 59kg / 체중감량 / 하트형',messages:[{role:'user',content:q}]})
 },1);
 const data=await resp.json();
 const reply=data.content?.map(c=>c.text||'').join('')||'응답 없음';
@@ -4944,7 +4949,7 @@ const w=wl.find(x=>x.id===id);if(!w)return;
 /* 코드 생성 */
 const code=generateCode(w.name,w.g);
 /* 목표 kcal 계산 */
-const bmr=w.g==='남'?Math.round(88.362+13.397*w.w+4.799*w.h-5.677*w.age):Math.round(447.593+9.247*w.w+3.098*w.h-4.33*w.age);
+const bmr=paBmr(w.g,w.w,w.h,w.age);
 const tdee=Math.round(bmr*PA_ACT);
 let tar=w.tar||0;
 if(!tar){
@@ -5280,7 +5285,7 @@ const mediaType=resized.split(';')[0].split(':')[1]||'image/jpeg';
 try{
 const resp=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
 method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
+body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1000,messages:[{role:'user',content:[
 {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
 {type:'text',text:`이 인바디(InBody) 체성분 분석 결과지 사진을 읽고 수치를 추출하세요.
 
@@ -5600,7 +5605,7 @@ userInfo=`\n\n[사용자 기본정보]\n${s.g==='여'?'여성':'남성'} · ${s.
 try{
 const resp=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
 method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:[
+body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1500,messages:[{role:'user',content:[
 {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
 {type:'text',text:`당신은 골격 체형 분석 전문가(10년 경력)입니다. 아래 모든 데이터를 종합하여 체형을 분석하세요.
 
@@ -8028,12 +8033,12 @@ function tabOps(){
   <div class="po-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px" id="poCfg">${[['warm','워밍업'],['main','메인 근력'],['finish','마무리 (코어·스트레칭)'],['cardio','셀프 유산소 추천 (기본)'],['cardioLoss','셀프 유산소 추천 (감량 목표)'],['cardioMax','유산소 존 정원 (층별 기구 수)']].map(([k,nm])=>`<label class="po-sub">${nm}<input type="number" min="0" max="120" data-cfg="${k}" value="${cfg()[k]}" style="width:100%;margin-top:4px;padding:9px;border-radius:10px;background:var(--card2);color:#fff;border:1px solid var(--border)"></label>`).join('')}</div>
   <div class="po-row" style="margin-top:10px;justify-content:space-between;flex-wrap:wrap"><span class="po-sub" id="poCfgSum">코치 수업 합계 ${cfg().total}분</span><button class="po-btn sm" id="poCfgSave">저장</button></div>
   <p class="po-note" style="margin-top:8px">학생 체형·요일에 맞춰 워밍업 → 메인 근력 → 마무리 순서로 이 시간 안에 들어가게 운동 개수를 자동으로 맞춥니다. 셀프 유산소는 코치 수업 밖(수업 전·후 유산소 존)입니다. 유산소 존 정원은 층별 런닝머신+스텝밀 대수로 넣으세요(기본 런닝머신 3 + 스텝밀 2 = 5). 이미 출석한 학생은 다음 출석부터 반영됩니다.</p></div>
- <div class="po-card" style="margin-top:12px"><div class="po-lbl">🔥 TDEE 다시 계산 (활동 계수 ${PA_ACT})</div><p class="po-note">기존 학생은 예전 계수(1.375)로 계산되어 있습니다. 누르면 모든 학생의 TDEE를 다시 계산하고, 목표 칼로리는 지금 비율을 유지합니다(18세 미만은 85% 이상, 기초대사량 이상).</p><button class="po-btn sm" id="poTdee" style="margin-top:8px">전체 학생 다시 계산</button></div>
+ <div class="po-card" style="margin-top:12px"><div class="po-lbl">🔥 기초대사량·TDEE 다시 계산 (미플린 공식 · 활동 계수 ${PA_ACT})</div><p class="po-note">화면에는 이미 미플린 공식으로 계산해 보여줍니다. 누르면 저장된 값도 새 공식으로 바꿉니다. 기존 학생은 예전 계수(1.375)로 계산되어 있습니다. 누르면 모든 학생의 TDEE를 다시 계산하고, 목표 칼로리는 지금 비율을 유지합니다(18세 미만은 85% 이상, 기초대사량 이상).</p><button class="po-btn sm" id="poTdee" style="margin-top:8px">전체 학생 다시 계산</button></div>
  <div class="po-card" style="margin-top:12px" id="poV2"><div class="po-lbl">🗂 데이터 구조 (0-3 학생별 분리)</div><div class="po-note" id="poV2St">상태 확인 중…</div><div class="po-row" style="margin-top:10px;flex-wrap:wrap"><button class="po-btn sm" id="poV2Run">학생별 분리 실행</button><button class="po-btn sm g" id="poV2Back">되돌리기</button></div><pre id="poV2Log" style="white-space:pre-wrap;font-size:12px;color:var(--muted);margin-top:10px"></pre></div>
  <div class="po-card" style="margin-top:12px"><div class="po-lbl">학생 출석 QR</div><p class="po-note">학생은 카카오 로그인 → <b>MY 페이지 맨 위 "출석 QR 열기"</b>를 누르면 됩니다. QR은 30초마다 바뀝니다.</p></div>`;
  v2Card();staffCards();
  {const tb=document.getElementById('poTdee');if(tb)tb.onclick=()=>{if(!confirm('모든 학생의 TDEE와 목표 칼로리를 다시 계산할까요?'))return;let n=0;const ps=lG('pa_students',{})||{},cs=lG('pa_custom_students',{})||{};
-  Object.keys(S).forEach(c=>{const x=S[c];if(!x||!x.bmr)return;const r=x.tar&&x.tdee?x.tar/x.tdee:1;x.tdee=Math.round(x.bmr*PA_ACT);let t=Math.round(x.tdee*r);if((+x.age||0)<18)t=Math.max(t,Math.round(x.tdee*0.85));t=Math.max(t,x.bmr);x.tar=t;if(ps[c])ps[c]=Object.assign({},ps[c],{tdee:x.tdee,tar:x.tar});if(cs[c])cs[c]=Object.assign({},cs[c],{tdee:x.tdee,tar:x.tar});n++;});
+  Object.keys(S).forEach(c=>{const x=S[c];if(!x)return;{const b0=paBmr(x.g,x.w,x.h,x.age);if(b0)x.bmr=b0;}if(!x.bmr)return;const r=x.tar&&x.tdee?x.tar/x.tdee:1;x.tdee=Math.round(x.bmr*PA_ACT);let t=Math.round(x.tdee*r);if((+x.age||0)<18)t=Math.max(t,Math.round(x.tdee*0.85));t=Math.max(t,x.bmr);x.tar=t;if(ps[c])ps[c]=Object.assign({},ps[c],{bmr:x.bmr,tdee:x.tdee,tar:x.tar});if(cs[c])cs[c]=Object.assign({},cs[c],{bmr:x.bmr,tdee:x.tdee,tar:x.tar});n++;});
   lS('pa_students',ps);lS('pa_custom_students',cs);toastP(n+'명 다시 계산했습니다');};}
  {const box=document.getElementById('poCfg'),sum=document.getElementById('poCfgSum');const read=()=>{const o={};box.querySelectorAll('[data-cfg]').forEach(i=>{o[i.dataset.cfg]=Math.max(0,Math.min(120,Math.round(+i.value||0)));if(i.dataset.cfg==='cardioMax')o.cardioMax=Math.max(1,Math.min(10,o.cardioMax||5));});return o;};
   box.oninput=()=>{const o=read();sum.textContent='코치 수업 합계 '+(o.warm+o.main+o.finish)+'분';};
