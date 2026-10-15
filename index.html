@@ -3395,8 +3395,9 @@ const ar=getUserAcademyRole();
 let tabs;
 if(ar.role==='academy_owner'){
   /* 원장: 자기 학원 학생 관리, 기록, 리포트, 컨디션, 식단 보기 */
-  tabs=[{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-report',l:'📄 리포트'},{id:'a-diet',l:'🍽 식단 수정'}];
-  if(aTab==='a-wait'||aTab==='a-rsv'||aTab==='a-notices'||aTab==='a-sched'||aTab==='a-academy'||aTab==='a-prods'||aTab==='a-slots'||aTab==='a-inquiry'||aTab==='a-aicoach'){aTab='a-stuMgr';}
+  tabs=[{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-report',l:'📄 리포트'}];
+  /* [v11] 식단·칼로리는 P.A만 수정 (원장은 볼 수만 있음) */
+  if(aTab==='a-wait'||aTab==='a-rsv'||aTab==='a-notices'||aTab==='a-sched'||aTab==='a-academy'||aTab==='a-diet'||aTab==='a-prods'||aTab==='a-slots'||aTab==='a-inquiry'||aTab==='a-aicoach'){aTab='a-stuMgr';}
 }else if(ar.role==='academy_teacher'){
   /* 선생: 학생 보기/기록 수정만 */
   tabs=[{id:'a-stuMgr',l:'👥 학생 관리'},{id:'a-records',l:'📊 학생 기록'},{id:'a-report',l:'📄 리포트'}];
@@ -4143,6 +4144,7 @@ let adStu=Object.keys(S)[0];
 function aDiet(){
 /* 🔒 학원 권한자는 자기 학원 학생만 (선생은 식단탭 접근 불가지만 안전상) */
 const _ar=getUserAcademyRole();
+if(_ar.role==='academy_owner'||_ar.role==='academy_teacher')return`<p style="color:var(--muted);font-size:12px">🍽 식단과 목표 칼로리는 P.A 트레이닝이 관리합니다.</p>`;
 const _allowedCodes=(_ar.role==='academy_owner'||_ar.role==='academy_teacher')?new Set(getAccessibleStudents()):null;
 const _entries=Object.entries(S).filter(([c])=>!_allowedCodes||_allowedCodes.has(c));
 if(_allowedCodes&&!_allowedCodes.has(adStu)&&_entries.length>0)adStu=_entries[0][0];
@@ -4397,7 +4399,7 @@ ${_ar.role==='super_admin'?`<button class="ab ab-r" style="font-size:9px;" oncli
 </div>
 
 ${(function(){const A=adjOf(c),raw=adjRaw(c)||{},lg=(Array.isArray(raw.log)?raw.log:[]).slice().reverse(),R=(window.PO&&PO._adjRec)?PO._adjRec(c):null;
-return`<div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;background:rgba(255,255,255,.02)"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:12px">⚙️ 코치 조정: ${A.ic} ${A.nm}</b>${A.until?`<span style="font-size:10px;color:var(--muted)">~ ${A.until}</span>`:''}${A.lv!=='base'?`<span style="font-size:10px;color:var(--muted)">식단 ${s.tar||'-'} → ${tarOf(c)}kcal${A.reason?' · '+esc(A.reason):''}${A.by?' · '+esc(A.by):''}</span>`:''}<button class="ab ab-b" style="margin-left:auto;font-size:10px" data-adjopen="${c}">조정하기</button></div>${R?`<div style="font-size:10px;color:var(--muted);margin-top:6px">💡 권장: ${ADJ_LV[R.lv].ic} ${ADJ_LV[R.lv].nm} — ${esc(R.why)}</div>`:''}${lg.length?`<details style="margin-top:6px"><summary style="font-size:10px;color:var(--muted);cursor:pointer">변경 기록 ${lg.length}건</summary>${lg.map(x=>`<div style="font-size:10px;color:var(--muted);padding:3px 0">${new Date(x.at).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})} · ${esc(x.by||'')} · ${(ADJ_LV[x.lv]||{}).ic||''} ${(ADJ_LV[x.lv]||{}).nm||x.lv}${x.until?' (~'+x.until+')':''} · ${esc(x.reason||'')}</div>`).join('')}</details>`:''}</div>`;})()}
+return`<div style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;background:rgba(255,255,255,.02)"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:12px">⚙️ 코치 조정: ${A.ic} ${A.nm}</b>${A.until?`<span style="font-size:10px;color:var(--muted)">~ ${A.until}</span>`:''}${A.lv!=='base'?`<span style="font-size:10px;color:var(--muted)">식단 ${s.tar||'-'} → ${tarOf(c)}kcal${A.reason?' · '+esc(A.reason):''}${A.by?' · '+esc(A.by):''}</span>`:''}${_ar.role==='super_admin'?`<button class="ab ab-b" style="margin-left:auto;font-size:10px" data-adjopen="${c}">조정하기</button>`:''}</div>${R?`<div style="font-size:10px;color:var(--muted);margin-top:6px">💡 권장: ${ADJ_LV[R.lv].ic} ${ADJ_LV[R.lv].nm} — ${esc(R.why)}</div>`:''}${lg.length?`<details style="margin-top:6px"><summary style="font-size:10px;color:var(--muted);cursor:pointer">변경 기록 ${lg.length}건</summary>${lg.map(x=>`<div style="font-size:10px;color:var(--muted);padding:3px 0">${new Date(x.at).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})} · ${esc(x.by||'')} · ${(ADJ_LV[x.lv]||{}).ic||''} ${(ADJ_LV[x.lv]||{}).nm||x.lv}${x.until?' (~'+x.until+')':''} · ${esc(x.reason||'')}</div>`).join('')}</details>`:''}</div>`;})()}
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
 <div style="text-align:center;padding:12px;background:rgba(100,160,200,.06);border-radius:10px;"><div style="font-size:9px;color:var(--muted);">BMR</div><div style="font-size:18px;font-weight:900;color:var(--accent);">${s.bmr}</div><div style="font-size:9px;color:var(--muted);">kcal</div></div>
 <div style="text-align:center;padding:12px;background:rgba(100,160,200,.06);border-radius:10px;"><div style="font-size:9px;color:var(--muted);">TDEE</div><div style="font-size:18px;font-weight:900;">${s.tdee}</div><div style="font-size:9px;color:var(--muted);">kcal</div></div>
@@ -4416,10 +4418,10 @@ return`<div style="border:1px solid var(--border);border-radius:10px;padding:12p
 <label>몸무게</label><input type="number" step="0.1" id="awV" placeholder="kg" style="width:70px"><button class="ab ab-b" style="font-size:10px;" onclick="document.getElementById('awS').value='${c}';aAW()">추가</button></div>
 <select id="awS" style="display:none;"><option value="${c}" selected>${s.name}</option></select>
 
-<div style="margin-top:10px;"><div style="font-size:11px;font-weight:700;margin-bottom:6px;">칼로리 비율</div>
+${_ar.role!=='super_admin'?`<div style="margin-top:10px;font-size:11px;color:var(--muted)">🍽 목표 칼로리 ${tarOf(c)}kcal · 식단은 P.A 트레이닝이 관리합니다</div>`:`<div style="margin-top:10px;"><div style="font-size:11px;font-weight:700;margin-bottom:6px;">칼로리 비율</div>
 <div style="display:flex;gap:4px;flex-wrap:wrap;">
 ${[70,75,80,85,90,95,100,105,110,115,120].filter(v=>!((+S[c].age||0)<18&&v<85)).map(v=>`<button onclick="adjRatio('${c}','${v}')" style="padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid ${Math.abs(ratio-v)<=2?'var(--accent)':'var(--border)'};background:${Math.abs(ratio-v)<=2?'rgba(100,160,200,.15)':'transparent'};color:${Math.abs(ratio-v)<=2?'var(--accent)':'var(--muted)'};">${v}%</button>`).join('')}
-</div></div>
+</div></div>`}
 
 ${(function(){
 const cAvg30=gCondAvg(c,30);const cAvg7=gCondAvg(c,7);
@@ -4646,7 +4648,7 @@ typeId=(q1==='A')?'heart':'oval';
 document.getElementById('btType').value=typeId;
 const t=BODY_TYPES.find(x=>x.id===typeId);
 toast(`자동 판정: ${t?.name} (${t?.parent}) — 확인 후 저장 버튼을 눌러주세요`);
-}function adjRatio(c,pct){
+}function adjRatio(c,pct){if(getUserAcademyRole().role!=='super_admin'){toast('식단·칼로리는 P.A 트레이닝만 바꿀 수 있어요','err');return;}
 const s=S[c];if(!s)return;
 const ratio=parseInt(pct)/100;
 /* [커리큘럼 7-2] 성장기 안전 하한: 18세 미만은 TDEE의 85% 미만 불가, 누구든 기초대사량 미만 불가 */
@@ -7080,7 +7082,7 @@ function adjCard(c){const A=adjOf(c),R=adjRec(c),s=stu(c)||{};const t0=+s.tar||0
  ${A.lv!=='base'?`<div class="po-sub" style="margin-top:3px">운동량 ${adjPct(A.vol)} · 소모 목표 ${adjPct(A.kcal)} · 식단 ${t1!==t0?t0+' → '+t1+'kcal':'그대로'+(A.diet<1?' (성장기·기초대사량 기준이라 더 못 내림)':'')}${A.reason?' · 사유: '+E(A.reason):''}${A.by?' · '+E(A.by):''}</div>`:''}${A.expired?'<div class="po-sub" style="margin-top:3px">이전 조정 기간이 끝나 기본으로 돌아왔어요</div>':''}</div>
  <button class="po-btn sm" data-adjopen="${E(c)}">조정하기</button></div>
  <div class="po-note" style="margin-top:8px">💡 권장: <b>${ADJ_LV[R.lv].ic} ${ADJ_LV[R.lv].nm}</b> — ${E(R.why)}</div></div>`;}
-function adjOpen(c){const s=stu(c)||{};if(!s.name&&!S[c])return;const A=adjOf(c),R=adjRec(c),blk=adjBlock(c),cs=courseOf(c);
+function adjOpen(c){if(!['super_admin','coach'].includes(paRole()))return toastP('코치 조정은 P.A 코치·대표만 할 수 있어요','err');const s=stu(c)||{};if(!s.name&&!S[c])return;const A=adjOf(c),R=adjRec(c),blk=adjBlock(c),cs=courseOf(c);
  const m=document.createElement('div');m.className='po-modal';
  const opt=k=>{const L=ADJ_LV[k],dis=k==='focus'&&blk;return `<label style="display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1}"><input type="radio" name="adjLv" value="${k}" ${A.lv===k?'checked':''} ${dis?'disabled':''} style="margin-top:3px"><div><b>${L.ic} ${L.nm}</b>${R.lv===k?' <span class="po-chip" style="background:rgba(111,207,151,.18);color:var(--green)">권장</span>':''}<div class="po-sub">${L.d}</div></div></label>`;};
  const until=n=>{const d=new Date(Date.now()+9*3600e3+n*864e5);return d.toISOString().slice(0,10);};
