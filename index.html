@@ -1633,14 +1633,15 @@ lb.style.display='block';
 document.getElementById('myDB').style.display='none';
 lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class="kcard-h">${esc(nn)}님 환영합니다!</div><p class="kcard-p">로그인 성공!<br>어떤 분이신가요?</p>
 <div id="linkStep1">
-<button class="dbe" onclick="linkChoose('self')" style="width:100%;margin-bottom:10px;padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;border:none;padding:20px;font-size:17px;">🏋️ 본인 (학생)</button>
-<button class="dbe" onclick="linkChoose('parent')" style="width:100%;margin-bottom:10px;padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(111,207,151,.15);color:var(--green);border:1px solid rgba(111,207,151,.25);padding:20px;font-size:17px;">👨‍👩‍👧 보호자</button>
-<button onclick="document.getElementById('linkMore').style.display='block';this.style.display='none';" style="width:100%;margin-top:6px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:none;cursor:pointer;text-decoration:underline;">학원 원장·선생님, P.A 코치이신가요?</button>
-<div id="linkMore" style="display:none;margin-top:6px">
-<button class="dbe" onclick="linkChoose('owner')" style="width:100%;margin-bottom:10px;padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(232,98,42,.12);color:var(--orange);border:1px solid rgba(232,98,42,.3);">👑 학원 원장</button>
-<button class="dbe" onclick="linkChoose('teacher')" style="width:100%;margin-bottom:10px;padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(100,160,200,.12);color:var(--accent);border:1px solid rgba(100,160,200,.3);">🎓 학원 선생님</button>
-<button class="dbe" onclick="linkChoose('coach')" style="width:100%;margin-bottom:10px;padding:16px;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.18);">🧑‍🏫 P.A 코치 (초대 코드)</button>
+<button class="dbe" onclick="linkChoose('self')" style="width:100%;margin-bottom:10px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;flex-direction:column;background:var(--accent);color:#fff;border:none;padding:22px;font-size:19px;">🏋️ 학생<span style="font-size:11px;font-weight:500;opacity:.85">직접 운동하는 학생이에요</span></button>
+<button class="dbe" onclick="linkChoose('parent')" style="width:100%;margin-bottom:10px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(111,207,151,.15);color:var(--green);border:1px solid rgba(111,207,151,.25);padding:18px;font-size:16px;">👨‍👩‍👧 학부모 (보호자)</button>
+<button class="dbe" onclick="var m=document.getElementById('linkMore');m.style.display=m.style.display==='block'?'none':'block';" style="width:100%;margin-bottom:10px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(232,98,42,.12);color:var(--orange);border:1px solid rgba(232,98,42,.3);padding:18px;font-size:16px;">🏫 학원 (원장·선생님)</button>
+<div id="linkMore" style="display:none;margin:2px 0 8px;padding:10px;border-radius:12px;background:rgba(255,255,255,.03);border:1px dashed rgba(232,98,42,.3)">
+<button class="dbe" onclick="linkChoose('owner')" style="width:100%;margin-bottom:10px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;font-size:15px;background:rgba(232,98,42,.12);color:var(--orange);border:1px solid rgba(232,98,42,.3);">👑 원장님</button>
+<button class="dbe" onclick="linkChoose('teacher')" style="width:100%;margin-bottom:10px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:0;padding:14px;font-size:15px;background:rgba(100,160,200,.12);color:var(--accent);border:1px solid rgba(100,160,200,.3);">🎓 선생님</button>
 </div>
+<button onclick="linkChoose('coach')" style="width:100%;margin-top:4px;padding:8px;background:transparent;color:var(--muted);font-size:12px;border:none;cursor:pointer;text-decoration:underline;">P.A 코치이신가요?</button>
+
 </div>
 <div id="linkStep2Self" style="display:none;text-align:left;">
 <div style="font-size:13px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">📋 기본 정보를 입력해 주세요</div>
@@ -1649,8 +1650,8 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <label class="di">성별</label><div style="display:flex;gap:8px;margin-bottom:10px;" id="sfG" data-v=""><button type="button" class="my-tab" data-g="남" style="flex:1;padding:10px;font-weight:700;">남</button><button type="button" class="my-tab" data-g="여" style="flex:1;padding:10px;font-weight:700;">여</button></div>
 <div style="display:flex;gap:8px;"><div style="flex:1"><label class="di">키 (cm)</label><input class="dc" id="sfH" type="number" inputmode="decimal" placeholder="162" min="100" max="220" style="margin-bottom:10px;"></div><div style="flex:1"><label class="di">몸무게 (kg)</label><input class="dc" id="sfW" type="number" inputmode="decimal" placeholder="50" min="20" max="200" style="margin-bottom:10px;"></div></div>
 <label class="di">목표</label><select class="dc" id="sfGoal" style="margin-bottom:10px;"><option>체중감량</option><option>유지</option><option>근육증가</option><option selected>체형교정</option></select>
-<label class="di">학원 가입 코드 <span style="color:var(--muted);font-weight:400">(선택)</span></label><input class="dc" id="sfAca" placeholder="예: YEIN-2026 · 없으면 비워 두세요" maxlength="12" autocomplete="off" spellcheck="false" style="text-transform:uppercase;">
-<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;">학원 코드를 넣으면 <b>원장님</b>이, 비워 두면 <b>P.A 트레이닝</b>이 확인한 뒤 바로 이용할 수 있어요. 키·몸무게는 운동량과 칼로리 계산에 쓰여요.</div>
+<label class="di">학원 가입 코드 <span style="color:var(--muted);font-weight:400">(선택)</span></label><input class="dc" id="sfAca" placeholder="예: ABCD-1234 · 없으면 비워 두세요" maxlength="12" autocomplete="off" spellcheck="false" style="text-transform:uppercase;">
+<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6;">학원 코드를 넣으면 <b>바로</b> 이용할 수 있고, 비워 두면 <b>P.A 트레이닝</b>이 확인한 뒤 이용할 수 있어요. 키·몸무게는 운동량과 칼로리 계산에 쓰여요.</div>
 <div class="em" id="linkEmSelf"></div>
 <button class="dbe" onclick="doSelfSignup()" style="width:100%;background:var(--accent);color:#fff;border:none;margin-top:8px;">가입 신청하기</button>
 <button onclick="linkChoose('student')" style="width:100%;margin-top:8px;padding:8px;background:transparent;color:var(--muted);font-size:11px;border:none;cursor:pointer;text-decoration:underline;">예전에 받은 입장 코드가 있어요</button>
@@ -1676,9 +1677,13 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 </div>
 <div id="linkStep2O" style="display:none;">
 <div style="font-size:12px;color:var(--orange);margin-bottom:14px;text-align:center;font-weight:700;">👑 학원 원장 인증</div>
-<div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6;">P.A 트레이닝 본사로부터 받은<br><strong style="color:var(--orange);">원장용 암호구문</strong>을 입력하세요</div>
+<div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6;">원장님 정보와, P.A 트레이닝에서 받은<br><strong style="color:var(--orange);">원장용 암호구문</strong>을 입력하세요<br><span style="font-size:10px">암호구문이 없으면 010-5252-0121 로 연락 주세요</span></div>
 <label class="di" style="font-size:11px;">이름 (학원 내 표시용)</label><input class="dc" id="linkAcaNmO" placeholder="예: 홍길동" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
-<label class="di" style="font-size:11px;">암호구문 (16자, 4-4-4-4)</label><input class="dc" id="linkTokO" placeholder="예: K3xP-9mQR-vN7L-2sBy" maxlength="19" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:1px;">
+<label class="di" style="font-size:11px;">휴대폰 번호</label><input class="dc" id="linkPhO" type="tel" inputmode="numeric" placeholder="예: 010-1234-5678" maxlength="13" autocomplete="tel" style="margin-bottom:10px;">
+<label class="di" style="font-size:11px;">학원 지역 (주소)</label><input class="dc" id="linkRegO" placeholder="예: 서울 송파구 잠실동" maxlength="40" autocomplete="off" style="margin-bottom:10px;">
+<label class="di" style="font-size:11px;">대략적인 학생 수</label><div id="linkCntO" data-v="" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${['10명 이하','10~30명','30~50명','50명 이상'].map(x=>`<button type="button" class="my-tab" data-cnt="${x}" style="padding:8px 10px;font-size:12px;">${x}</button>`).join('')}</div>
+<label class="di" style="font-size:11px;">전공 장르 (여러 개 선택)</label><div id="linkGenO" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${['한국무용','발레','현대무용','실용무용','기타'].map(x=>`<button type="button" class="my-tab" data-gen="${x}" style="padding:8px 10px;font-size:12px;">${x}</button>`).join('')}</div>
+<label class="di" style="font-size:11px;">원장용 암호구문 (16자, 4-4-4-4)</label><input class="dc" id="linkTokO" placeholder="예: K3xP-9mQR-vN7L-2sBy" maxlength="19" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:1px;">
 <div class="em" id="linkEmO"></div>
 <button class="dbe" onclick="doKakaoLinkAcademy('owner')" style="width:100%;background:var(--orange);color:#fff;border:none;margin-top:8px;">원장 인증하기</button>
 <button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
@@ -1687,7 +1692,8 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <div style="font-size:12px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">🎓 학원 선생님 인증</div>
 <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-align:center;line-height:1.6;">학원 원장님으로부터 받은<br><strong style="color:var(--accent);">선생용 암호구문</strong>을 입력하세요</div>
 <label class="di" style="font-size:11px;">이름 (학원 내 표시용)</label><input class="dc" id="linkAcaNmT" placeholder="예: 홍길동" maxlength="20" autocomplete="off" style="margin-bottom:10px;">
-<label class="di" style="font-size:11px;">암호구문 (16자, 4-4-4-4)</label><input class="dc" id="linkTokT" placeholder="예: K3xP-9mQR-vN7L-2sBy" maxlength="19" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:1px;">
+<label class="di" style="font-size:11px;">휴대폰 번호 <span style="color:var(--muted);font-weight:400">(선택)</span></label><input class="dc" id="linkPhT" type="tel" inputmode="numeric" placeholder="예: 010-1234-5678" maxlength="13" autocomplete="tel" style="margin-bottom:10px;">
+<label class="di" style="font-size:11px;">선생님용 암호구문 (16자, 4-4-4-4)</label><input class="dc" id="linkTokT" placeholder="예: K3xP-9mQR-vN7L-2sBy" maxlength="19" autocomplete="off" spellcheck="false" style="font-family:'Courier New',monospace;letter-spacing:1px;">
 <div class="em" id="linkEmT"></div>
 <button class="dbe" onclick="doKakaoLinkAcademy('teacher')" style="width:100%;background:var(--accent);color:#fff;border:none;margin-top:8px;">선생 인증하기</button>
 <button onclick="linkBack()" style="width:100%;margin-top:8px;padding:10px;background:transparent;color:var(--muted);font-size:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;">← 처음으로</button>
@@ -1720,6 +1726,10 @@ else if(type==='owner'){document.getElementById('linkStep2O').style.display='blo
 else if(type==='teacher'){document.getElementById('linkStep2T').style.display='block';document.getElementById('linkAcaNmT').focus();}
 else if(type==='coach'){document.getElementById('linkStep2C').style.display='block';document.getElementById('linkInvC').focus();}
 }
+/* [patch32] 원장 정보 선택 칩 */
+document.addEventListener('click',e=>{const c=e.target.closest&&e.target.closest('#linkCntO [data-cnt]');if(c){const w=document.getElementById('linkCntO');w.dataset.v=c.dataset.cnt;w.querySelectorAll('[data-cnt]').forEach(x=>x.classList.toggle('on',x===c));return;}
+ const g=e.target.closest&&e.target.closest('#linkGenO [data-gen]');if(g)g.classList.toggle('on');});
+function paPhone(v){const d=String(v||'').replace(/\D/g,'');return /^01\d{8,9}$/.test(d)?d.replace(/^(\d{3})(\d{3,4})(\d{4})$/,'$1-$2-$3'):'';}
 function linkBack(){
 document.getElementById('linkStep1').style.display='block';
 ['linkStep2S','linkStep2P','linkStep2O','linkStep2T','linkStep2C','linkStep2Self'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
@@ -1915,6 +1925,16 @@ const em=document.getElementById(isOwner?'linkEmO':'linkEmT');
 const nm=nmInp.value.trim();
 const tok=tokInp.value.trim();
 if(!nm){em.textContent='이름을 입력하세요';em.classList.add('on');return;}
+const ph=paPhone(document.getElementById(isOwner?'linkPhO':'linkPhT').value);
+const info={};
+if(isOwner){
+ if(!ph){em.textContent='휴대폰 번호를 입력하세요 (예: 010-1234-5678)';em.classList.add('on');return;}
+ info.region=document.getElementById('linkRegO').value.trim();info.students=document.getElementById('linkCntO').dataset.v||'';
+ info.genres=[...document.querySelectorAll('#linkGenO [data-gen].on')].map(x=>x.dataset.gen);
+ if(!info.region){em.textContent='학원 지역을 입력하세요';em.classList.add('on');return;}
+ if(!info.students){em.textContent='대략적인 학생 수를 골라 주세요';em.classList.add('on');return;}
+ if(!info.genres.length){em.textContent='전공 장르를 하나 이상 골라 주세요';em.classList.add('on');return;}
+}
 if(!tok){em.textContent='암호구문을 입력하세요';em.classList.add('on');return;}
 
 /* 시도 횟수 체크 */
@@ -1927,7 +1947,7 @@ em.classList.remove('on');
 
 /* [0-4] 암호구문 확인·등록은 서버에서 (암호구문 목록은 화면에 내려오지 않음) */
 let d;
-try{d=await paLink({type:isOwner?'owner':'teacher',name:nm,passphrase:tok,replace:!!replace});}
+try{d=await paLink({type:isOwner?'owner':'teacher',name:nm,passphrase:tok,replace:!!replace,phone:ph,info});}
 catch(e){
   if(e&&e.status===409&&e.reason==='confirm'){
     if(confirm(`이미 다른 원장(${(e.data&&e.data.ownerName)||''})이 등록되어 있습니다.\n교체하시겠습니까?`))return doKakaoLinkAcademy(kind,true);
@@ -3604,7 +3624,7 @@ return `<div style="background:var(--card);border:1px solid ${sel?'var(--accent)
 <div style="display:flex;justify-content:space-between;align-items:flex-start;cursor:pointer;" onclick="acaSelected='${acaSelected===id?'':id}';rAB();">
 <div>
 <div style="font-size:14px;font-weight:600;">${esc(a.name)}</div>
-<div style="font-size:11px;color:var(--muted);margin-top:4px;">📍 ${esc(a.region||'미지정')} · 📞 ${esc(a.phone||'-')} · 학생 ${stuCount}명 · 선생 ${teachers.length}명</div>
+<div style="font-size:11px;color:var(--muted);margin-top:4px;">📍 ${esc((a.info&&a.info.region)||a.region||'미지정')} · 📞 ${esc(a.phone||'-')} · 학생 ${stuCount}명 · 선생 ${teachers.length}명</div>${a.owner?`<div style="font-size:11px;margin-top:3px;">👑 ${esc(a.owner.name||'원장')}${a.owner.phone?' · '+esc(a.owner.phone):''}${a.info&&a.info.students?' · 원장 입력 학생 수 '+esc(a.info.students):''}${a.info&&(a.info.genres||[]).length?' · '+esc(a.info.genres.join('·')):''}</div>`:`<div style="font-size:11px;margin-top:3px;color:var(--orange)">👑 원장 미연결 — 원장용 암호구문을 보내 주세요</div>`}
 </div>
 <div style="display:flex;gap:6px;" onclick="event.stopPropagation();">
 <button onclick="acaToggleAuto('${id}')" title="학원 코드로 가입한 학생을 승인 없이 바로 등록" style="padding:6px 10px;background:${a.autoApprove!==false?'rgba(111,207,151,.15)':'transparent'};border:1px solid ${a.autoApprove!==false?'var(--green)':'var(--border)'};border-radius:6px;color:${a.autoApprove!==false?'var(--green)':'var(--muted)'};font-size:11px;font-weight:700;cursor:pointer;">${a.autoApprove!==false?'✅ 코드 가입 자동 승인':'⏸ 코드 가입 승인 필요'}</button>
@@ -3645,11 +3665,11 @@ ${a.teacherLastUsed?`<div style="font-size:10px;color:var(--muted);margin-top:4p
 <div style="margin-top:12px;padding:12px;background:rgba(255,255,255,.03);border-radius:8px;">
 <div style="font-size:11px;font-weight:700;margin-bottom:8px;">👥 등록된 인원</div>
 ${a.owner?`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(100,160,200,.08);border-radius:6px;font-size:12px;margin-bottom:4px;">
-<span>👑 <strong>${esc(a.owner.name||'원장')}</strong> <span style="color:var(--muted);font-size:10px;">(카카오 ${esc(a.owner.kid)})</span></span>
+<span>👑 <strong>${esc(a.owner.name||'원장')}</strong>${a.owner.phone?` · <a href="tel:${esc(a.owner.phone)}" style="color:var(--accent)">${esc(a.owner.phone)}</a>`:''}${a.info?`<br><span style="color:var(--muted);font-size:10px;">${esc([a.info.region,a.info.students?'학생 '+a.info.students:'',(a.info.genres||[]).join('·')].filter(Boolean).join(' · '))}</span>`:''}</span>
 <button onclick="acaRemoveOwner('${id}')" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:10px;cursor:pointer;">제거</button>
 </div>`:'<div style="font-size:11px;color:var(--muted);padding:4px 10px;">원장 미등록 (위 구문으로 첫 로그인 시 자동 등록)</div>'}
 ${teachers.length?teachers.map(t=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(111,207,151,.08);border-radius:6px;font-size:12px;margin-bottom:4px;">
-<span>🎓 <strong>${esc(t.name||'선생')}</strong> <span style="color:var(--muted);font-size:10px;">(카카오 ${esc(t.kid)})</span></span>
+<span>🎓 <strong>${esc(t.name||'선생')}</strong>${t.phone?` · <a href="tel:${esc(t.phone)}" style="color:var(--accent)">${esc(t.phone)}</a>`:''}</span>
 <button onclick="acaRemoveTeacher('${id}','${t.kid}')" style="padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:10px;cursor:pointer;">제거</button>
 </div>`).join(''):'<div style="font-size:11px;color:var(--muted);padding:4px 10px;">등록된 선생 없음</div>'}
 </div>
