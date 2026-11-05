@@ -944,6 +944,14 @@ try{isApp=!!(window.Capacitor&&Capacitor.isNativePlatform());}catch(e){}
 if(isApp){document.documentElement.classList.add('pa-app');
 document.addEventListener('focusin',e=>{if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)&&!/^(checkbox|radio|file|button)$/.test(e.target.type||''))document.documentElement.classList.add('pa-kb');});
 document.addEventListener('focusout',()=>document.documentElement.classList.remove('pa-kb'));}
+/* 앱·홈페이지 구분 스위치 — 양쪽 스토어 출시 후 true로 변경. 학생·보호자는 앱에서만 이용, 원장·선생님·코치·관리자는 웹과 앱 모두 이용 */
+const PA_APP_ONLY_WEB=false;
+const PA_STORE={android:'',ios:''}; /* 스토어 주소가 나오면 입력 */
+function paWebGate(role){if(!PA_APP_ONLY_WEB||isApp||!['student','father','mother','parent'].includes(role)||document.getElementById('paAppOnly'))return;
+const lk=[[PA_STORE.android,'Google Play'],[PA_STORE.ios,'App Store']].filter(x=>x[0]).map(x=>`<a href="${x[0]}" target="_blank" rel="noopener" style="display:block;margin-top:10px;padding:14px;border-radius:12px;background:var(--orange);color:#fff;font-weight:700;text-decoration:none;">${x[1]}에서 받기</a>`).join('');
+const d=document.createElement('div');d.id='paAppOnly';d.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg);text-align:center;';
+d.innerHTML=`<div style="width:100%;max-width:360px;"><div style="font-size:22px;font-weight:900;margin-bottom:10px;">P.A 앱에서 이용해 주세요</div><div style="font-size:14px;line-height:1.7;color:var(--muted);margin-bottom:14px;">식단·운동·예약은 앱에서 이용할 수 있어요.<br>같은 계정으로 로그인하면 기록이 그대로 이어집니다.</div>${lk}<button onclick="document.getElementById('paAppOnly').remove();doLogout();go('home');" style="margin-top:16px;padding:10px 18px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;cursor:pointer;">로그아웃</button></div>`;
+document.body.appendChild(d);}
 function paTabSync(id){const k=['home','notice','reserve','my'].includes(id)?id:'more';document.querySelectorAll('.pa-tab').forEach(b=>b.classList.toggle('on',b.id==='pt-'+k));}
 function paTabMore(){const m=document.getElementById('mob'),p=document.getElementById('navProf');m.classList.toggle('pa-in',!!(p&&p.classList.contains('show')));m.classList.toggle('on');}
 
@@ -1256,6 +1264,7 @@ async function paTokenSignIn(body,hdr){
   if(!r.ok||!d.token){const err=new Error(d.error||('auth '+r.status));err.status=r.status;err.reason=d.reason;err.data=d;throw err;}
   await firebase.auth().signInWithCustomToken(d.token);
   console.log('[PA] Firebase 로그인 완료:',firebase.auth().currentUser.uid,'역할:',d.role);
+  paWebGate(d.role);
   return d;
 }
 async function paFirebaseSignIn(){
