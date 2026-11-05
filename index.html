@@ -926,20 +926,20 @@ try{isApp=!!(window.Capacitor&&Capacitor.isNativePlatform());}catch(e){}
 async function initAppPlugins(){
 if(!isApp)return;
 try{
-const{StatusBar,Style}=await import('@capacitor/status-bar');
-await StatusBar.setStyle({style:Style.Dark});
+const{StatusBar}=Capacitor.Plugins;
+await StatusBar.setStyle({style:'DARK'});
 await StatusBar.setBackgroundColor({color:'#09111C'});
 }catch(e){console.warn('[PA] StatusBar:',e);}
 try{
-const{SplashScreen}=await import('@capacitor/splash-screen');
-await SplashScreen.hide();
+await Capacitor.Plugins.SplashScreen.hide();
 }catch(e){console.warn('[PA] Splash:',e);}
 }
 initAppPlugins();
 
 /* 앱: Android 하드웨어 백 버튼 처리 */
 if(isApp){
-import('@capacitor/app').then(({App})=>{
+try{
+const{App}=Capacitor.Plugins;
 App.addListener('backButton',({canGoBack})=>{
 const openModal=document.querySelector('.nc-modal-bg.on,.mob.on');
 if(openModal){openModal.classList.remove('on');return;}
@@ -947,14 +947,13 @@ const currentPg=document.querySelector('.pg.on');
 if(currentPg&&currentPg.id!=='pg-home'){go('home');return;}
 if(confirm('앱을 종료하시겠습니까?')){App.exitApp();}
 });
-}).catch(e=>console.warn('[PA] App plugin:',e));
+}catch(e){console.warn('[PA] App plugin:',e);}
 }
 /* ===== 수정 7: Capacitor HTTP 분기 (CORS 대비) ===== */
 async function appFetch(url,options){
 if(isApp&&window.Capacitor){
 try{
-const{CapacitorHttp}=await import('@capacitor/core');
-const resp=await CapacitorHttp.request({
+const resp=await Capacitor.Plugins.CapacitorHttp.request({
 url:url,
 method:options.method||'GET',
 headers:options.headers||{},
@@ -1500,23 +1499,8 @@ function rP(cat){const prods=typeof getAllProds==='function'?getAllProds():PRODS
 /* 로그인 */
 let LC=null;
 function kakaoLogin(){if(isL){toast('로컬 환경 — 아래 테스트 코드 로그인 이용','err');document.getElementById('dbox').classList.add('on');return;}
-if(isApp){
-/* 앱: 카카오 SDK 팝업 방식 */
-if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중...','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
-Kakao.Auth.login({
-success:function(authObj){
-Kakao.API.request({
-url:'/v2/user/me',
-success:function(r){handleKakaoUser(r);},
-fail:function(e){console.warn('Kakao API:',e);toast('카카오 정보 조회 실패','err');}
-});
-},
-fail:function(e){console.warn('Kakao login:',e);toast('카카오 로그인 실패','err');if(paTestOn())document.getElementById('dbox').classList.add('on');}
-});
-return;
-}
 if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
-try{Kakao.Auth.authorize({redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 잠시 후 다시 시도해 주세요','err');if(paTestOn())document.getElementById('dbox').classList.add('on');}}
+try{Kakao.Auth.authorize(isApp?{redirectUri:location.origin+'/',throughTalk:false}:{redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 잠시 후 다시 시도해 주세요','err');if(paTestOn())document.getElementById('dbox').classList.add('on');}}
 /* [v7] 테스트 모드: 주소 끝에 ?test=1 → 테스트 코드 입장 버튼 보임 (?test=0 으로 끄기) */
 function paTestOn(){try{return isL||localStorage.getItem('pa_test')==='1';}catch(e){return isL;}}
 (function(){try{const q=new URLSearchParams(location.search);if(q.has('test')){if(q.get('test')==='0')localStorage.removeItem('pa_test');else localStorage.setItem('pa_test','1');}}catch(e){}if(paTestOn())document.documentElement.classList.add('pa-test');else document.documentElement.classList.remove('pa-test');})();
@@ -2146,11 +2130,10 @@ rWSVG(wts);rCB(c,tarOf(c),diet);rMP(diet);rToday();}
 async function openCamera(targetId,handler){
 if(isApp&&window.Capacitor){
 try{
-const{Camera,CameraResultType,CameraSource}=await import('@capacitor/camera');
-const photo=await Camera.getPhoto({
+const photo=await Capacitor.Plugins.Camera.getPhoto({
 quality:85,allowEditing:false,
-resultType:CameraResultType.DataUrl,
-source:CameraSource.Camera
+resultType:'dataUrl',
+source:'CAMERA'
 });
 if(photo.dataUrl){handler({_capDataUrl:photo.dataUrl});}
 }catch(e){if(e.message&&!e.message.includes('cancel'))toast('카메라 오류: '+e.message,'err');}
@@ -2159,11 +2142,10 @@ if(photo.dataUrl){handler({_capDataUrl:photo.dataUrl});}
 async function openGallery(targetId,handler){
 if(isApp&&window.Capacitor){
 try{
-const{Camera,CameraResultType,CameraSource}=await import('@capacitor/camera');
-const photo=await Camera.getPhoto({
+const photo=await Capacitor.Plugins.Camera.getPhoto({
 quality:85,allowEditing:false,
-resultType:CameraResultType.DataUrl,
-source:CameraSource.Photos
+resultType:'dataUrl',
+source:'PHOTOS'
 });
 if(photo.dataUrl){handler({_capDataUrl:photo.dataUrl});}
 }catch(e){if(e.message&&!e.message.includes('cancel'))toast('갤러리 오류: '+e.message,'err');}
