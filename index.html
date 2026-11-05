@@ -942,6 +942,9 @@ let isL=false;try{if(location.protocol==='file:'||location.hostname==='localhost
 let isApp=false;
 try{isApp=!!(window.Capacitor&&Capacitor.isNativePlatform());}catch(e){}
 if(isApp){document.documentElement.classList.add('pa-app');
+try{const K='pa_login',v=localStorage.getItem(K);if(v&&!sessionStorage.getItem(K))sessionStorage.setItem(K,v);const S0=Storage.prototype.setItem,R0=Storage.prototype.removeItem;
+Storage.prototype.setItem=function(k,x){if(this===sessionStorage&&k===K)S0.call(localStorage,K,x);return S0.call(this,k,x);};
+Storage.prototype.removeItem=function(k){if(this===sessionStorage&&k===K)R0.call(localStorage,K);return R0.call(this,k);};}catch(e){}
 document.addEventListener('focusin',e=>{if(/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)&&!/^(checkbox|radio|file|button)$/.test(e.target.type||''))document.documentElement.classList.add('pa-kb');});
 document.addEventListener('focusout',()=>document.documentElement.classList.remove('pa-kb'));}
 /* 앱·홈페이지 구분 스위치 — 양쪽 스토어 출시 후 true로 변경. 학생·보호자는 앱에서만 이용, 원장·선생님·코치·관리자는 웹과 앱 모두 이용 */
@@ -953,10 +956,10 @@ const d=document.createElement('div');d.id='paAppOnly';d.style.cssText='position
 d.innerHTML=`<div style="width:100%;max-width:360px;"><div style="font-size:22px;font-weight:900;margin-bottom:10px;">P.A 앱에서 이용해 주세요</div><div style="font-size:14px;line-height:1.7;color:var(--muted);margin-bottom:14px;">식단·운동·예약은 앱에서 이용할 수 있어요.<br>같은 계정으로 로그인하면 기록이 그대로 이어집니다.</div>${lk}<button onclick="document.getElementById('paAppOnly').remove();doLogout();go('home');" style="margin-top:16px;padding:10px 18px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;cursor:pointer;">로그아웃</button></div>`;
 document.body.appendChild(d);}
 /* 카카오 앱 로그인 복귀 */
-if(isApp){try{Capacitor.Plugins.App.addListener('appUrlOpen',({url})=>{if(!/^kr\.co\.patraining\.app:\/\/kakao/.test(url||''))return;const q=new URL(url.replace(/^[^:]+:/,'https:')).searchParams,c=q.get('code'),st=q.get('state');
+if(isApp){try{Capacitor.Plugins.App.addListener('appUrlOpen',({url})=>{const m=/^kr\.co\.patraining\.app:\/\/(kakao|google)\b/.exec(url||'');if(!m)return;const q=new URL(url.replace(/^[^:]+:/,'https:')).searchParams,st=q.get('state');
 let ok=false;try{ok=!!st&&st===localStorage.getItem('pa_kk_state');localStorage.removeItem('pa_kk_state');}catch(e){}
 try{Capacitor.Plugins.Browser.close();}catch(e){}
-if(!c||!ok){toast('카카오 로그인이 취소되었어요','err');return;}go('my');paKakaoExchange(c);});}catch(e){console.warn('[PA] appUrlOpen:',e);}}
+const v=m[1]==='kakao'?q.get('code'):q.get('token');if(!v||!ok){toast('로그인이 취소되었어요','err');return;}go('my');if(m[1]==='kakao')paKakaoExchange(v);else paGoogleFinish(v,q.get('nm')||'',q.get('img')||'');});}catch(e){console.warn('[PA] appUrlOpen:',e);}}
 else{try{const q=new URLSearchParams(location.search),c=q.get('code'),st=q.get('state')||'';if(c&&/^pa_app_[0-9a-f]+$/.test(st)){const u='kr.co.patraining.app://kakao?code='+encodeURIComponent(c)+'&state='+st;history.replaceState(null,'',location.pathname);document.body.innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:#09111C;color:#fff;font-family:sans-serif;"><p style="font-size:16px;margin:0 0 20px;">P.A 앱으로 돌아가는 중이에요</p><a href="'+u+'" style="padding:14px 28px;border-radius:12px;background:#E8622A;color:#fff;font-weight:700;text-decoration:none;">앱으로 돌아가기</a></div>';location.replace(u);throw 0;}}catch(e){if(e===0)throw new Error('pa-app-return');}}
 function paTabSync(id){const k=['home','notice','reserve','my'].includes(id)?id:'more';document.querySelectorAll('.pa-tab').forEach(b=>b.classList.toggle('on',b.id==='pt-'+k));}
 function paTabMore(){const m=document.getElementById('mob'),p=document.getElementById('navProf');m.classList.toggle('pa-in',!!(p&&p.classList.contains('show')));m.classList.toggle('on');}
@@ -1261,7 +1264,14 @@ const PA_ACT=1.55;
 /* 로그인은 이 브라우저 탭에서만 유지 (탭을 닫으면 로그아웃 — PC방·공용 기기 대비) */
 /* [0-4] 키오스크로 등록한 기기만 로그인 유지 (껐다 켜도 키오스크 유지) */
 function paIsKioskDevice(){try{return localStorage.getItem('pa_kiosk_device')==='1';}catch(e){return false;}}
-try{firebase.auth().setPersistence(paIsKioskDevice()?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION).catch(()=>{});}catch(e){}
+try{firebase.auth().setPersistence(isApp||paIsKioskDevice()?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION).catch(()=>{});}catch(e){}
+/* 앱용 구글 로그인: 브라우저에서 구글 로그인 → 확인 토큰을 앱으로 전달 */
+if(!isApp){try{const q=new URLSearchParams(location.search),st=q.get('state')||'';if(q.get('appauth')==='google'&&/^pa_app_[0-9a-f]+$/.test(st)){history.replaceState(null,'',location.pathname);
+const d=document.createElement('div');d.id='paGoogleBridge';d.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:#09111C;color:#fff;font-family:sans-serif;';
+d.innerHTML='<p style="font-size:17px;font-weight:700;margin:0 0 8px;">P.A 트레이닝 앱 로그인</p><p id="pgbMsg" style="font-size:14px;line-height:1.6;color:#b9c7d3;margin:0 0 22px;">아래 버튼을 눌러 구글 계정을 선택해 주세요.</p><button id="pgbBtn" style="padding:14px 28px;border:0;border-radius:12px;background:#fff;color:#111;font-size:15px;font-weight:700;">Google로 계속하기</button>';
+document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(d));
+d.addEventListener('click',async e=>{if(e.target.id!=='pgbBtn')return;const m=d.querySelector('#pgbMsg');e.target.disabled=true;try{const pv=new firebase.auth.GoogleAuthProvider();pv.setCustomParameters({prompt:'select_account'});const cr=await firebase.auth().signInWithPopup(pv),u=cr.user,t=await u.getIdToken(),nm=u.displayName||'',img=u.photoURL||'';await firebase.auth().signOut().catch(()=>{});
+const url='kr.co.patraining.app://google?token='+encodeURIComponent(t)+'&state='+st+'&nm='+encodeURIComponent(nm)+'&img='+encodeURIComponent(img);m.textContent='로그인되었어요. 앱으로 돌아갑니다.';e.target.outerHTML='<a href="'+url+'" style="padding:14px 28px;border-radius:12px;background:#E8622A;color:#fff;font-weight:700;text-decoration:none;">앱으로 돌아가기</a>';location.href=url;}catch(x){console.warn('[PA] 앱 구글 로그인:',x);m.textContent='로그인하지 못했어요. 다시 시도해 주세요.';e.target.disabled=false;}});}}catch(e){}}
 function paSignedIn(){try{return !!firebase.auth().currentUser;}catch(e){return false;}}
 function paAuthReady(){return new Promise(res=>{let done=false;const fin=()=>{if(!done){done=true;res();}};try{const u=firebase.auth().onAuthStateChanged(()=>{try{u();}catch(e){}fin();});}catch(e){fin();}setTimeout(fin,4000);});}
 async function paTokenSignIn(body,hdr){
@@ -1540,7 +1550,8 @@ function rP(cat){const prods=typeof getAllProds==='function'?getAllProds():PRODS
 let LC=null;
 /* 앱 카카오 로그인: 브라우저에서 로그인 → 사이트가 앱 주소로 돌려보냄 → 앱이 코드를 받아 처리 */
 const PA_KK_KEY='a1ca85645cfb642c43ac95082a46e872';
-async function paKakaoApp(){try{const st='pa_app_'+Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem('pa_kk_state',st);
+function paNewAppState(){const st='pa_app_'+Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem('pa_kk_state',st);return st;}
+async function paKakaoApp(){try{const st=paNewAppState();
 const url='https://kauth.kakao.com/oauth/authorize?response_type=code&client_id='+PA_KK_KEY+'&redirect_uri='+encodeURIComponent('https://patraining.co.kr/')+'&state='+st;
 await Capacitor.Plugins.Browser.open({url});}catch(e){console.warn('[PA] 카카오 앱 로그인:',e);toast('카카오 로그인을 열지 못했어요. 다시 시도해 주세요','err');}}
 function kakaoLogin(){if(isL){toast('로컬 환경 — 아래 테스트 코드 로그인 이용','err');document.getElementById('dbox').classList.add('on');return;}
@@ -1588,20 +1599,22 @@ async function appleLogin(btn){
 /* [patch29] 구글 로그인 — 웹: Firebase 구글 팝업 → 로그인 서버가 확인 → google:구글ID 계정으로 로그인 */
 async function googleLogin(btn){
   if(isL){toast('로컬 환경 — 구글 로그인은 실제 주소에서만 됩니다','err');return;}
-  if(isApp){toast('앱에서 구글 로그인은 다음 업데이트에서 지원돼요. 카카오로 시작해 주세요.','err');return;}
+  if(isApp){try{const st=paNewAppState();await Capacitor.Plugins.Browser.open({url:'https://patraining.co.kr/?appauth=google&state='+st});}catch(e){console.warn('[PA] 앱 구글:',e);toast('구글 로그인을 열지 못했어요. 다시 시도해 주세요','err');}return;}
   if(btn)btn.disabled=true;
   try{
     let cr;
     try{const pv=new firebase.auth.GoogleAuthProvider();pv.setCustomParameters({prompt:'select_account'});cr=await firebase.auth().signInWithPopup(pv);}
     catch(e){const c=String((e&&e.code)||'');if(/popup-closed|cancelled-popup/.test(c))return;if(/popup-blocked/.test(c)){toast('팝업이 막혔어요. 주소창 오른쪽에서 팝업을 허용해 주세요.','err');return;}console.warn('[PA] Google:',e);toast('구글 로그인에 실패했어요. 잠시 후 다시 시도해 주세요.','err');return;}
     const gu=cr&&cr.user;if(!gu){toast('구글 로그인 정보를 받지 못했어요','err');return;}
-    const nm=gu.displayName||'',img=gu.photoURL||'';
+    await paGoogleFinish(await gu.getIdToken(),gu.displayName||'',gu.photoURL||'');
+  }finally{if(btn)btn.disabled=false;}
+}
+async function paGoogleFinish(tok,nm,img){
     let d;
-    try{d=await paTokenSignIn({googleFbToken:await gu.getIdToken()});}
+    try{d=await paTokenSignIn({googleFbToken:tok});}
     catch(e){console.warn('[PA] Google 서버:',e);try{await firebase.auth().signOut();}catch(x){}toast(e.status===401?'구글 로그인은 준비 중이에요. 카카오로 시작해 주세요.':'로그인 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.','err');return;}
     const uid=String((firebase.auth().currentUser||{}).uid||'');
     await handleKakaoUser({id:uid,kakao_account:{profile:{nickname:nm||'사용자',profile_image_url:img}}},d);
-  }finally{if(btn)btn.disabled=false;}
 }
 /* 카카오·애플 유저 처리 (공용) */
 async function handleKakaoUser(r,pre){window._paLastKakao=r;const _d=pre||await paFirebaseSignIn();if(!_d){toast('로그인 서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.','err');return;}await paReloadData();const kid=String(r.id),nn=r.kakao_account?.profile?.nickname||'사용자',img=r.kakao_account?.profile?.profile_image_url||null;
