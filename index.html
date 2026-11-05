@@ -998,6 +998,7 @@ if(confirm('앱을 종료하시겠습니까?')){App.exitApp();}
 }
 /* ===== 수정 7: Capacitor HTTP 분기 (CORS 대비) ===== */
 async function appFetch(url,options){
+if(/analyzefood/.test(url)){try{const u=firebase.auth().currentUser;if(u)options=Object.assign({},options,{headers:Object.assign({},options.headers||{},{Authorization:'Bearer '+await u.getIdToken()})});}catch(e){}}
 if(isApp&&window.Capacitor){
 try{
 const resp=await Capacitor.Plugins.CapacitorHttp.request({
