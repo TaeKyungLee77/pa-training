@@ -952,6 +952,12 @@ const lk=[[PA_STORE.android,'Google Play'],[PA_STORE.ios,'App Store']].filter(x=
 const d=document.createElement('div');d.id='paAppOnly';d.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg);text-align:center;';
 d.innerHTML=`<div style="width:100%;max-width:360px;"><div style="font-size:22px;font-weight:900;margin-bottom:10px;">P.A 앱에서 이용해 주세요</div><div style="font-size:14px;line-height:1.7;color:var(--muted);margin-bottom:14px;">식단·운동·예약은 앱에서 이용할 수 있어요.<br>같은 계정으로 로그인하면 기록이 그대로 이어집니다.</div>${lk}<button onclick="document.getElementById('paAppOnly').remove();doLogout();go('home');" style="margin-top:16px;padding:10px 18px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;cursor:pointer;">로그아웃</button></div>`;
 document.body.appendChild(d);}
+/* 카카오 앱 로그인 복귀 */
+if(isApp){try{Capacitor.Plugins.App.addListener('appUrlOpen',({url})=>{if(!/^kr\.co\.patraining\.app:\/\/kakao/.test(url||''))return;const q=new URL(url.replace(/^[^:]+:/,'https:')).searchParams,c=q.get('code'),st=q.get('state');
+let ok=false;try{ok=!!st&&st===localStorage.getItem('pa_kk_state');localStorage.removeItem('pa_kk_state');}catch(e){}
+try{Capacitor.Plugins.Browser.close();}catch(e){}
+if(!c||!ok){toast('카카오 로그인이 취소되었어요','err');return;}go('my');paKakaoExchange(c);});}catch(e){console.warn('[PA] appUrlOpen:',e);}}
+else{try{const q=new URLSearchParams(location.search),c=q.get('code'),st=q.get('state')||'';if(c&&/^pa_app_[0-9a-f]+$/.test(st)){const u='kr.co.patraining.app://kakao?code='+encodeURIComponent(c)+'&state='+st;history.replaceState(null,'',location.pathname);document.body.innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:#09111C;color:#fff;font-family:sans-serif;"><p style="font-size:16px;margin:0 0 20px;">P.A 앱으로 돌아가는 중이에요</p><a href="'+u+'" style="padding:14px 28px;border-radius:12px;background:#E8622A;color:#fff;font-weight:700;text-decoration:none;">앱으로 돌아가기</a></div>';location.replace(u);throw 0;}}catch(e){if(e===0)throw new Error('pa-app-return');}}
 function paTabSync(id){const k=['home','notice','reserve','my'].includes(id)?id:'more';document.querySelectorAll('.pa-tab').forEach(b=>b.classList.toggle('on',b.id==='pt-'+k));}
 function paTabMore(){const m=document.getElementById('mob'),p=document.getElementById('navProf');m.classList.toggle('pa-in',!!(p&&p.classList.contains('show')));m.classList.toggle('on');}
 
@@ -1532,9 +1538,15 @@ function rP(cat){const prods=typeof getAllProds==='function'?getAllProds():PRODS
 
 /* 로그인 */
 let LC=null;
+/* 앱 카카오 로그인: 브라우저에서 로그인 → 사이트가 앱 주소로 돌려보냄 → 앱이 코드를 받아 처리 */
+const PA_KK_KEY='a1ca85645cfb642c43ac95082a46e872';
+async function paKakaoApp(){try{const st='pa_app_'+Array.from(crypto.getRandomValues(new Uint8Array(12)),b=>b.toString(16).padStart(2,'0')).join('');localStorage.setItem('pa_kk_state',st);
+const url='https://kauth.kakao.com/oauth/authorize?response_type=code&client_id='+PA_KK_KEY+'&redirect_uri='+encodeURIComponent('https://patraining.co.kr/')+'&state='+st;
+await Capacitor.Plugins.Browser.open({url});}catch(e){console.warn('[PA] 카카오 앱 로그인:',e);toast('카카오 로그인을 열지 못했어요. 다시 시도해 주세요','err');}}
 function kakaoLogin(){if(isL){toast('로컬 환경 — 아래 테스트 코드 로그인 이용','err');document.getElementById('dbox').classList.add('on');return;}
+if(isApp){paKakaoApp();return;}
 if(!window.Kakao||!Kakao.isInitialized()){toast('카카오 SDK 로딩 중... 잠시 후 다시 시도해주세요','err');try{if(window.Kakao&&!Kakao.isInitialized())Kakao.init('a1ca85645cfb642c43ac95082a46e872');}catch(e){}return;}
-try{Kakao.Auth.authorize(isApp?{redirectUri:location.origin+'/',throughTalk:false}:{redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 잠시 후 다시 시도해 주세요','err');if(paTestOn())document.getElementById('dbox').classList.add('on');}}
+try{Kakao.Auth.authorize({redirectUri:location.origin+'/'});}catch(e){console.warn('Kakao error:',e);toast('카카오 연결 오류 — 잠시 후 다시 시도해 주세요','err');if(paTestOn())document.getElementById('dbox').classList.add('on');}}
 /* [v7] 테스트 모드: 주소 끝에 ?test=1 → 테스트 코드 입장 버튼 보임 (?test=0 으로 끄기) */
 function paTestOn(){try{return isL||localStorage.getItem('pa_test')==='1';}catch(e){return isL;}}
 (function(){try{const q=new URLSearchParams(location.search);if(q.has('test')){if(q.get('test')==='0')localStorage.removeItem('pa_test');else localStorage.setItem('pa_test','1');}}catch(e){}if(paTestOn())document.documentElement.classList.add('pa-test');else document.documentElement.classList.remove('pa-test');})();
@@ -1642,7 +1654,8 @@ return cfg?.adminKakaoId||'4824357984';
 const ADMIN_KAKAO_ID_FALLBACK='4824357984';
 
 /* 리다이렉트 인가코드 처리 */
-function processKakaoAuth(){const params=new URLSearchParams(location.search);const code=params.get('code');if(!code)return;history.replaceState(null,'',location.pathname+location.hash);fetch('https://kauth.kakao.com/oauth/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:'a1ca85645cfb642c43ac95082a46e872',redirect_uri:location.origin+'/',code})}).then(r=>r.json()).then(data=>{if(data.access_token){Kakao.Auth.setAccessToken(data.access_token);Kakao.API.request({url:'/v2/user/me'}).then(r=>{handleKakaoUser(r);}).catch(e=>{console.warn('API error:',e);toast('사용자 정보 조회 실패','err');});}else{console.warn('Token fail:',data);toast('토큰 발급 실패','err');}}).catch(e=>{console.warn('Token error:',e);toast('인증 처리 오류','err');});}
+function processKakaoAuth(){const params=new URLSearchParams(location.search);const code=params.get('code');if(!code)return;history.replaceState(null,'',location.pathname+location.hash);paKakaoExchange(code);}
+function paKakaoExchange(code){fetch('https://kauth.kakao.com/oauth/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:'a1ca85645cfb642c43ac95082a46e872',redirect_uri:location.origin+'/',code})}).then(r=>r.json()).then(data=>{if(data.access_token){Kakao.Auth.setAccessToken(data.access_token);Kakao.API.request({url:'/v2/user/me'}).then(r=>{handleKakaoUser(r);}).catch(e=>{console.warn('API error:',e);toast('사용자 정보 조회 실패','err');});}else{console.warn('Token fail:',data);toast('토큰 발급 실패','err');}}).catch(e=>{console.warn('Token error:',e);toast('인증 처리 오류','err');});}
 
 /* 미등록 카카오 유저 → 스텝 기반 연결 UI */
 function showKakaoLink(nn){
