@@ -961,6 +961,11 @@ let ok=false;try{ok=!!st&&st===localStorage.getItem('pa_kk_state');localStorage.
 try{Capacitor.Plugins.Browser.close();}catch(e){}
 const v=m[1]==='kakao'?q.get('code'):q.get('token');if(!v||!ok){toast('로그인이 취소되었어요','err');return;}go('my');if(m[1]==='kakao')paKakaoExchange(v);else paGoogleFinish(v,q.get('nm')||'',q.get('img')||'');});}catch(e){console.warn('[PA] appUrlOpen:',e);}}
 else{try{const q=new URLSearchParams(location.search),c=q.get('code'),st=q.get('state')||'';if(c&&/^pa_app_[0-9a-f]+$/.test(st)){const u='kr.co.patraining.app://kakao?code='+encodeURIComponent(c)+'&state='+st;history.replaceState(null,'',location.pathname);document.body.innerHTML='<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:#09111C;color:#fff;font-family:sans-serif;"><p style="font-size:16px;margin:0 0 20px;">P.A 앱으로 돌아가는 중이에요</p><a href="'+u+'" style="padding:14px 28px;border-radius:12px;background:#E8622A;color:#fff;font-weight:700;text-decoration:none;">앱으로 돌아가기</a></div>';location.replace(u);throw 0;}}catch(e){if(e===0)throw new Error('pa-app-return');}}
+/* 앱: 리포트는 앱 안 전체 화면으로 표시 (PDF 저장은 PC 홈페이지에서) */
+function paShowDocInApp(html){if(!isApp)return false;const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;z-index:9700;display:flex;flex-direction:column;background:#fff;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);';
+const t=document.createElement('div');t.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#09111C;color:#fff;font-size:12px;';t.innerHTML='<span>PDF 저장은 PC 홈페이지에서 할 수 있어요</span>';
+const b=document.createElement('button');b.textContent='닫기';b.style.cssText='flex:none;padding:7px 14px;border:0;border-radius:8px;background:#E8622A;color:#fff;font-weight:700;font-family:inherit;';b.onclick=()=>d.remove();t.appendChild(b);
+const f=document.createElement('iframe');f.style.cssText='flex:1;width:100%;border:0;background:#fff;';f.srcdoc=html.replace('</head>','<style>.btn-print{display:none!important}</style></head>');d.append(t,f);document.body.appendChild(d);return true;}
 function paTabSync(id){const k=['home','notice','reserve','my'].includes(id)?id:'more';document.querySelectorAll('.pa-tab').forEach(b=>b.classList.toggle('on',b.id==='pt-'+k));}
 function paTabMore(){const m=document.getElementById('mob'),p=document.getElementById('navProf');m.classList.toggle('pa-in',!!(p&&p.classList.contains('show')));m.classList.toggle('on');}
 
@@ -3942,6 +3947,7 @@ ${[7,30,90,180].map(d=>`<button onclick="reportPeriod=${d};rAB();" style="flex:1
 function generateReport(){
 if(!reportTarget){toast('대상을 선택하세요','err');return;}
 const html=reportType==='student'?buildStudentReport(reportTarget,reportPeriod):buildAcademyReport(reportTarget,reportPeriod);
+if(paShowDocInApp(html))return;
 const w=window.open('','_blank','width=900,height=1200');
 if(!w){toast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요','err');return;}
 w.document.write(html);w.document.close();
@@ -3977,6 +3983,7 @@ function closeQuickReport(){const w=document.getElementById('qrWrap');if(w)w.rem
 function doQuickReport(code,period){
 closeQuickReport();
 const html=buildStudentReport(code,period);
+if(paShowDocInApp(html))return;
 const w=window.open('','_blank','width=900,height=1200');
 if(!w){toast('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요','err');return;}
 w.document.write(html);w.document.close();
