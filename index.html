@@ -966,6 +966,10 @@ function paShowDocInApp(html){if(!isApp)return false;const d=document.createElem
 const t=document.createElement('div');t.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#09111C;color:#fff;font-size:12px;';t.innerHTML='<span>PDF 저장은 PC 홈페이지에서 할 수 있어요</span>';
 const b=document.createElement('button');b.textContent='닫기';b.style.cssText='flex:none;padding:7px 14px;border:0;border-radius:8px;background:#E8622A;color:#fff;font-weight:700;font-family:inherit;';b.onclick=()=>d.remove();t.appendChild(b);
 const f=document.createElement('iframe');f.style.cssText='flex:1;width:100%;border:0;background:#fff;';f.srcdoc=html.replace('</head>','<style>.btn-print{display:none!important}</style></head>');d.append(t,f);document.body.appendChild(d);return true;}
+/* 가입 생년월일: 연·월·일 선택 (달력을 넘기지 않음) */
+function paBirthSel(){const o=(from,to,step,suf)=>{let h='';for(let i=from;step>0?i<=to:i>=to;i+=step)h+=`<option value="${i}">${i}${suf}</option>`;return h;};const st='flex:1;min-width:0;margin:0;';
+return `<div style="display:flex;gap:6px;margin-bottom:10px;"><select class="dc" id="sfBY" style="${st}flex:1.4;" onchange="paBirthSync()"><option value="">연도</option>${o(new Date().getFullYear()-3,1950,-1,'년')}</select><select class="dc" id="sfBM" style="${st}" onchange="paBirthSync()"><option value="">월</option>${o(1,12,1,'월')}</select><select class="dc" id="sfBD" style="${st}" onchange="paBirthSync()"><option value="">일</option>${o(1,31,1,'일')}</select></div><input type="hidden" id="sfBirth">`;}
+function paBirthSync(){const g=i=>document.getElementById(i),y=+g('sfBY').value,m=+g('sfBM').value,dEl=g('sfBD');if(y&&m){const last=new Date(y,m,0).getDate();[...dEl.options].forEach(op=>{if(op.value)op.hidden=op.disabled=+op.value>last;});if(+dEl.value>last)dEl.value='';}const d=+dEl.value;g('sfBirth').value=y&&m&&d?`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`:'';}
 function paTabSync(id){const k=['home','notice','reserve','my'].includes(id)?id:'more';document.querySelectorAll('.pa-tab').forEach(b=>b.classList.toggle('on',b.id==='pt-'+k));}
 function paTabMore(){const m=document.getElementById('mob'),p=document.getElementById('navProf');m.classList.toggle('pa-in',!!(p&&p.classList.contains('show')));m.classList.toggle('on');}
 
@@ -1696,7 +1700,7 @@ lb.innerHTML=`<div class="kcard fu"><div class="kcard-ico">🔗</div><div class=
 <div id="linkStep2Self" style="display:none;text-align:left;">
 <div style="font-size:13px;color:var(--accent);margin-bottom:14px;text-align:center;font-weight:700;">📋 기본 정보를 입력해 주세요</div>
 <label class="di">이름</label><input class="dc" id="sfName" placeholder="예: 홍길동" maxlength="20" autocomplete="name" style="margin-bottom:10px;">
-<label class="di">생년월일</label><input class="dc" id="sfBirth" type="date" min="1950-01-01" max="2023-12-31" style="margin-bottom:10px;">
+<label class="di">생년월일</label>${paBirthSel()}
 <label class="di">성별</label><div style="display:flex;gap:8px;margin-bottom:10px;" id="sfG" data-v=""><button type="button" class="my-tab" data-g="남" style="flex:1;padding:10px;font-weight:700;">남</button><button type="button" class="my-tab" data-g="여" style="flex:1;padding:10px;font-weight:700;">여</button></div>
 <div style="display:flex;gap:8px;"><div style="flex:1"><label class="di">키 (cm)</label><input class="dc" id="sfH" type="number" inputmode="decimal" placeholder="162" min="100" max="220" style="margin-bottom:10px;"></div><div style="flex:1"><label class="di">몸무게 (kg)</label><input class="dc" id="sfW" type="number" inputmode="decimal" placeholder="50" min="20" max="200" style="margin-bottom:10px;"></div></div>
 <label class="di">목표</label><select class="dc" id="sfGoal" style="margin-bottom:10px;"><option>체중감량</option><option>유지</option><option>근육증가</option><option selected>체형교정</option></select>
