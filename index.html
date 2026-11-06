@@ -10,6 +10,9 @@
 <title>P.A 트레이닝 · Performance Achievement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,800;1,900&display=swap" rel="stylesheet" media="(max-width:768px)">
+<link href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" rel="stylesheet" media="(max-width:768px)">
+<script>/* 모바일 웹(768px 이하)과 앱에만 새 UI 적용 */(function(){var r=document.documentElement,m=window.matchMedia('(max-width:768px)'),f=function(){var a=window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform();r.classList.toggle('pa-m',m.matches||!!a);};f();m.addEventListener('change',f);})();</script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -631,6 +634,67 @@ footer{position:relative;z-index:1;background:var(--card2);border-top:1px solid 
 .cond-chart-empty{text-align:center;padding:18px;font-size:11px;color:var(--muted);}
 
 /* ===== 앱 전용: 상단바 숨김 + 하단 메뉴 ===== */
+/* ===== 모바일·앱 새 UI (html.pa-m 범위, PC 영향 없음) ===== */
+.pm-home{display:none;}
+html.pa-m{--pm-surface:#0D2030;--pm-surface2:#142B3D;--pm-line:#2A4050;--pm-muted:#9AAFBF;--pm-title:'Barlow Condensed','Bebas Neue',sans-serif;}
+html.pa-m body{font-family:'Pretendard Variable',Pretendard,'Noto Sans KR',sans-serif;}
+html.pa-m .logo .sub{display:none;}
+html.pa-m .pm-home{display:block;position:relative;overflow:hidden;}
+html.pa-m #pg-home .hero-bg{display:none;}
+.pm-hero{position:relative;padding:36px 22px 34px;}
+.pm-art{position:absolute;top:-70px;right:-210px;width:430px;height:430px;border-radius:50%;background:radial-gradient(circle at 34% 40%,rgba(100,160,200,.2),rgba(100,160,200,.03) 68%,transparent 70%);box-shadow:0 0 0 1px rgba(100,160,200,.2),0 0 0 44px rgba(100,160,200,.025),0 0 0 45px rgba(100,160,200,.11);pointer-events:none;}
+.pm-hero>*:not(.pm-art){position:relative;}
+.pm-brand{display:none;font-family:var(--pm-title);font-style:italic;font-weight:800;font-size:24px;letter-spacing:.02em;margin-bottom:26px;}
+.pm-brand b{color:var(--orange);font-weight:800;}
+html.pa-app .pm-hero{padding-top:calc(22px + env(safe-area-inset-top));}
+html.pa-app .pm-brand{display:block;}
+.pm-ey{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--accent);}
+.pm-title{margin:16px 0 18px -3px;font-family:var(--pm-title);font-style:italic;font-weight:900;font-size:clamp(46px,calc((100vw - 44px)/5.72),84px);line-height:.94;letter-spacing:0;}
+.pm-title span{display:block;white-space:nowrap;}
+.pm-title span:nth-child(2){color:var(--accent);}
+.pm-title span:nth-child(3){color:var(--orange);}
+.pm-lead{font-size:20px;font-weight:700;line-height:1.45;word-break:keep-all;}
+.pm-desc{margin-top:10px;max-width:520px;font-size:15px;line-height:1.7;color:var(--pm-muted);word-break:keep-all;}
+.pm-cta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px;max-width:520px;}
+.pm-btn{min-height:52px;padding:0 12px;border:0;border-radius:10px;font:inherit;font-size:15px;font-weight:800;color:#09111C;cursor:pointer;}
+.pm-btn.blue{background:var(--accent);}
+.pm-btn.orange{background:var(--orange);}
+.pm-body{display:block;width:calc(100% - 44px);margin:0 22px;padding:20px;border:1px solid var(--pm-line);border-radius:12px;background:var(--pm-surface2);color:var(--text);font:inherit;text-align:left;cursor:pointer;}
+.pm-kick{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--accent);}
+.pm-body h2,.pm-special h2,.pm-prog h2{font-size:21px;font-weight:800;line-height:1.35;word-break:keep-all;}
+.pm-body h2{margin-top:6px;}
+.pm-body p{margin-top:6px;font-size:14px;line-height:1.6;color:var(--pm-muted);word-break:keep-all;}
+.pm-shapes{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:16px;}
+.pm-shapes svg{width:100%;max-width:38px;height:auto;fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linejoin:round;}
+.pm-go{display:block;margin-top:14px;font-size:14px;font-weight:700;}
+.pm-prog{padding:38px 22px 8px;}
+.pm-prog h2{margin-top:6px;}
+.pm-list{margin:14px 0 0;padding:0;list-style:none;border-top:1px solid var(--pm-line);}
+.pm-list li{padding:16px 0;border-bottom:1px solid var(--pm-line);}
+.pm-list b{display:block;font-size:17px;font-weight:700;}
+.pm-list i{display:block;margin-top:3px;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--accent);}
+.pm-list span{display:block;margin-top:7px;font-size:14px;line-height:1.6;color:var(--pm-muted);word-break:keep-all;}
+.pm-link{display:inline-flex;align-items:center;min-height:48px;padding:0;border:0;background:none;color:var(--text);font:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+.pm-special{margin:22px 22px 0;padding:22px 20px;border:1px solid rgba(232,98,42,.45);border-radius:12px;background:linear-gradient(135deg,rgba(232,98,42,.14),rgba(232,98,42,.03));}
+.pm-special .pm-kick{color:var(--orange);}
+.pm-special h2{margin-top:6px;}
+.pm-special p{margin-top:8px;font-size:14px;line-height:1.65;color:var(--pm-muted);word-break:keep-all;}
+.pm-special .pm-link{margin-top:6px;}
+.pm-feat{display:grid;grid-template-columns:1fr 1fr;gap:18px 14px;padding:32px 22px 34px;}
+.pm-feat b{display:block;font-size:15px;font-weight:700;}
+.pm-feat span{display:block;margin-top:3px;font-size:13px;line-height:1.5;color:var(--pm-muted);word-break:keep-all;}
+html.pa-m #pg-home>.sec{padding:32px 22px 44px!important;border-top:1px solid var(--pm-line);}
+html.pa-m #pg-home .sec-top{align-items:center;margin-bottom:14px;}
+html.pa-m #pg-home .sey{font-size:11px;letter-spacing:.14em;}
+html.pa-m #pg-home .st{font-family:inherit;font-size:21px;font-weight:800;letter-spacing:0;}
+html.pa-m #pg-home .smore{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;font-size:14px;}
+html.pa-m #pg-home .ng{grid-template-columns:1fr;gap:10px;}
+html.pa-m #pg-home .nc{padding:16px;border-radius:12px;background:var(--pm-surface);border-color:var(--pm-line);max-height:none;}
+html.pa-m #pg-home .ntag{font-size:11px;margin-bottom:8px;}
+html.pa-m #pg-home .nt{font-size:16px;}
+html.pa-m #pg-home .nd{font-size:14px;color:var(--pm-muted);-webkit-line-clamp:2;}
+html.pa-m #pg-home .ndt{font-size:12px;color:var(--pm-muted);margin-top:8px;}
+.pm-btn:focus-visible,.pm-body:focus-visible,.pm-link:focus-visible{outline:2px solid #fff;outline-offset:2px;}
 .pa-tabs{display:none;}
 .pa-app-only{display:none;}
 html.pa-app{--nav:0px;}
@@ -657,6 +721,22 @@ html.pa-app .mob.pa-in .pa-app-only{display:block;}
 <div class="pa-tabs" id="paTabs"><button class="pa-tab on" id="pt-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>홈</button><button class="pa-tab" id="pt-notice" onclick="go('notice')"><svg viewBox="0 0 24 24"><path d="M18 9a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M10 21h4"/></svg>공지</button><button class="pa-tab" id="pt-reserve" onclick="goReserve()"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>예약</button><button class="pa-tab" id="pt-my" onclick="goMY()"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>MY</button><button class="pa-tab" id="pt-more" onclick="paTabMore()"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>더보기</button></div>
 
 <div class="pg on" id="pg-home">
+<section class="pm-home" aria-label="P.A 트레이닝 소개">
+<div class="pm-hero"><div class="pm-art" aria-hidden="true"></div>
+<div class="pm-brand">P.<b>A</b>·TRAINING</div>
+<p class="pm-ey">PERFORMANCE ACHIEVEMENT TRAINING</p>
+<h1 class="pm-title"><span>YOUR BODY.</span><span>YOUR BALANCE.</span><span>YOUR STAGE.</span></h1>
+<p class="pm-lead">무대를 위한 몸,<br>목표를 위한 체계적인 관리.</p>
+<p class="pm-desc">무용 입시·콩쿠르 컨디셔닝부터 체중 관리와 바디라인 개선까지, 개인의 목표에 맞춰 관리합니다.</p>
+<div class="pm-cta"><button class="pm-btn blue" onclick="goMY()">MY TRAINING</button><button class="pm-btn orange" onclick="goReserve()">레슨 예약</button></div>
+</div>
+<button class="pm-body" onclick="go('body')"><span class="pm-kick">P.A BODY TYPE</span><h2>6가지 골격 체형 분석</h2><p>내 골격 유형을 확인하고 나에게 맞는 운동 방향을 찾아보세요.</p><span class="pm-shapes"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 6 34 34H6Z"/></svg><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 6H34L20 34Z"/></svg><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 34 20 20 36 6 20Z"/></svg><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 6H31V34H9Z"/></svg><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 33C8 25 5 18 7.500 12.500 10 8 16 8 20 13 24 8 30 8 32.500 12.500 35 18 32 25 20 33Z"/></svg><svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="20" rx="12" ry="16"/></svg></span><span class="pm-go">체형 분석하기 →</span></button>
+<div class="pm-prog"><p class="pm-kick">TRAINING PROGRAM</p><h2>수업 방식</h2>
+<ul class="pm-list"><li><b>1:1 퍼스널 트레이닝</b><i>PRIVATE TRAINING</i><span>개인의 목표와 신체 조건에 맞춘 집중형 코칭.</span></li><li><b>1:2 · 1:3 세미 퍼스널</b><i>SEMI-PRIVATE TRAINING</i><span>소수 정예로 진행하는 개인별 맞춤 트레이닝.</span></li><li><b>그룹 트레이닝</b><i>GROUP TRAINING</i><span>함께 운동하며 꾸준한 습관을 만드는 프로그램.</span></li></ul>
+<button class="pm-link" onclick="go('inquiry')">수업 문의하기 →</button></div>
+<div class="pm-special"><p class="pm-kick">SPECIALIZED PROGRAM</p><h2>입시 &amp; 콩쿠르 전문 컨디셔닝</h2><p>무용 전공자의 체력·움직임·컨디션을 목표 일정에 맞춰 관리합니다.</p><button class="pm-link" onclick="go('inquiry')">상담 문의하기 →</button></div>
+<div class="pm-feat"><div><b>체중 &amp; 바디라인</b><span>지속 가능한 변화</span></div><div><b>체형 밸런스</b><span>움직임과 자세 개선</span></div><div><b>퍼포먼스 향상</b><span>근력·체력·유연성</span></div><div><b>영양 &amp; 컨디션</b><span>개인별 식단 코칭</span></div></div>
+</section>
 <div class="hero-bg"><div class="hero"><div class="hcont"><div class="eyebrow fu"><span class="pulse"></span>PERFORMANCE ACHIEVEMENT TRAINING</div><h1 class="htitle fu d1"><span class="t1">PERFORM</span><span class="t2">ACHIEVEMENT</span><span class="t3">TRAINING</span><span class="tf">Performance · Achievement · Training</span></h1><p class="hdesc fu d2">개인의 신체 조건과 목표를 분석해 최적의 트레이닝과 영양 관리 솔루션을 제공합니다.<br>체중 관리부터 체형 개선, 퍼포먼스 향상까지. <strong>P.A 트레이닝</strong>과 함께 목표를 결과로 만들어보세요.</p><div class="hbtns fu d3"><div class="btnp" onclick="goMY()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7" r="4" stroke="white" stroke-width="2"/></svg>MY 페이지</div><div class="btng" onclick="go('notice')">공지사항 보기 →</div></div></div><div class="hside fu d4"><div class="hc"><div class="hcl">CURRENT</div><div class="hcv og" id="heroMonth">-</div><div class="hcs">이번 달 운영 중</div></div><div class="hc"><div class="hcl">WAITING</div><div class="hcv bl" id="heroWaitCount">-</div><div class="hcs">대기 인원</div></div><div class="hc" style="padding:13px 15px;"><div class="hcl" style="margin-bottom:9px;">이용 신청 / MY 식단표</div><div class="hcbtn" onclick="go('apply')">이용 신청 →</div><div class="hcbtn" onclick="goMY()" style="margin-top:4px;background:rgba(100,160,200,.2);color:var(--accent);">MY 페이지 →</div></div></div></div></div>
 <div class="sec" style="padding-top:0;"><div class="sec-top"><div><div class="sey">NOTICE</div><h2 class="st">공지사항</h2></div><div class="smore" onclick="go('notice')">전체보기 →</div></div><div class="ng" id="homeN"></div></div>
 </div>
@@ -941,7 +1021,7 @@ let isL=false;try{if(location.protocol==='file:'||location.hostname==='localhost
 /* ===== Capacitor 앱 감지 ===== */
 let isApp=false;
 try{isApp=!!(window.Capacitor&&Capacitor.isNativePlatform());}catch(e){}
-if(isApp){document.documentElement.classList.add('pa-app');
+if(isApp){document.documentElement.classList.add('pa-app','pa-m');
 try{const K='pa_login',v=localStorage.getItem(K);if(v&&!sessionStorage.getItem(K))sessionStorage.setItem(K,v);const S0=Storage.prototype.setItem,R0=Storage.prototype.removeItem;
 Storage.prototype.setItem=function(k,x){if(this===sessionStorage&&k===K)S0.call(localStorage,K,x);return S0.call(this,k,x);};
 Storage.prototype.removeItem=function(k){if(this===sessionStorage&&k===K)R0.call(localStorage,K);return R0.call(this,k);};}catch(e){}
