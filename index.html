@@ -1527,7 +1527,7 @@ function esc(s){const d=document.createElement('div');d.textContent=s;return d.i
 
 const PGS=['home','notice','reserve','body','my','apply','loc','prod','price','inquiry','coach','admin'];
 function go(id){PGS.forEach(p=>{const el=document.getElementById('pg-'+p);if(el)el.classList.toggle('on',p===id);const nl=document.getElementById('nl-'+p);if(nl)nl.classList.toggle('on',p===id);});window.scrollTo({top:0,behavior:'smooth'});if(id==='notice')rAN();if(id==='prod')rP('all');if(id==='body')initBodyPage();if(id==='inquiry'){hideInqForm();renderPublicInqList();}paTabSync(id);cMob();}
-function goMY(){go('my');chkL();}
+function goMY(){if(isApp&&aOK){go('admin');paTabSync('my');return;}go('my');chkL();}
 function togMob(){document.getElementById('mob').classList.toggle('on');}
 function cMob(){document.getElementById('mob').classList.remove('on');}
 function chkHash(){if(location.hash==='#admin')go('admin');}
@@ -6010,7 +6010,7 @@ return all[ds]||null;
 }
 
 /* 예약 페이지 */
-function goReserve(){go('reserve');rsvInit();}
+function goReserve(){if(isApp&&aOK&&paRole()==='super_admin'){aTab='a-rsv';go('admin');rAT();paTabSync('reserve');return;}go('reserve');rsvInit();}
 /* 1:1 문의 제출 */
 /* 대표 문의 (상단 고정, pinned) */
 const PINNED_INQUIRIES=[
