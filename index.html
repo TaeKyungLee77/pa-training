@@ -12,6 +12,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://www.gstatic.com">
 <link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com">
+<link rel="preconnect" href="https://securetoken.googleapis.com">
 <link rel="preconnect" href="https://kakaoauth-414257826796.asia-northeast3.run.app">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js" integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4" crossorigin="anonymous"></script>
@@ -991,14 +993,14 @@ return false;}
 const paAuthKey=d=>JSON.stringify([d.role||'',d.code||'',d.academyId||'',d.relation||'',d.nm||'']);
 function paAppUser(u){let pf={};try{pf=JSON.parse(localStorage.getItem('pa_app_prof')||'{}');}catch(e){}return {id:pf.id||u.uid,kakao_account:{profile:{nickname:pf.nn||'사용자',profile_image_url:pf.img||null}}};}
 /* 앱을 켜자마자 이름을 먼저 표시 */
-function paAppEarly(){try{const u=firebase.auth().currentUser;if(!isApp||!u||!/^(kakao|apple|google):/.test(String(u.uid||'')))return;window._paRestoring=true;const pr=paAppUser(u).kakao_account.profile;let n=pr.nickname,i=pr.profile_image_url;try{const d=JSON.parse(sessionStorage.getItem('pa_login')||'{}');if(d.name){n=d.name;i=d.img||i;}}catch(e){}setN(n,i);}catch(e){}}
+function paAppEarly(){try{if(!isApp||window._paRestoring)return;let c=null;try{c=JSON.parse(localStorage.getItem('pa_app_auth')||'null');}catch(e){}const u=firebase.auth().currentUser,uid=String((u&&u.uid)||(c&&c.uid)||'');if(!/^(kakao|apple|google):/.test(uid))return;window._paRestoring=true;const pr=paAppUser({uid}).kakao_account.profile;let n=pr.nickname,i=pr.profile_image_url;try{const d=JSON.parse(sessionStorage.getItem('pa_login')||'{}');if(d.name){n=d.name;i=d.img||i;}}catch(e){}setN(n,i);paT('이름 먼저 표시');}catch(e){}}
 /* 지난번 역할로 화면을 먼저 열고, 서버 확인은 뒤에서 진행 */
 async function paAppVerify(c,usr,uid){try{const u=firebase.auth().currentUser;if(!u||u.uid!==uid)return;const t=await u.getIdToken();const r=await fetch(PA_AUTH_URL,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:'{}'});if(!r.ok)return;const d=await r.json();paT('서버 확인 끝');const u2=firebase.auth().currentUser;if(!u2||u2.uid!==uid||!d.role)return;
 if(paAuthKey(d)===paAuthKey(c)){paSaveAuth(d,uid);return;}
 window._paQuiet=true;try{await handleKakaoUser(usr);go('home');_paHist=[];}finally{window._paQuiet=false;}}catch(e){console.warn('[PA] 로그인 확인:',e);}}
 async function paAppRestore(){window._paQuiet=true;try{const u=firebase.auth().currentUser;if(!isApp||!u||!/^(kakao|apple|google):/.test(String(u.uid||'')))return;const usr=paAppUser(u);let c=null;try{c=JSON.parse(localStorage.getItem('pa_app_auth')||'null');}catch(e){}
 const fast=c&&c.uid===u.uid&&c.role&&c.role!=='pending'&&c.role===_paC.role;
-await handleKakaoUser(usr,fast?c:undefined,fast?{noReload:true}:undefined);go('home');_paHist=[];paT('앱 로그인 복구 끝');if(fast)paAppVerify(c,usr,u.uid);}catch(e){console.warn('[PA] 로그인 복구:',e);}finally{window._paQuiet=false;window._paRestoring=false;try{const lb=document.getElementById('loginBox');if(window._paLbSave!=null&&lb.textContent.includes('불러오는 중이에요'))lb.innerHTML=window._paLbSave;window._paLbSave=null;if((document.querySelector('.pg.on')||{}).id==='pg-my')chkL();}catch(e){}}}
+await handleKakaoUser(usr,fast?c:undefined,fast?{noReload:true}:undefined);go('home');_paHist=[];paT('앱 로그인 복구 끝');if(fast)paAppVerify(c,usr,u.uid);}catch(e){console.warn('[PA] 로그인 복구:',e);}finally{window._paQuiet=false;const wasR=window._paRestoring;window._paRestoring=false;try{if(wasR&&!firebase.auth().currentUser){const np=document.getElementById('navProf');if(np)np.classList.remove('show');}const lb=document.getElementById('loginBox');if(window._paLbSave!=null&&lb.textContent.includes('불러오는 중이에요'))lb.innerHTML=window._paLbSave;window._paLbSave=null;if((document.querySelector('.pg.on')||{}).id==='pg-my')chkL();}catch(e){}}}
 function paTabSync(id){const k=['home','notice','reserve','my'].includes(id)?id:'more';document.querySelectorAll('.pa-tab').forEach(b=>b.classList.toggle('on',b.id==='pt-'+k));}
 function paTabMore(){const m=document.getElementById('mob'),p=document.getElementById('navProf');m.classList.toggle('pa-in',!!(p&&p.classList.contains('show')));m.classList.toggle('on');}
 
@@ -2101,7 +2103,7 @@ if(role==='student'){logIn(code,S[code].name,null);}
 else{const h=role==='father'?'아버님':'어머님';logIn(code,S[code].name+' '+h,null);try{const d=JSON.parse(sessionStorage.getItem('pa_login')||'{}');d.rel=role;sessionStorage.setItem('pa_login',JSON.stringify(d));}catch(e){}rDB();}
 go('my');
 }
-document.addEventListener('DOMContentLoaded',async()=>{paT('문서 준비');const _hc=new URLSearchParams(location.search).get('code');await paAuthReady();paT('로그인 상태 확인');if(!_hc)paAppEarly();
+document.addEventListener('DOMContentLoaded',async()=>{paT('문서 준비');const _hc=new URLSearchParams(location.search).get('code');if(!_hc)paAppEarly();try{rHN();}catch(e){}await paAuthReady();paT('로그인 상태 확인');if(!_hc)paAppEarly();
 /* 카카오에서 돌아온 경우: 비로그인 데이터를 먼저 받지 않고 바로 로그인 */
 if(_hc){await processKakaoAuth();if(!_fsReady)await paReloadData();}else{await fsInit();await loadStudents();fsListen();}const i=document.getElementById('dcI');if(i){i.addEventListener('input',function(){this.value=this.value.toUpperCase();this.classList.remove('err');document.getElementById('em').classList.remove('on');});i.addEventListener('keydown',e=>{if(e.key==='Enter')doCode();});}rHN();rP('all');chkHash();const sv=sessionStorage.getItem('pa_login');if(sv){const d=JSON.parse(sv);if(d.code&&S[d.code]){LC=d.code;setN(d.name,d.img);}}if(isApp&&!_hc)paAppRestore();});
 function logIn(c,n,img){LC=c;sessionStorage.setItem('pa_login',JSON.stringify({code:c,name:n,img}));setN(n,img);toast(n+'님 환영합니다!');rDB();}
