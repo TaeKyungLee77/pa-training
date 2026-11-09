@@ -654,6 +654,28 @@ html.pa-kb body{padding-bottom:0;}
 html.pa-app .mob{top:auto;bottom:calc(60px + env(safe-area-inset-bottom));border-bottom:0;border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 20px 12px;}
 html.pa-app .mob .pa-web-only{display:none;}
 html.pa-app .mob.pa-in .pa-app-only{display:block;}
+.my-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;}
+.mh-l{display:flex;align-items:center;gap:12px;min-width:0;}
+.mh-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#2c5d7c);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff;flex:none;}
+.mh-n{font-size:17px;font-weight:900;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.mh-m{font-size:11px;color:var(--muted);margin-top:3px;}
+.mh-goal{font-size:10px!important;margin:0!important;}
+.mh-b{padding:10px 12px;border-radius:12px;font-size:12px;font-weight:800;background:var(--orange);color:#fff;border:0;white-space:nowrap;flex:none;}
+#myDB .my-tabs{overflow:visible;gap:4px;}
+#myDB .my-tabs .my-tab{flex:1 1 0;padding:10px 2px;font-size:12px;white-space:nowrap;}
+html.pa-app #myDB .my-tabs{top:env(safe-area-inset-top);}
+.my-ai-entry{width:100%;display:flex;align-items:center;gap:8px;padding:12px 14px;margin-bottom:12px;border-radius:14px;background:rgba(100,160,200,.10);border:1px solid rgba(100,160,200,.25);color:inherit;font-size:13px;text-align:left;}
+.my-ai-entry span{margin-left:auto;font-size:11px;color:var(--muted);}
+.my-rep-btns{display:flex;margin-bottom:12px;}
+.my-rep-btns .po-btn{width:100%;}
+.pa-fold:not(.open){max-height:230px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent);}
+.pa-fold-btn{display:block;width:100%;margin:-2px 0 16px;padding:10px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--accent);font-size:12px;font-weight:700;}
+#pnl-info .mprof{margin-bottom:12px;}
+#pnl-info #poMyAcc{margin:0 0 12px!important;}
+.cond-emojis{grid-template-columns:repeat(5,minmax(0,1fr))!important;}
+.cond-emoji{min-width:0;}
+.cond-card-h{flex-wrap:wrap;gap:4px;}
+.cond-card-t{white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -2493,7 +2515,7 @@ const dateStr=`${dt.getMonth()+1}/${dt.getDate()}`;
 const el=document.createElement('div');el.className='dd';el.innerHTML=`<div class="ddh" onclick="this.nextElementSibling.classList.toggle('on');this.querySelector('.chev').classList.toggle('on')"><div class="ddl"><div class="dpill">${d.d}<br><span style="font-size:8px;opacity:.6">${d.e}</span></div><div class="ddn">${dateStr}</div></div><div style="display:flex;align-items:center;gap:11px;"><div class="ddk">${d.k.toLocaleString()} kcal</div><div class="chev${i===0?' on':''}">▼</div></div></div><div class="ddb${i===0?' on':''}"><div class="mg2"><div><div class="mt">🌅 아침</div><div class="mk">${d.am.k} kcal</div><div class="mc">${d.am.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">☀️ 점심</div><div class="mk">${d.lu.k} kcal</div><div class="mc">${d.lu.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🍪 간식</div><div class="mk">${d.sn.k} kcal</div><div class="mc">${d.sn.c.replace(/\n/g,'<br>')}</div></div><div><div class="mt">🌙 저녁</div><div class="mk">${d.di.k} kcal</div><div class="mc">${d.di.c.replace(/\n/g,'<br>')}</div></div></div><div style="margin-top:10px;padding:8px 10px;background:rgba(100,160,200,.05);border-radius:8px;font-size:10px;color:var(--accent);display:flex;align-items:center;gap:6px;">💧 수분 섭취 목표: ${(water/1000).toFixed(1)}L</div></div>`;dl.appendChild(el);});});}
 
 /* MY 탭 전환 */
-function myTab(id,btn){document.querySelectorAll('.my-tab').forEach(t=>t.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='today')rToday();if(id==='diet'){const diet=gDiet(LC);rMP(diet);rCB(LC,tarOf(LC),diet);}if(id==='exercise')rExProgram();if(id==='aicoach')initAICoach();}
+function myTab(id,btn){window._paMyTab=id;document.querySelectorAll('.my-tab').forEach(t=>t.classList.toggle('on',t===btn||t.dataset.t===id));document.querySelectorAll('.my-panel').forEach(p=>p.classList.remove('on'));const pnl=document.getElementById('pnl-'+id);if(pnl)pnl.classList.add('on');if(id==='today')rToday();if(id==='diet'){const diet=gDiet(LC);rMP(diet);rCB(LC,tarOf(LC),diet);}if(id==='exercise')rExProgram();if(id==='aicoach')initAICoach();}
 
 /* ===== TODAY 페이지 ===== */
 const DAY_SCHED={
@@ -8305,6 +8327,38 @@ rDB=function(){
    a.innerHTML=`${under14&&!gN?`<div class="po-note" style="color:var(--orange);margin-bottom:8px">만 14세 미만은 보호자 동의가 필요합니다. 아래 [보호자 초대]로 보호자에게 코드를 보내 주세요.</div>`:''}<div class="po-lbl">계정 · 보호자 ${gN}명 연결</div><div class="po-row" style="flex-wrap:wrap"><button class="po-btn sm" id="poInv">👨‍👩‍👧 보호자 초대</button><a href="#privacy" class="po-btn sm g">개인정보 처리방침</a><button class="po-btn sm g" id="poDel">회원 탈퇴</button></div>`;
    box.appendChild(a);a.querySelector('#poInv').onclick=()=>inviteFlow(LC);a.querySelector('#poDel').onclick=()=>deleteFlow(LC,false);}}catch(e){console.warn('[PA 계정]',e);}
  try{if(LC&&stu(LC)&&isStuActive(LC)){const box=document.getElementById('myDB');if(box&&!document.getElementById('poMyQR')){const d=document.createElement('div');d.id='poMyQR';d.className='po-myqr';d.innerHTML=`<div><div style="font-size:16px;font-weight:900">📲 출석 QR</div><div class="po-sub" style="margin-top:2px">센터 1층 키오스크에 비추면 출석됩니다</div></div><div class="po-row" style="flex-wrap:wrap"><button class="po-btn g" onclick="location.hash='#report'">📋 4주 리포트</button><button class="po-btn" onclick="location.hash='#myqr'">출석 QR 열기</button></div>`;box.insertBefore(d,box.firstChild);}}}catch(e){console.warn('[PA 운영] MY QR',e);}return r;};
+/* ===== MY 화면 정리 (2026-11): 상단 요약 + 오늘·운동·식단·리포트·내 정보 ===== */
+const PA_MY_TABS=[['today','오늘'],['exercise','운동'],['diet','식단'],['report','리포트'],['info','내 정보']];
+function paTodayFold(){const w=document.getElementById('todayWrap');if(!w)return;w.querySelectorAll('.td-sec').forEach(sec=>{if(sec.dataset.fold||!sec.querySelector('.td-sec-h'))return;sec.dataset.fold='1';sec.classList.add('pa-fold');const b=document.createElement('button');b.className='pa-fold-btn';b.textContent='자세히 보기';b.onclick=()=>{const o=sec.classList.toggle('open');b.textContent=o?'접기':'자세히 보기';};sec.after(b);});}
+function paMyLayout(){
+ const db=document.getElementById('myDB');if(!db||!LC||!stu(LC)||paIsGuardian())return;
+ const tabs=db.querySelector('.my-tabs');if(!tabs||document.getElementById('myHead'))return;
+ const s=stu(LC),prof=db.querySelector('.mprof'),qr=document.getElementById('poMyQR'),acc=document.getElementById('poMyAcc');
+ const wsv=db.querySelector('#wsvg'),wcc=wsv&&wsv.closest('.cc');
+ const meta=prof&&prof.querySelector('.mmeta')?prof.querySelector('.mmeta').textContent:'';
+ const h=document.createElement('div');h.id='myHead';h.className='my-head';
+ h.innerHTML=`<div class="mh-l"><div class="mh-av">${esc(String(s.name||'?')[0])}</div><div style="min-width:0"><div class="mh-n">${esc(s.name||'')}</div><div class="mh-m">${esc(meta)}</div></div></div>${qr?'<button class="mh-b" data-qr>📲 출석 QR</button>':''}`;
+ db.insertBefore(h,db.firstChild);
+ const qb=h.querySelector('[data-qr]');if(qb)qb.onclick=()=>{location.hash='#myqr';};
+ const goal=prof&&prof.querySelector('.mgoal');if(goal){const g=goal.cloneNode(true);g.classList.add('mh-goal');h.querySelector('.mh-n').appendChild(g);}
+ tabs.innerHTML=PA_MY_TABS.map(([id,l])=>`<button class="my-tab" data-t="${id}" onclick="myTab('${id}',this)">${l}</button>`).join('');
+ h.after(tabs);
+ const rp=document.createElement('div');rp.className='my-panel';rp.id='pnl-report';
+ rp.innerHTML=`<div class="my-rep-btns"><button class="po-btn" onclick="location.hash='#report'">📋 4주 리포트 보기</button></div>`;
+ const st=prof&&prof.querySelector('.mst');if(st){const w=document.createElement('div');w.className='cc';w.style.marginBottom='12px';w.innerHTML='<div class="ct">🎯 하루 에너지 기준</div>';w.appendChild(st);rp.appendChild(w);}
+ if(wcc)rp.appendChild(wcc);
+ const cb=db.querySelector('#cbars'),cbc=cb&&cb.closest('.cc');if(cbc)rp.appendChild(cbc);
+ const ai=document.getElementById('pnl-aicoach');if(ai)ai.after(rp);else db.appendChild(rp);
+ const ip=document.createElement('div');ip.className='my-panel';ip.id='pnl-info';
+ if(prof)ip.appendChild(prof);if(acc)ip.appendChild(acc);
+ db.querySelectorAll(':scope > .blo').forEach(b=>ip.appendChild(b));
+ rp.after(ip);if(qr)qr.remove();
+ const tp=document.getElementById('pnl-today');if(tp){const aiB=document.createElement('button');aiB.className='my-ai-entry';aiB.innerHTML='🤖 <b>AI 코치에게 물어보기</b><span>운동·부상·식단</span>';aiB.onclick=()=>myTab('aicoach',null);tp.insertBefore(aiB,tp.firstChild);}
+ const cur=window._paMyTab||'today',b=tabs.querySelector(`[data-t="${cur}"]`);
+ if(cur!=='today'&&b)myTab(cur,b);else tabs.querySelector('[data-t="today"]').classList.add('on');
+}
+const _rToday0=rToday;rToday=function(){const r=_rToday0.apply(this,arguments);try{paTodayFold();}catch(e){}return r;};
+const _rDB1=rDB;rDB=function(){const r=_rDB1.apply(this,arguments);try{paMyLayout();}catch(e){console.warn('[PA MY 화면]',e);}return r;};
 /* 이미 연결된 학생·보호자 중 동의 기록이 없으면 한 번 받기 */
 let _cAsked=false;
 async function consentCheck(c,guard){
