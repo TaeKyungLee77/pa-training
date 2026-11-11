@@ -4895,7 +4895,7 @@ reader.onload=async function(e){
 const dataUrl=e.target.result;
 toast(`${S[code]?.name} 인바디 분석 중...`);
 try{
-const result=await analyzeInbody(dataUrl,code);
+window._paIbErr='';const result=await analyzeInbody(dataUrl,code);
 if(result&&result.weight){
 saveInbody(code,result);
 /* 체중도 자동 업데이트 */
@@ -4907,7 +4907,7 @@ lS('pa_weights',wData);
 }
 toast(`${S[code]?.name} 인바디 저장 완료! (${result.weight}kg, 체지방 ${result.bodyFatPct||'?'}%)`);
 }else{
-toast('인바디 분석 실패 — 사진을 다시 확인해주세요','err');
+toast('인바디 분석 실패 — '+(window._paIbErr||'사진을 다시 확인해주세요'),'err');
 }
 }catch(err){
 console.warn('Inbody upload error:',err);
@@ -5453,15 +5453,15 @@ lS('pa_inbody',all);
 
 /* AI 인바디 사진 분석 */
 async function analyzeInbody(dataUrl,code){
-const resized=await resizeImage(dataUrl,1024);
+const resized=await resizeImage(dataUrl,1600);
 const base64=resized.split(',')[1];
 const mediaType=resized.split(';')[0].split(':')[1]||'image/jpeg';
 try{
 const resp=await appFetchRetry('https://analyzefood-cqtmksnvya-du.a.run.app',{
 method:'POST',headers:{'Content-Type':'application/json'},
-body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1000,messages:[{role:'user',content:[
+body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1500,messages:[{role:'user',content:[
 {type:'image',source:{type:'base64',media_type:mediaType,data:base64}},
-{type:'text',text:`이 인바디(InBody) 체성분 분석 결과지 사진을 읽고 수치를 추출하세요.
+{type:'text',text:`이 인바디(InBody) 체성분 분석 결과지 사진을 읽고 수치를 추출하세요. 인쇄가 흐리거나 사진이 기울어져 있어도 최대한 읽고, 숫자는 단위 없이 숫자로만 쓰세요. analysis와 recommendation은 각각 2문장 이내로 짧게 쓰세요.
 
 아래 JSON 형식으로만 응답. 다른 텍스트 없이 JSON만:
 {"weight":체중kg숫자,"skeletalMuscle":골격근량kg숫자,"bodyFat":체지방량kg숫자,"bodyFatPct":체지방률%숫자,"bmi":BMI숫자,"bmr":기초대사량kcal숫자,"bodyWater":체수분kg숫자,"protein":단백질kg숫자,"mineral":무기질kg숫자,"visceralFat":내장지방레벨숫자,"score":인바디점수숫자,"segmental":{"rightArm":"정상/부족/과다","leftArm":"정상/부족/과다","trunk":"정상/부족/과다","rightLeg":"정상/부족/과다","leftLeg":"정상/부족/과다"},"analysis":"이 체성분의 특징과 개선점 3줄 설명(한국어)","recommendation":"운동/식단 방향 조언 2줄(한국어)"}
@@ -5469,11 +5469,16 @@ body:JSON.stringify({model:'claude-sonnet-5-5',max_tokens:1000,messages:[{role:'
 읽을 수 없는 항목은 0으로 표시하세요.`}
 ]}]})
 },1);
+if(!resp.ok){window._paIbErr=resp.status===429?'오늘 AI 사용 횟수를 모두 썼어요':resp.status===401?'로그인이 풀렸어요. 다시 로그인해 주세요':'AI 서버 오류('+resp.status+')';return null;}
 const data=await resp.json();
 const text=data.content?.map(c=>c.text||'').join('')||'';
 const result=safeParseJSON(text);
+if(!result){window._paIbErr=data.stop_reason==='max_tokens'?'AI 응답이 길어서 잘렸어요':(data.error?'AI 오류: '+(data.error.message||data.error.type||''):'결과지 수치를 읽지 못했어요');console.warn('[PA 인바디] 응답:',text.slice(0,300),data.stop_reason);return null;}
+const num=v=>{const n=parseFloat(String(v==null?'':v).replace(/[^0-9.\-]/g,''));return isFinite(n)?n:0;};
+['weight','skeletalMuscle','bodyFat','bodyFatPct','bmi','bmr','bodyWater','protein','mineral','visceralFat','score'].forEach(k=>{if(k in result)result[k]=num(result[k]);});
+if(!result.weight)window._paIbErr='체중 숫자를 찾지 못했어요. 결과지 전체가 나오게 다시 찍어 주세요';
 return result;
-}catch(e){console.warn('InBody analysis error:',e);return null;}
+}catch(e){console.warn('InBody analysis error:',e);window._paIbErr='네트워크 오류: '+(e&&e.message||e);return null;}
 }
 
 /* 체형분석 페이지 초기화 */
